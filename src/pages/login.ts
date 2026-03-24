@@ -47,23 +47,85 @@ export function renderLogin() {
   form.autocomplete = 'off'
   form.setAttribute('aria-describedby', 'login-error')
 
+  // Email field: single-line outlined input with right-aligned
+  // non-interactive status icon slot. We keep a programmatic label
+  // for accessibility but visually hide it so the control appears as
+  // a single-line input with placeholder text.
   const emailField = document.createElement('div')
   emailField.className = 'form-field'
   const emailLabel = document.createElement('label')
-  emailLabel.className = 'form-label'
+  emailLabel.className = 'form-label visually-hidden'
   emailLabel.htmlFor = 'email'
   emailLabel.textContent = 'Email'
+
+  const emailWrap = document.createElement('div')
+  emailWrap.className = 'input-with-actions'
+
   const emailInput = document.createElement('input')
   emailInput.id = 'email'
   emailInput.className = 'input'
   emailInput.name = 'email'
   emailInput.type = 'email'
+  emailInput.placeholder = 'Email'
+  // keep demo value prefilled for the demo account; placeholder still present when empty
   emailInput.value = demoCredentials.email
   emailInput.autofocus = true
   emailInput.required = true
   emailInput.setAttribute('aria-label', 'Email')
+
+  // Status icon slot on the right (non-interactive). This keeps a fixed
+  // action area so the input does not shift between states.
+  const emailStatus = document.createElement('span')
+  emailStatus.className = 'input-action input-action--status'
+  emailStatus.setAttribute('aria-hidden', 'true')
+  emailStatus.innerHTML = `
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--neutral" aria-hidden="true">
+      <path d="M12 2v20M2 12h20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`
+
+  // Assemble email field: hidden label (for screen readers), input wrapper,
+  // and the fixed action area for status.
+  emailWrap.appendChild(emailInput)
+  const emailActionsWrap = document.createElement('div')
+  emailActionsWrap.className = 'input-actions'
+  emailActionsWrap.appendChild(emailStatus)
+  emailWrap.appendChild(emailActionsWrap)
+
   emailField.appendChild(emailLabel)
-  emailField.appendChild(emailInput)
+  emailField.appendChild(emailWrap)
+
+  // Update the email status icon depending on state: error, filled, or neutral
+  function updateEmailStatus() {
+    if (!emailStatus) return
+    if (emailField.classList.contains('has-error')) {
+      emailStatus.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--error" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M9.5 9.5l5 5M14.5 9.5l-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>`
+      emailStatus.classList.add('is-error')
+      emailStatus.classList.remove('is-success')
+    } else if (emailInput.value && emailInput.value.length > 0) {
+      emailStatus.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--success" aria-hidden="true">
+          <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`
+      emailStatus.classList.remove('is-error')
+      emailStatus.classList.add('is-success')
+    } else {
+      emailStatus.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--neutral" aria-hidden="true">
+          <path d="M12 2v20M2 12h20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`
+      emailStatus.classList.remove('is-error')
+      emailStatus.classList.remove('is-success')
+    }
+  }
+
+  emailInput.addEventListener('input', updateEmailStatus)
+  const emailObs = new MutationObserver(updateEmailStatus)
+  emailObs.observe(emailField, { attributes: true, attributeFilter: ['class'] })
+  updateEmailStatus()
 
   const passField = document.createElement('div')
   passField.className = 'form-field'
