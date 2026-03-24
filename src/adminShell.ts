@@ -42,8 +42,8 @@ export function createAdminShell(container: HTMLElement) {
   sidebar.setAttribute('aria-label', 'Admin sidebar')
   sidebar.innerHTML = `
     <nav class="admin-sidebar-nav" aria-label="Admin navigation">
-      <a href="#/admin/dashboard" data-link>Dashboard</a>
-      <a href="#/admin/events" data-link>Events</a>
+      <a href="#/admin/dashboard" data-link role="link">Dashboard</a>
+      <a href="#/admin/events" data-link role="link">Events</a>
     </nav>
   `
 
@@ -124,6 +124,56 @@ export function createAdminShell(container: HTMLElement) {
   window.addEventListener('hashchange', updateActive)
   window.addEventListener('popstate', updateActive)
   updateActive()
+
+  // Keyboard accessibility for sidebar navigation
+  // - ArrowUp / ArrowDown to move focus between links
+  // - Home / End to jump to first/last
+  // - Enter / Space activate the focused link
+  sidebar.addEventListener('keydown', (e) => {
+    const anchors = Array.from(sidebar.querySelectorAll('a')) as HTMLAnchorElement[]
+    if (!anchors.length) return
+
+    const active = document.activeElement as HTMLElement | null
+    const idx = anchors.indexOf(active as HTMLAnchorElement)
+
+    switch (e.key) {
+      case 'ArrowDown': {
+        e.preventDefault()
+        const next = anchors[(idx + 1) % anchors.length]
+        next.focus()
+        break
+      }
+      case 'ArrowUp': {
+        e.preventDefault()
+        const prev = anchors[(idx - 1 + anchors.length) % anchors.length]
+        prev.focus()
+        break
+      }
+      case 'Home': {
+        e.preventDefault()
+        anchors[0].focus()
+        break
+      }
+      case 'End': {
+        e.preventDefault()
+        anchors[anchors.length - 1].focus()
+        break
+      }
+      case 'Enter':
+      case ' ': {
+        // Space/Enter should activate the link without causing a full reload
+        if (idx >= 0) {
+          e.preventDefault()
+          const href = anchors[idx].getAttribute('href') || '#/admin/dashboard'
+          location.hash = href.replace(/^#/, '')
+          shell.classList.remove('admin-shell--sidebar-open')
+          const t = header.querySelector('.admin-nav-toggle') as HTMLButtonElement | null
+          if (t) t.setAttribute('aria-expanded', 'false')
+        }
+        break
+      }
+    }
+  })
 
   // Keep header height CSS variable in sync (used by other layout pieces)
   function syncHeaderHeight() {
