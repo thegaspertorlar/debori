@@ -177,7 +177,9 @@ h1 {
   box-shadow: var(--shadow-subtle);
   text-decoration: none;
   color: inherit;
-  transition: transform 160ms ease, box-shadow 160ms ease;
+  transition: transform 180ms cubic-bezier(.2,.9,.2,1), box-shadow 180ms cubic-bezier(.2,.9,.2,1), border-color 160ms ease, background-color 160ms ease;
+  will-change: transform, box-shadow, border-color;
+  cursor: pointer;
 }
 .event-card__media {
   width: 100%;
@@ -186,6 +188,8 @@ h1 {
   object-fit: cover;
   display: block;
   background: var(--neutral-100);
+  transition: transform 300ms cubic-bezier(.2,.9,.2,1), filter 300ms cubic-bezier(.2,.9,.2,1);
+  transform-origin: center center;
 }
 .event-card__body { padding: 16px; display:flex; flex-direction:column; gap:12px; }
 .event-card__header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
@@ -196,8 +200,33 @@ h1 {
 .event-card__location { color: var(--neutral-600); font-size: var(--fs-sm); }
 
 /* hover & focus affordances to feel like product cards */
-.event-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-elevated); }
+.event-card:hover,
+.event-card:focus-within {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-elevated);
+  border-color: rgba(16,163,107,0.10);
+  background-color: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0));
+}
 .event-card:active { transform: translateY(-2px); }
+
+/* Slight image lift/zoom on hover to reinforce interactivity */
+.event-card:hover .event-card__media,
+.event-card:focus-within .event-card__media {
+  transform: scale(1.03);
+  filter: saturate(1.03) contrast(1.02);
+}
+
+/* Keyboard focus: visible, accessible ring and subtle elevated state */
+.event-card:focus-visible {
+  outline: none; /* we use box-shadow + border to convey focus */
+  box-shadow: 0 0 0 4px rgba(16,163,107,0.10), var(--shadow-elevated);
+  border-color: rgba(16,163,107,0.16);
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .event-card, .event-card__media { transition: none !important; transform: none !important; }
+}
 
 @media (max-width: 640px) {
   .events-grid { grid-template-columns: 1fr; }
