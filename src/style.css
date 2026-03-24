@@ -1,9 +1,28 @@
 @import './design-system.css';
 
+/* Previously the app hid page-level horizontal overflow globally.
+   Instead of masking layout issues, prefer to fix root causes by
+   enforcing sensible box-sizing and allowing flex/grid children to
+   shrink. Remove the global overflow-x hide and apply targeted
+   rules below to avoid page-level horizontal scrolling. */
+
 /* App-level overrides and small demo layout */
 body {
   margin: 0;
   padding: 0;
+}
+
+/* Global CSS variable for header height so any part of the app can
+   reference the real measured header height (updated from JS). */
+:root {
+  /* Design-time header height used for stable layout.
+     This is the intentional header size the UI is built against.
+     The runtime measured header height (--app-header-height) is still
+     kept in sync by JS for overlays and positioning, but we avoid
+     using it as the header's min-height to prevent feedback loops
+     where a transient measurement permanently inflates layout. */
+  --app-header-design-height: 72px;
+  --app-header-height: 72px;
 }
 
 h1 {
@@ -18,17 +37,29 @@ h1 {
   position: sticky;
   top: 0;
   z-index: 50;
-  /* expose a single source of truth for header height so other
-     components can size against it (avoids hard-coded 72px values) */
-  --app-header-height: 72px;
+  /* ensure header spans the full viewport and doesn't contribute
+     to horizontal overflow when its children use absolute positioning */
+  left: 0;
+  right: 0;
+  width: 100%;
+  box-sizing: border-box;
+  /* header height is provided as a global CSS variable (see :root)
+     and kept in sync by JS. The header itself keeps a min-height that
+     respects the measured value. */
 }
+  /* ensure header's immediate children can shrink on small viewports
+     so long nav strings or stacked controls don't force horizontal scroll */
+  .app-header-inner, .primary-nav, .primary-nav .nav-links, .primary-nav .nav-auth { min-width: 0 }
   .app-header-inner {
     display: flex;
     align-items: center;
     gap: 16px;
     /* prefer a flexible header that can grow when items wrap on
-       small screens while remaining at least the design height */
-    min-height: var(--app-header-height);
+       small screens while remaining at least the design height.
+       Use the design-time constant for the header's min-height so
+       temporary layout measurements (written to --app-header-height)
+       do NOT permanently enlarge the header. */
+    min-height: var(--app-header-design-height);
     padding-left: var(--space-3);
     padding-right: var(--space-3);
   }
@@ -39,6 +70,32 @@ h1 {
   font-size: 20px;
   letter-spacing: -0.02em;
 }
+
+/* Admin header variant: visually separate the admin workspace from the public site
+   - Slightly stronger surface and subtle left border to convey a distinct mode
+   - Keep the brand but mute brand color so the admin chrome feels more utilitarian */
+.app-header--admin {
+  background: linear-gradient(180deg, #fff, #fbfbfc);
+  border-bottom: 1px solid rgba(16,24,40,0.04);
+}
+.app-header--admin .brand {
+  color: var(--neutral-900);
+}
+
+/* Subtle return-to-public-site link placed outside the primary nav so the
+   admin workspace still feels separate. Kept intentionally low-contrast. */
+.return-public {
+  display: inline-block;
+  margin-left: 10px;
+  font-size: 13px;
+  color: var(--neutral-600);
+  text-decoration: none;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: background 120ms ease, color 120ms ease;
+}
+.return-public:hover, .return-public:focus { background: rgba(16,24,40,0.03); color: var(--neutral-800) }
+
 .primary-nav {
   margin-left: auto;
   display: flex;
@@ -201,8 +258,17 @@ h1 {
 /* Auth / login specific layout: center the card for focused, quiet experience */
 .page--login .auth-wrapper { display:flex; align-items:center; justify-content:center; /* fill viewport below header while accounting for internal padding */ min-height: calc(100vh - var(--app-header-height) - 48px); padding-top: 24px; padding-bottom: 24px; }
 .page--login .card { max-width: 520px; width: 100%; }
-.login-credentials { margin-bottom: 12px; background: linear-gradient(180deg, rgba(16,163,107,0.03), transparent); padding: 10px; border-radius: 8px; border: 1px solid rgba(16,163,107,0.06); }
-.login-credentials .badge { background: transparent; border: 1px solid var(--neutral-200); padding: 6px 10px; font-size: 13px; border-radius: var(--radius-sm); color: var(--neutral-800); font-weight: var(--fw-medium); }
+.login-credentials { margin-bottom: 12px; background: linear-gradient(180deg, rgba(16,163,107,0.03), transparent); padding: 12px; border-radius: 10px; border: 1px solid rgba(16,163,107,0.06); }
+.login-credentials .badge { background: rgba(255,255,255,0.98); border: 1px solid var(--neutral-200); padding: 6px 10px; font-size: 13px; border-radius: var(--radius-sm); color: var(--neutral-900); font-weight: var(--fw-medium); box-shadow: var(--shadow-subtle); }
+
+/* Utility: visually hidden but accessible to screen readers */
+.visually-hidden {
+  position: absolute !important;
+  height: 1px; width: 1px;
+  overflow: hidden;
+  clip: rect(1px, 1px, 1px, 1px);
+  white-space: nowrap; /* added line */
+}
 
 .login-error { margin-top: 8px; }
 .has-error .input { border-color: var(--color-danger) !important; box-shadow: none !important; }
@@ -450,39 +516,52 @@ h1 {
 }
 
 .event-detail {
-  max-width: 1100px;
-  margin: 28px auto;
-  padding: 0 16px;
+  /* Slightly wider editorial measure to give the main column breathing room */
+  max-width: 1200px;
+  margin: 36px auto;
+  padding: 0 18px;
 }
 .event-detail__inner {
   display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 32px;
+  grid-template-columns: 1fr 340px; /* a bit wider aside for actions/meta */
+  gap: 36px;
   align-items: start;
-  padding: 20px;
+  padding: 24px;
 }
-.event-detail__main { padding: 6px 2px; }
+.event-detail__main { padding: 8px 4px; }
 .event-detail__content { min-width: 0 }
 
 /* Summary block directly below the hero to give content rhythm */
 .event-summary__dek {
   color: var(--neutral-800);
-  font-size: var(--fs-lg);
-  line-height: 1.5;
-  margin: 0 0 12px 0;
-  max-width: 68ch; /* comfortable reading measure for summary */
+  font-size: calc(var(--fs-lg) + 1px);
+  line-height: 1.55;
+  margin: 0 0 18px 0;
+  max-width: 70ch; /* comfortable reading measure for summary */
 }
-.event-summary__meta { display:block; color: var(--neutral-700); font-size: 14px; }
+
+/* Use a simple grid for label/value pairs to create a clear information hierarchy */
+.event-summary__meta {
+  display: grid;
+  grid-template-columns: 140px 1fr; /* label / value */
+  column-gap: 16px;
+  row-gap: 10px;
+  color: var(--neutral-700);
+  font-size: 14px;
+  align-items: start;
+}
 .event-summary__meta .muted { color: var(--neutral-600); font-size: 13px }
+.event-summary__meta .strong { color: var(--neutral-900); font-weight: 700 }
 
 /* Make the prose column comfortable to read: constrain measure and add rhythm */
 .prose {
   color: var(--neutral-900);
   font-size: var(--fs-md);
-  line-height: 1.7; /* slightly more airy for long reading */
-  max-width: 64ch; /* ideal reading measure */
+  line-height: 1.72; /* slightly more airy for long reading */
+  max-width: 66ch; /* ideal reading measure */
   font-weight: 400;
   -webkit-font-smoothing:antialiased;
+  margin-top: 6px;
 }
 
 /* Paragraphs: consistent rhythm and comfortable spacing */
@@ -552,11 +631,17 @@ h1 {
 
 /* Aside compact card with clear grouping and sticky positioning on desktop */
 .card--compact { background: var(--color-surface); border-radius: 10px; padding: 16px; border: 1px solid var(--neutral-100); box-shadow: var(--shadow-subtle); }
-.event-detail__aside.card--compact { position: sticky; top: calc(var(--app-header-height) + 20px); align-self: start; }
-.event-detail__aside .aside-section { margin-bottom: 12px; }
+.event-detail__aside.card--compact {
+  position: sticky;
+  top: calc(var(--app-header-height) + 20px);
+  align-self: start;
+  padding: 16px;
+}
+.event-detail__aside .aside-section { margin-bottom: 14px; display: flex; flex-direction: row; justify-content: space-between; align-items: center; gap: 12px; }
 .event-detail__aside .aside-section .muted { color: var(--neutral-600); font-size: 13px }
-.event-detail__aside .aside-section .strong { font-weight:700; margin-top:6px }
-.event-detail__aside .aside-actions { display:flex; gap:8px; margin-top: 14px; flex-wrap:wrap }
+.event-detail__aside .aside-section .strong { font-weight:700; margin-top:0; text-align:right }
+.event-detail__aside .aside-actions { display:flex; gap:8px; margin-top: 14px; flex-wrap:wrap; align-items:center }
+.event-detail__aside .aside-actions .btn--primary { min-width: 140px }
 
 
 /* Prose styles for rich description */
@@ -570,9 +655,13 @@ h1 {
 @media (max-width: 900px) {
   .event-hero__inner { padding: 36px 12px }
   .event-detail__inner { grid-template-columns: 1fr; }
-  .event-detail__aside { border-left: none; padding-left: 0; margin-top: 12px; position: static; }
+  .event-detail__aside { border-left: none; padding-left: 0; margin-top: 18px; position: static; width: 100%; }
   .event-summary__dek { max-width: 100%; }
   .prose { max-width: 100%; }
+  .event-detail__aside .aside-section { flex-direction: column; align-items: flex-start; gap: 6px }
+  .event-detail__aside .aside-section .strong { text-align: left }
+  .event-detail__aside .aside-actions { width: 100%; }
+  .event-detail__aside .aside-actions .btn { width: 100%; }
 }
 
 /* Load more container */
@@ -637,56 +726,96 @@ h1 {
 .page .card { border-radius: var(--radius-md); border: 1px solid var(--neutral-200); box-shadow: var(--shadow-card); }
 .page #admin-events.card { padding: 16px }
 
-/* Admin card variant: compact, scannable, task-oriented */
+/* Admin card variant: compact, scannable, manager-focused */
 .event-card--admin {
+  display: flex; /* explicit for clarity */
   flex-direction: row;
-  align-items: center;
-  gap: 12px;
-  padding: 8px;
+  align-items: stretch;
+  gap: 14px;
+  padding: 12px;
+  min-height: 104px; /* comfortable touch target and consistent rows */
+}
+
+/* Media treatment: consistent, slightly elevated and cropped for scanning */
+.event-card--admin .event-card__media-wrap {
+  flex: 0 0 140px;
+  width: 140px;
+  aspect-ratio: 4/3;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--neutral-100);
+  box-shadow: inset 0 0 0 1px rgba(16,24,40,0.02);
 }
 .event-card--admin .event-card__media {
-  width: 136px;
-  aspect-ratio: 4/3;
-  object-fit: cover;
-  flex: 0 0 136px;
-  border-radius: 8px;
-}
-.event-card--admin .event-card__body {
-  padding: 8px 10px;
-  gap: 6px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
   width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 220ms ease, filter 220ms ease;
 }
+
+/* Body becomes a two-column grid: content + actions for clear hierarchy */
+.event-card--admin .event-card__body {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 6px 0 6px 0; /* leverage card padding for outer spacing */
+  width: 100%;
+  background: transparent; /* let card surface provide background */
+}
+
 .event-card--admin .event-card__header {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 6px;
 }
 .event-card--admin .flex-1 { min-width: 0 }
-.event-card--admin .event-card__title { font-size: var(--fs-md); margin: 0; }
-.event-card--admin .event-card__date { font-size: 13px }
+.event-card--admin .event-card__title { font-size: 15px; margin: 0; line-height: 1.18 }
+.event-card--admin .event-card__date { font-size: 13px; color: var(--neutral-700); font-weight:600 }
 .event-card--admin .event-card__meta { flex-direction: row; gap: 10px; align-items: center; color: var(--neutral-600); }
 
-/* Actions row: small, inline, aligned to the right for quick access */
-.event-card--admin .actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
-.event-card--admin .actions .btn { height: 30px; padding: 6px 9px; font-size: 13px }
+/* Actions column: compact vertical stack on narrow widths, inline on desktop */
+.event-card--admin .actions { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; justify-content: center; }
+.event-card--admin .actions .btn { height: 34px; padding: 6px 10px; font-size: 13px; border-radius: 8px }
+.event-card--admin .actions .btn--ghost { background: transparent }
+.event-card--admin .actions a.btn--ghost:hover { background: rgba(16,24,40,0.03) }
 
-/* Status badge: keep visible but more compact and attached to header */
+/* Polished admin-specific refinements: stronger title, restrained date accent */
+.event-card--admin .event-card__title { font-weight: 600; color: var(--neutral-900); }
+.event-card--admin .event-card__date { color: var(--brand-700); font-weight: 700; }
+.event-card--admin .actions .btn--secondary { box-shadow: 0 3px 8px rgba(2,6,23,0.04) }
+
+/* Status badge: compact, aligned with header on the left column */
 .event-card--admin .badge { margin-left: 8px; padding: 6px 8px; font-size: 12px; font-weight: var(--fw-semibold); }
 
-/* Reduce hover motion for manager view to keep the layout stable */
-.event-card--admin:hover,
-.event-card--admin:focus-within {
+/* Reduce hover motion for manager view; subtle emphasis on media and actions */
+.event-card--admin:hover, .event-card--admin:focus-within {
   transform: none;
-  box-shadow: var(--shadow-subtle);
+  box-shadow: 0 6px 18px rgba(2,6,23,0.04);
   border-color: rgba(16,163,107,0.06);
 }
 
+.event-card--admin:hover .event-card__media { transform: scale(1.02) }
+
+/* Make action buttons show a subtle lift on hover rather than elevating entire card */
+.event-card--admin .actions .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(2,6,23,0.06) }
+
+/* Tighten description/meta spacing for scanability */
 /* Tighten description/meta spacing for scanability */
 .event-card--admin .event-card__dek { display: none }
 .event-card--admin .event-card__location { font-size: 13px; color: var(--neutral-600) }
+
+/* Admins shouldn't rely on the location emoji; hide it to keep rows tidy */
+.event-card--admin .event-card__location::before { content: none }
+
+/* Responsive: stack admin cards on narrow screens for readability and touch */
+@media (max-width: 900px) {
+  .event-card--admin { flex-direction: column; padding: 12px; min-height: auto }
+  .event-card--admin .event-card__media-wrap { width: 100%; flex: none; aspect-ratio: 16/9 }
+  .event-card--admin .event-card__body { grid-template-columns: 1fr; gap: 10px }
+  .event-card--admin .actions { flex-direction: row; justify-content: flex-start }
+}
 
 
 /* Modal component styles: clear, concise, not alarming */

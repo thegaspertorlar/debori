@@ -58,17 +58,23 @@ test.describe('Authentication-sensitive event UI', () => {
     // Create should be visible to manager
     await expect(page.locator('button:has-text("Create"), [data-testid="create-event"], a:has-text("Create Event")')).toBeVisible();
 
-    // Visit an event detail page (first event)
+    // Visit an event detail page (first event). Public pages are read-only; manager edit entry points
+    // must not be present on public routes. If an event exists, ensure Edit/Delete are not shown.
     const firstEventLink = page.locator('[data-testid="event-list"] a, .event-list a, main a').first();
     if (await firstEventLink.count() > 0) {
       await firstEventLink.click();
-      await expect(page.locator('button:has-text("Edit"), [data-testid="edit-event"]').first()).toBeVisible();
-      await expect(page.locator('button:has-text("Delete"), [data-testid="delete-event"]').first()).toBeVisible();
+      // public detail must be read-only regardless of manager auth
+      await expect(page.locator('button:has-text("Edit"), [data-testid="edit-event"]').first()).toHaveCount(0);
+      await expect(page.locator('button:has-text("Delete"), [data-testid="delete-event"]').first()).toHaveCount(0);
     } else {
-      // If no event exists, the manager should be able to open a create flow
+      // If no event exists, the manager should be able to open a create flow via the admin dashboard
       await page.click('button:has-text("Create"), [data-testid="create-event"], a:has-text("Create Event")');
       await expect(page.locator('form:has-text("Title"), [data-testid="event-form"]').first()).toBeVisible();
     }
+
+    // Manager workflows must originate from the admin dashboard. Verify admin dashboard is accessible
+    await page.goto('/admin');
+    await expect(page.locator('a:has-text("Create event"), a:has-text("Create Event")')).toBeVisible();
   });
 
   test('Switching auth state does not leak admin content', async ({ page }) => {
