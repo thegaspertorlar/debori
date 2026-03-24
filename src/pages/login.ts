@@ -25,20 +25,17 @@ export function renderLogin() {
   card.setAttribute('role', 'region')
   card.setAttribute('aria-labelledby', 'signin-heading')
 
-  // credentials hint (visible, subtle)
+  // credentials hint (visible, subtle) — keep demo credentials plainly visible and labelled
   const creds = document.createElement('div')
   creds.className = 'login-credentials'
   creds.innerHTML = `
-    <div class="row row--md justify-between">
-      <div>
-        <div class="muted text-sm" style="margin-bottom:6px;">Demo credentials</div>
-        <div class="row row--sm" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px;">
-          <span class="badge">${demoCredentials.email}</span>
-          <span class="badge">${demoCredentials.password}</span>
+    <div class="row">
+      <div style="width:100%;">
+        <div class="muted text-sm" style="margin-bottom:6px;">Demo account — use these credentials to sign in</div>
+        <div class="row row--sm" style="flex-direction:column; gap:6px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px;">
+          <div><span class="muted" style="margin-right:8px; font-size:13px;">Email</span><span class="badge" aria-label="demo email">${demoCredentials.email}</span></div>
+          <div><span class="muted" style="margin-right:8px; font-size:13px;">Password</span><span class="badge" aria-label="demo password">${demoCredentials.password}</span></div>
         </div>
-      </div>
-      <div style="min-width:120px; text-align:right;">
-        <button type="button" class="btn btn--outline" id="copy-creds">Copy</button>
       </div>
     </div>`
 
@@ -87,12 +84,7 @@ export function renderLogin() {
   submit.className = 'btn btn--primary'
   submit.type = 'submit'
   submit.textContent = 'Sign in'
-  const guest = document.createElement('a')
-  guest.href = '#/events'
-  guest.className = 'btn btn--ghost'
-  guest.textContent = 'Continue as guest'
   actions.appendChild(submit)
-  actions.appendChild(guest)
 
   const errorEl = document.createElement('div')
   errorEl.id = 'login-error'
@@ -113,18 +105,7 @@ export function renderLogin() {
   wrapper.appendChild(card)
   el.appendChild(wrapper)
 
-  // copy credentials button
-  const copyBtn = card.querySelector('#copy-creds') as HTMLButtonElement
-  copyBtn.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(`${demoCredentials.email}\t${demoCredentials.password}`)
-      copyBtn.textContent = 'Copied'
-      setTimeout(() => (copyBtn.textContent = 'Copy'), 1800)
-    } catch (err) {
-      copyBtn.textContent = 'Copy failed'
-      setTimeout(() => (copyBtn.textContent = 'Copy'), 1800)
-    }
-  })
+
 
   form.addEventListener('submit', (e) => {
     e.preventDefault()
