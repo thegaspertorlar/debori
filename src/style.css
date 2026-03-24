@@ -215,6 +215,40 @@ h1 {
   position: relative;
   background: var(--neutral-100);
 }
+
+/* Date badge overlay (month / day) placed on the image for quick scanning */
+.event-card__date-badge {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  background: rgba(255,255,255,0.96);
+  color: var(--neutral-900);
+  border-radius: 10px;
+  padding: 6px 8px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.08);
+  border: 1px solid rgba(16,24,40,0.04);
+  z-index: 3;
+  min-width: 44px;
+}
+.event-card__date-badge-month { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; opacity: 0.9 }
+.event-card__date-badge-day { font-size: 18px; font-weight: 800; line-height: 1; margin-top: 2px }
+
+/* Admin variant: make mediaWrap consistent and sized to match compact layout */
+.event-card--admin .event-card__media-wrap {
+  width: 136px;
+  aspect-ratio: 4/3;
+  flex: 0 0 136px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--neutral-100);
+  position: relative;
+}
+
+.event-card--admin .event-card__media { width: 100%; height: 100%; object-fit: cover; border-radius: 8px }
 .event-card__media-wrap::after {
   /* subtle gradient at image bottom to visually integrate image with body */
   content: '';

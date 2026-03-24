@@ -97,6 +97,17 @@ export function renderEventsList() {
         img.src = ev.heroImage || `https://picsum.photos/seed/${encodeURIComponent(ev.id)}/1200/675`
         mediaWrap.appendChild(img)
 
+        // date badge overlay for stronger visual hierarchy
+        const badge = document.createElement('div')
+        badge.className = 'event-card__date-badge'
+        if (ev.startDate) {
+          const d = new Date(ev.startDate)
+          const month = d.toLocaleString(undefined, { month: 'short' }).toUpperCase()
+          const day = d.getDate()
+          badge.innerHTML = `<div class="event-card__date-badge-month">${month}</div><div class="event-card__date-badge-day">${day}</div>`
+        }
+        mediaWrap.appendChild(badge)
+
         const body = document.createElement('div')
         body.className = 'event-card__body'
 
