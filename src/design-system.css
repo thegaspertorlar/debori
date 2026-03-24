@@ -143,6 +143,8 @@ h4, .h4 { font-size: var(--fs-xl); line-height: 1.3; margin: 0 0 var(--space-2) 
 
 /* Buttons */
 .btn {
+  --btn-focus-ring: 0 0 0 4px rgba(16,163,107,0.12);
+  --btn-press-transform: translateY(1px);
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -154,38 +156,87 @@ h4, .h4 { font-size: var(--fs-xl); line-height: 1.3; margin: 0 0 var(--space-2) 
   line-height: 1;
   cursor: pointer;
   user-select: none;
-  transition: all 150ms ease;
+  transition: box-shadow 140ms ease, transform 120ms ease, background-color 140ms ease, color 140ms ease, border-color 140ms ease;
+  will-change: transform, box-shadow;
+  background-clip: padding-box;
 }
-.btn:focus { outline: none; box-shadow: 0 0 0 4px rgba(16,185,129,0.12); }
-.btn:active { transform: translateY(1px); }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
+/* Focus and keyboard-visible focus should be prominent but not aggressive */
+.btn:focus { outline: none; }
+.btn:focus-visible { box-shadow: var(--btn-focus-ring); border-color: rgba(16,163,107,0.18); }
+.btn:active { transform: var(--btn-press-transform); }
+.btn[disabled], .btn:disabled { opacity: 0.56; cursor: not-allowed; pointer-events: none; transform: none; box-shadow: none; }
+
+/* Primary - clear confident action
+   - Solid brand color, slight elevation and subtle gradient for depth
+   - Hover: slightly darker and higher contrast
+   - Active: slight press
+   - Disabled: toned down but still readable
+*/
 .btn--primary {
   background: linear-gradient(180deg, var(--brand-400), var(--brand-500));
   color: white;
-  border-color: rgba(0,0,0,0.04);
-  box-shadow: var(--shadow-subtle);
+  border-color: rgba(0,0,0,0.06);
+  box-shadow: 0 6px 18px rgba(16,24,40,0.08);
+  font-weight: var(--fw-semibold);
 }
-.btn--primary:hover { filter: brightness(0.98); }
+.btn--primary:hover { filter: brightness(0.96); box-shadow: 0 10px 28px rgba(16,24,40,0.10); }
+.btn--primary:active { transform: translateY(1px) scale(0.999); }
+.btn--primary[disabled] { background: linear-gradient(180deg, var(--brand-200), var(--brand-200)); color: rgba(255,255,255,0.9); box-shadow:none; }
 
+/* Secondary - supportive but clearly below primary
+   - White surface, subtle border, confident text color
+   - Hover: soft elevated surface and stronger border
+*/
 .btn--secondary {
-  background: white;
+  background: var(--color-surface);
   color: var(--neutral-700);
   border-color: var(--neutral-300);
+  box-shadow: 0 2px 6px rgba(16,24,40,0.04);
+  font-weight: var(--fw-medium);
 }
+.btn--secondary:hover { background: linear-gradient(180deg, #fff, #fbfdfe); border-color: var(--neutral-400); box-shadow: 0 6px 14px rgba(16,24,40,0.06); }
+.btn--secondary:active { transform: translateY(1px); }
+.btn--secondary[disabled] { opacity: 0.6; background: var(--color-surface); box-shadow:none; }
+
+/* Ghost - minimal, used for tertiary actions and inline links
+   - Transparent background, muted text, subtle hover surface
+*/
 .btn--ghost {
   background: transparent;
   color: var(--neutral-700);
+  border-color: transparent;
+  box-shadow: none;
+  font-weight: var(--fw-medium);
 }
+.btn--ghost:hover { background: rgba(16,24,40,0.02); color: var(--neutral-800); }
+.btn--ghost:active { transform: translateY(1px); }
+.btn--ghost[disabled] { color: var(--neutral-400); }
+
+/* Destructive - cautionary but controlled
+   - Use semantic red, slightly muted to avoid alarming visuals
+   - Distinct from primary via hue and subtle border rather than heavy shadow
+*/
 .btn--destructive {
-  background: var(--color-danger);
+  background: linear-gradient(180deg, #f87171, #ef4444); /* lighter red to brand red */
   color: white;
+  border-color: rgba(0,0,0,0.04);
+  box-shadow: 0 6px 18px rgba(239,68,68,0.06);
+  font-weight: var(--fw-semibold);
 }
+.btn--destructive:hover { filter: brightness(0.96); box-shadow: 0 10px 28px rgba(239,68,68,0.08); }
+.btn--destructive:active { transform: translateY(1px); }
+.btn--destructive[disabled] { background: linear-gradient(180deg, #fee9e9, #fee9e9); color: rgba(239,68,68,0.9); box-shadow:none; }
+
+/* Outline - useful for less prominent bordered actions */
 .btn--outline {
   background: transparent;
   color: var(--neutral-700);
   border: 1px solid var(--neutral-300);
+  box-shadow: none;
 }
+.btn--outline:hover { background: rgba(16,24,40,0.02); border-color: var(--neutral-400); }
+
 
 /* Size modifiers */
 .btn--sm { height: 32px; padding: 0 var(--space-3); font-size: var(--fs-sm); border-radius: var(--radius-sm); }
