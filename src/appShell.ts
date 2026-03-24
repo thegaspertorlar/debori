@@ -5,6 +5,7 @@ import { renderAdmin } from './pages/admin'
 import { renderEventsList } from './pages/eventsList'
 import { renderEventDetail } from './pages/eventDetail'
 import { renderEventCreate } from './pages/eventCreate'
+import { renderEventEdit } from './pages/eventEdit'
 import './style.css'
 
 import { isAuthenticated, logoutSession, onSessionChange } from './session'
@@ -15,6 +16,7 @@ const routes = [
   { path: '/admin', render: renderAdmin, protected: true },
   { path: '/events', render: renderEventsList },
   { path: '/events/create', render: renderEventCreate, protected: true },
+  { path: '/events/:id/edit', render: renderEventEdit, protected: true },
   { path: '/events/:id', render: renderEventDetail },
 ]
 
