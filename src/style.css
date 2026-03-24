@@ -144,6 +144,28 @@ h1 {
 
 /* Login / auth specific overrides */
 .page { padding: var(--space-6) var(--space-4); }
+.container { max-width: 1100px; margin: 0 auto; padding-left: var(--space-3); padding-right: var(--space-3); }
+
+/* Events page composition */
+.events-page__header { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; padding-top: 8px; padding-bottom: 16px; }
+.events-page__title h1 { margin: 0 0 6px 0; }
+.events-page__title .muted { margin: 0; color: var(--neutral-700); }
+.events-page__actions { display:flex; align-items:center; gap:12px; }
+
+/* Wrap for grid to provide breathing room between intro and grid */
+.events-grid-wrap { padding-top: 8px; }
+
+/* Slightly more generous grid spacing on larger screens to feel airy */
+.events-grid { gap: 24px; }
+
+/* Footer wrapper keeps pagination aligned with grid and page width */
+.events-footer-wrap { margin-top: 20px; display:flex; justify-content:center; }
+
+@media (max-width: 640px) {
+  .events-page__header { flex-direction:column; align-items:flex-start; gap:8px; padding-bottom: 12px }
+  .container { padding-left: 12px; padding-right: 12px }
+  .events-page__title .muted { max-width: 100%; }
+}
 .page--public { background: linear-gradient(180deg, #fbfcfd, var(--color-bg)); }
 .page-title { margin-bottom: var(--space-4); }
 

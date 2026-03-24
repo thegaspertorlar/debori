@@ -20,13 +20,20 @@ function formatDateRange(start?: string, end?: string) {
 
 export function renderEventsList() {
   const el = document.createElement('div')
-  el.className = 'page'
+  el.className = 'page page--public events-page'
   el.innerHTML = `
-    <div class="page-title">
-      <h1>Events</h1>
-      <p class="muted">Browse upcoming and recent events.</p>
+    <div class="events-page__header container">
+      <div class="events-page__title">
+        <h1>Events</h1>
+        <p class="muted">Curated selection of upcoming and recent events — easy to browse and discover.</p>
+      </div>
+      <div class="events-page__actions">
+        <div class="muted">Showing curated public events</div>
+      </div>
     </div>
-    <div id="events-list"></div>
+    <div class="container">
+      <div id="events-list" class="events-page__list" aria-live="polite"></div>
+    </div>
   `
 
   const list = el.querySelector('#events-list') as HTMLElement
@@ -62,6 +69,8 @@ export function renderEventsList() {
       return
     }
 
+    const gridWrap = document.createElement('div')
+    gridWrap.className = 'events-grid-wrap'
     const grid = document.createElement('div')
     grid.className = 'events-grid'
 
@@ -126,15 +135,16 @@ export function renderEventsList() {
         a.appendChild(img)
         a.appendChild(body)
 
-        grid.appendChild(a)
-      })
-      shown += slice.length
-    }
+      grid.appendChild(a)
+    })
+    shown += slice.length
+  }
 
     // initial render
     renderCardsAppend(pageSize)
 
-    list.appendChild(grid)
+    gridWrap.appendChild(grid)
+    list.appendChild(gridWrap)
 
     const footer = document.createElement('div')
     footer.className = 'events-footer'
@@ -148,7 +158,11 @@ export function renderEventsList() {
     })
     if (shown >= visible.length) loadMoreBtn.disabled = true
     footer.appendChild(loadMoreBtn)
-    list.appendChild(footer)
+    // Give footer some breathing room so it reads as a composed page action
+    const footerWrap = document.createElement('div')
+    footerWrap.className = 'events-footer-wrap container'
+    footerWrap.appendChild(footer)
+    list.appendChild(footerWrap)
   })()
 
   return el
