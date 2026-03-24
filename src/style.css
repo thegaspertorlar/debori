@@ -591,8 +591,49 @@ h1 {
 .event-card__meta { display:flex; flex-direction:column; gap:4px }
 .event-card__body .btn { margin-top: 6px }
 
-/* Lightweight editor toolbar and state */
-#desc-toolbar button { min-width:38px; padding:6px 8px; font-weight:600 }
+# Lightweight editor toolbar and state
+/* The description editor toolbar should feel light and integrated with the form.
+   Use a subtle background, increased spacing, and low visual weight for inactive
+   controls. Active controls show a soft accent to indicate state. */
+#desc-toolbar {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  padding: 6px; /* subtle padding so toolbar reads as a single control */
+  border-radius: 8px;
+}
+
+#desc-toolbar button {
+  /* keep buttons visually minimal and small */
+  background: transparent;
+  border: none;
+  height: 32px;
+  padding: 6px 10px;
+  min-width: auto;
+  border-radius: 6px;
+  color: var(--neutral-700);
+  font-weight: var(--fw-medium);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease, transform 80ms ease;
+}
+
+#desc-toolbar button:hover {
+  background: rgba(16,24,40,0.03);
+  color: var(--neutral-800);
+}
+
+/* pressed/active state: soft brand tint, subtle contrast */
+#desc-toolbar button[aria-pressed="true"] {
+  background: rgba(22,163,74,0.10); /* brand green 10% */
+  color: var(--brand-700);
+  font-weight: var(--fw-semibold);
+}
+
+#descriptionEditor[placeholder]:empty:before {
+  content: attr(placeholder);
+  color: var(--neutral-500);
+}
 #descriptionEditor[placeholder]:empty:before {
   content: attr(placeholder);
   color: var(--neutral-500);

@@ -54,11 +54,11 @@ export function renderEventEdit(params: Record<string, string>) {
             <div class="form-field">
               <label class="form-label" for="descriptionEditor">Description</label>
               <div class="stack stack--sm">
-                <div id="desc-toolbar" class="row row--sm">
-                  <button type="button" class="btn btn--ghost btn--sm" data-cmd="bold">B</button>
-                  <button type="button" class="btn btn--ghost btn--sm" data-cmd="italic">i</button>
-                  <button type="button" class="btn btn--ghost btn--sm" data-cmd="insertUnorderedList">• List</button>
-                  <button type="button" class="btn btn--ghost btn--sm" id="add-link">Link</button>
+                <div id="desc-toolbar" class="row row--sm" role="toolbar" aria-label="Description formatting">
+                  <button type="button" class="btn btn--ghost btn--sm" data-cmd="bold" title="Bold">B</button>
+                  <button type="button" class="btn btn--ghost btn--sm" data-cmd="italic" title="Italic">i</button>
+                  <button type="button" class="btn btn--ghost btn--sm" data-cmd="insertUnorderedList" title="Bulleted list">• List</button>
+                  <button type="button" class="btn btn--ghost btn--sm" id="add-link" title="Add link">Link</button>
                 </div>
                 <div id="descriptionEditor" class="textarea" contenteditable="true" role="textbox" aria-multiline="true" placeholder="Short description and details" style="min-height:120px;"></div>
                 <textarea id="description" name="description" style="display:none"></textarea>
@@ -217,7 +217,29 @@ export function renderEventEdit(params: Record<string, string>) {
       document.execCommand(cmd, false)
       updateHiddenFromEditor()
       descEditor.focus()
+      updateToolbarState()
     })
+
+    function updateToolbarState() {
+      if (!descToolbar) return
+      const btns = Array.from(descToolbar.querySelectorAll('button[data-cmd]')) as HTMLButtonElement[]
+      btns.forEach((b) => {
+        const cmd = b.getAttribute('data-cmd') || ''
+        try {
+          const state = document.queryCommandState(cmd)
+          b.setAttribute('aria-pressed', state ? 'true' : 'false')
+        } catch (e) {
+          b.setAttribute('aria-pressed', 'false')
+        }
+      })
+    }
+
+    document.addEventListener('selectionchange', updateToolbarState)
+    if (descEditor) {
+      descEditor.addEventListener('input', updateToolbarState)
+      descEditor.addEventListener('focus', updateToolbarState)
+    }
+    updateToolbarState()
   }
 
   if (addLinkBtn) {
@@ -232,6 +254,11 @@ export function renderEventEdit(params: Record<string, string>) {
       document.execCommand('createLink', false, safeUrl)
       updateHiddenFromEditor()
       descEditor.focus()
+      // reflect toolbar state after link creation
+      if (descToolbar) {
+        const btns = descToolbar.querySelectorAll('button[data-cmd]')
+        btns.forEach((b) => b.setAttribute('aria-pressed', document.queryCommandState((b as HTMLElement).getAttribute('data-cmd') || '') ? 'true' : 'false'))
+      }
     })
   }
 
