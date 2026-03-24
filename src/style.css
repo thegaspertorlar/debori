@@ -119,6 +119,41 @@ h1 {
   .events-grid { grid-template-columns: 1fr; }
 }
 
+/* Event detail / editorial styles */
+.event-hero {
+  width: 100%;
+  background-size: cover;
+  background-position: center;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.event-hero__overlay { background: linear-gradient(180deg, rgba(0,0,0,0.18), rgba(255,255,255,0.02)); padding: 40px 0; }
+.event-hero__inner { max-width: 980px; margin: 0 auto; padding: 56px 16px; color: white; }
+.event-hero__title { margin: 0 0 8px 0; font-size: clamp(28px, 4.5vw, 44px); line-height:1.02; font-weight:800; color: white; text-shadow: 0 6px 18px rgba(2,6,23,0.28); }
+.event-hero__dek { color: rgba(255,255,255,0.92); margin: 0 0 0; max-width: 60%; }
+.event-hero__meta { display:flex; gap:18px; align-items:center; margin-bottom:12px; color: rgba(255,255,255,0.9); font-weight:600 }
+.event-hero__date, .event-hero__place { background: rgba(0,0,0,0.28); padding:6px 10px; border-radius:8px; font-size:14px }
+
+.event-detail { max-width: 980px; margin: 28px auto; padding: 0 16px; }
+.event-detail__inner { display: grid; grid-template-columns: 1fr 280px; gap: 20px; align-items:start; padding: 20px; }
+.event-detail__content { min-width:0 }
+.event-detail__aside { background: transparent; border-left: 1px solid var(--neutral-100); padding-left: 18px; color: var(--neutral-800); }
+.event-detail__aside .muted { color: var(--neutral-600); font-size: 13px }
+.event-detail__aside .strong { font-weight:700; margin-top:4px }
+
+/* Prose styles for rich description */
+.prose { color: var(--neutral-900); font-size: 16px; line-height: 1.56 }
+.prose p { margin: 0 0 14px 0 }
+.prose h2 { margin-top: 18px }
+.prose h3 { margin-top: 12px }
+.prose ul, .prose ol { margin: 8px 0 12px 20px }
+.prose img { max-width: 100%; border-radius: 6px }
+
+@media (max-width: 900px) {
+  .event-hero__inner { padding: 36px 12px }
+  .event-detail__inner { grid-template-columns: 1fr; }
+  .event-detail__aside { border-left: none; padding-left: 0; margin-top: 12px }
+}
+
 /* Load more container */
 .events-footer { display:flex; justify-content:center; margin-top:16px; }
 }
