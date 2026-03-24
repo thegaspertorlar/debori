@@ -15,6 +15,13 @@ body {
 /* Global CSS variable for header height so any part of the app can
    reference the real measured header height (updated from JS). */
 :root {
+  /* Design-time header height used for stable layout.
+     This is the intentional header size the UI is built against.
+     The runtime measured header height (--app-header-height) is still
+     kept in sync by JS for overlays and positioning, but we avoid
+     using it as the header's min-height to prevent feedback loops
+     where a transient measurement permanently inflates layout. */
+  --app-header-design-height: 72px;
   --app-header-height: 72px;
 }
 
@@ -48,8 +55,11 @@ h1 {
     align-items: center;
     gap: 16px;
     /* prefer a flexible header that can grow when items wrap on
-       small screens while remaining at least the design height */
-    min-height: var(--app-header-height);
+       small screens while remaining at least the design height.
+       Use the design-time constant for the header's min-height so
+       temporary layout measurements (written to --app-header-height)
+       do NOT permanently enlarge the header. */
+    min-height: var(--app-header-design-height);
     padding-left: var(--space-3);
     padding-right: var(--space-3);
   }
