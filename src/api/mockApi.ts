@@ -1,5 +1,6 @@
 import { events as seededEvents, users as seededUsers, demoCredentials } from '../data/seed'
 import { Event, User, EventStatus } from '../models'
+import { isAuthenticated } from '../session'
 
 // In-memory state for the current session only
 const events: Event[] = JSON.parse(JSON.stringify(seededEvents))
@@ -75,6 +76,9 @@ export async function listPublicEvents(): Promise<ApiResponse<Event[]>> {
 
 export async function listAdminEvents(): Promise<ApiResponse<Event[]>> {
   await delay()
+  // Defensive check: admin listing is manager-only
+  if (!isAuthenticated()) return { ok: false, message: 'Unauthorized: manager access required' }
+
   // Admin sees all events, with derived status applied
   const list = events.map((e) => ({ ...e }))
   list.forEach((e) => {
@@ -92,6 +96,12 @@ export async function getEventById(id: string): Promise<ApiResponse<Event>> {
   const copy = { ...ev }
   const derived = deriveStatus(copy)
   if (derived === EventStatus.Past) copy.status = EventStatus.Past
+  // If the event is not published, only an authenticated manager may view it
+  if (copy.status !== EventStatus.Published && !isAuthenticated()) {
+    // Surface as not found so public users don't learn about drafts
+    return { ok: false, message: 'Event not found' }
+  }
+
   return { ok: true, data: copy }
 }
 
@@ -162,6 +172,7 @@ function validateEventInput(payload: Partial<Event>, isUpdate = false) {
 
 export async function createEvent(payload: Partial<Event> & { title: string; organizerId?: string }): Promise<ApiResponse<Event>> {
   await delay()
+  if (!isAuthenticated()) return { ok: false, message: 'Unauthorized: manager access required' }
   const errors = validateEventInput(payload, false)
   if (Object.keys(errors).length) return { ok: false, errors }
 
@@ -197,6 +208,7 @@ export async function createEvent(payload: Partial<Event> & { title: string; org
 
 export async function updateEvent(id: string, payload: Partial<Event>): Promise<ApiResponse<Event>> {
   await delay()
+  if (!isAuthenticated()) return { ok: false, message: 'Unauthorized: manager access required' }
   const ev = events.find((x) => x.id === id)
   if (!ev) return { ok: false, message: 'Event not found' }
   const errors = validateEventInput(payload, true)
@@ -233,6 +245,7 @@ export async function updateEvent(id: string, payload: Partial<Event>): Promise<
 
 export async function deleteEvent(id: string): Promise<ApiResponse<null>> {
   await delay()
+  if (!isAuthenticated()) return { ok: false, message: 'Unauthorized: manager access required' }
   const idx = events.findIndex((x) => x.id === id)
   if (idx === -1) return { ok: false, message: 'Event not found' }
   const ev = events[idx]
