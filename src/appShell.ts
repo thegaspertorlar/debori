@@ -78,6 +78,9 @@ export function createAppShell(container: HTMLElement) {
       // close mobile nav
       nav.classList.remove('is-open')
       toggle.setAttribute('aria-expanded', 'false')
+      // ensure header height variable is in sync after the nav closes
+      // (helps avoid a brief mismatch during route changes)
+      syncHeaderHeight()
     }
   })
 
@@ -134,6 +137,8 @@ export function createAppShell(container: HTMLElement) {
       const existing = header.querySelector('.logout-link')
       if (existing) existing.remove()
     }
+    // Auth UI changes can affect header height; sync immediately.
+    syncHeaderHeight()
   }
 
   // react to session changes
@@ -146,9 +151,14 @@ export function createAppShell(container: HTMLElement) {
   // breakpoints and when the mobile nav expands.
   function syncHeaderHeight() {
     // Use layout measurement to get the actual rendered height.
+    // Write the measured value to the document root so all parts of the
+    // app (not just the header subtree) can reference the same value. We
+    // also mirror the value on the header itself for backwards-compatibility.
     const rect = header.getBoundingClientRect()
     if (rect && rect.height) {
-      header.style.setProperty('--app-header-height', `${Math.ceil(rect.height)}px`)
+      const value = `${Math.ceil(rect.height)}px`
+      document.documentElement.style.setProperty('--app-header-height', value)
+      header.style.setProperty('--app-header-height', value)
     }
   }
 

@@ -12,6 +12,12 @@ body {
   padding: 0;
 }
 
+/* Global CSS variable for header height so any part of the app can
+   reference the real measured header height (updated from JS). */
+:root {
+  --app-header-height: 72px;
+}
+
 h1 {
   color: var(--neutral-900);
   font-weight: var(--fw-bold);
@@ -30,9 +36,9 @@ h1 {
   right: 0;
   width: 100%;
   box-sizing: border-box;
-  /* expose a single source of truth for header height so other
-     components can size against it (avoids hard-coded 72px values) */
-  --app-header-height: 72px;
+  /* header height is provided as a global CSS variable (see :root)
+     and kept in sync by JS. The header itself keeps a min-height that
+     respects the measured value. */
 }
   .app-header-inner {
     display: flex;
