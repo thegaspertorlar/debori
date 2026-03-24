@@ -63,11 +63,8 @@ export function renderAdmin() {
           <div role="tablist" aria-label="Event status tabs" id="admin-tabs" class="admin-tabs"></div>
           <div class="muted" style="margin-top:6px">Manager view · quick filters</div>
         </div>
-        <div style="display:flex; align-items:center; gap:8px">
-          <a class="btn btn--ghost" href="#/events?sort=recent" data-link>Recent</a>
-          <a class="btn btn--ghost" href="#/events?filter=team" data-link>My team</a>
-          <a class="btn btn--primary" href="#/events/create" data-link>Create event</a>
-        </div>
+        <!-- toolbar intentionally minimal for manager-focused workflows -->
+        <!-- removed: Recent, My team, and duplicate Create event actions to reduce noise -->
       </div>
     </div>
 
@@ -369,18 +366,29 @@ export function renderAdmin() {
 
       meta.appendChild(addr)
 
-      const actions = document.createElement('div')
-      actions.className = 'actions mt-2'
+    const actions = document.createElement('div')
+    actions.className = 'actions mt-2'
 
-      // Edit action: available for Draft and Published (not Past)
-      if (ev.status === EventStatus.Draft || ev.status === EventStatus.Published) {
-        const edit = document.createElement('a')
-        edit.className = 'btn btn--secondary btn--sm'
-        edit.href = `#/events/${ev.id}/edit`
-        edit.setAttribute('data-link', '')
-        edit.textContent = 'Edit'
-        actions.appendChild(edit)
-      }
+    // View action: quick access to open the event (useful for scanning)
+    const view = document.createElement('a')
+    view.className = 'btn btn--ghost btn--sm'
+    view.href = `#/events/${ev.id}`
+    view.setAttribute('data-link', '')
+    view.textContent = 'View'
+    // prevent the card-level click from also activating when clicking the inner control
+    view.addEventListener('click', (e) => { e.stopPropagation() })
+    actions.appendChild(view)
+
+    // Edit action: available for Draft and Published (not Past)
+    if (ev.status === EventStatus.Draft || ev.status === EventStatus.Published) {
+      const edit = document.createElement('a')
+      edit.className = 'btn btn--secondary btn--sm'
+      edit.href = `#/events/${ev.id}/edit`
+      edit.setAttribute('data-link', '')
+      edit.textContent = 'Edit'
+      edit.addEventListener('click', (e) => { e.stopPropagation() })
+      actions.appendChild(edit)
+    }
 
       // Delete action
       if (ev.status === EventStatus.Draft) {
