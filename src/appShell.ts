@@ -59,6 +59,11 @@ export function createAppShell(container: HTMLElement) {
   toggle.addEventListener('click', () => {
     const open = nav.classList.toggle('is-open')
     toggle.setAttribute('aria-expanded', String(open))
+    // When the nav opens the header height can change. Keep the
+    // --app-header-height CSS variable in sync so components that
+    // size against the header (e.g. mobile nav max-height) calculate
+    // correctly and avoid introducing page-level overflow.
+    syncHeaderHeight()
   })
 
   // Delegate link clicks to router for SPA behavior
@@ -134,6 +139,27 @@ export function createAppShell(container: HTMLElement) {
   // react to session changes
   onSessionChange(updateAuthUI)
   updateAuthUI()
+
+  // Keep the header height stored as a CSS variable so CSS can
+  // reference the real header height (not a fixed design value).
+  // This ensures the sticky header fits the viewport cleanly across
+  // breakpoints and when the mobile nav expands.
+  function syncHeaderHeight() {
+    // Use layout measurement to get the actual rendered height.
+    const rect = header.getBoundingClientRect()
+    if (rect && rect.height) {
+      header.style.setProperty('--app-header-height', `${Math.ceil(rect.height)}px`)
+    }
+  }
+
+  // Observe header size changes (e.g. when nav opens, auth UI changes,
+  // or on orientation/viewport resize) and sync the CSS variable.
+  const ro = new ResizeObserver(() => syncHeaderHeight())
+  ro.observe(header)
+  // also update on global resize to cover viewport changes
+  window.addEventListener('resize', syncHeaderHeight)
+  // initial sync after DOM is ready
+  setTimeout(syncHeaderHeight, 0)
 
   // Initialize route (redirect root to /home)
   if (!location.hash || location.hash === '#/' || location.hash === '#') {

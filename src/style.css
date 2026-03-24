@@ -1,5 +1,11 @@
 @import './design-system.css';
 
+/* Prevent any page-level horizontal scrolling caused by
+   absolutely positioned elements, large shadows, or outlines. */
+html, body {
+  overflow-x: hidden;
+}
+
 /* App-level overrides and small demo layout */
 body {
   margin: 0;
@@ -18,6 +24,12 @@ h1 {
   position: sticky;
   top: 0;
   z-index: 50;
+  /* ensure header spans the full viewport and doesn't contribute
+     to horizontal overflow when its children use absolute positioning */
+  left: 0;
+  right: 0;
+  width: 100%;
+  box-sizing: border-box;
   /* expose a single source of truth for header height so other
      components can size against it (avoids hard-coded 72px values) */
   --app-header-height: 72px;
