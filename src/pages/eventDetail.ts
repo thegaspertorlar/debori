@@ -73,14 +73,28 @@ export function renderEventDetail(params: Record<string, string>) {
 
     el.innerHTML = `
       <div class="event-hero" style="background-image: url('${heroUrl}');">
-        <div class="event-hero__overlay">
-          <div class="event-hero__inner">
+        <!-- subtle gradient & vignette for readable but not heavy overlay -->
+        <div class="event-hero__backdrop" aria-hidden="true"></div>
+        <div class="event-hero__inner">
+          <div class="event-hero__content">
             <div class="event-hero__meta">
-              <div class="event-hero__date">${formatDateRange(ev.startDate, ev.endDate)}</div>
-              <div class="event-hero__place">${ev.isOnline ? 'Online' : (ev.location?.city || addressLine(ev.location) || '')}</div>
+              <time class="event-hero__pill" datetime="${ev.startDate}">${formatDateRange(ev.startDate, ev.endDate)}</time>
+              <div class="event-hero__pill">${ev.isOnline ? 'Online' : (ev.location?.city || addressLine(ev.location) || 'TBA')}</div>
             </div>
             <h1 class="event-hero__title">${ev.title}</h1>
             ${ev.shortDescription ? `<p class="event-hero__dek">${ev.shortDescription}</p>` : ''}
+          </div>
+          <div class="event-hero__side">
+            <div class="event-hero__card">
+              <div class="event-hero__card-meta">
+                <div><strong>${ev.isOnline ? 'Online' : addressLine(ev.location) || 'TBA'}</strong></div>
+                <div class="muted">${formatDateRange(ev.startDate, ev.endDate)}</div>
+              </div>
+              <div class="event-hero__card-actions">
+                <a class="btn btn--primary" href="#/events">Back to events</a>
+                <a class="btn btn--outline" href="#/events/${ev.id}/edit">Edit</a>
+              </div>
+            </div>
           </div>
         </div>
       </div>
