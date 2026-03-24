@@ -239,3 +239,10 @@ h4 { font-size: var(--fs-lg); margin: 0 0 var(--space-2) 0; }
 
 /* Accessibility: focus-visible where supported */
 :focus-visible { outline: 3px solid rgba(16,163,107,0.16); outline-offset: 2px; }
+
+/* Ensure anchors and interactive cards have visible focus outlines for keyboard users */
+a:focus-visible, a[data-link]:focus-visible { outline: 3px solid rgba(16,163,107,0.18); outline-offset: 3px; }
+.event-card:focus-visible, .event-card:focus-within { box-shadow: 0 0 0 4px rgba(16,163,107,0.08); outline: 3px solid rgba(16,163,107,0.12); outline-offset: 3px; }
+
+/* Ensure modal dialog receives visible focus if focused programmatically */
+.modal:focus { outline: 3px solid rgba(16,163,107,0.16); outline-offset: 3px; }

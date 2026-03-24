@@ -70,16 +70,26 @@ export function renderAdmin() {
   function showModal(opts: { title: string; body: string; actions?: Array<{ label: string; className?: string; onClick?: (m: any) => void }>; }) {
     const backdrop = document.createElement('div')
     backdrop.className = 'modal-backdrop'
+    // outer dialog element with accessible attributes
     const dialog = document.createElement('div')
     dialog.className = 'modal'
 
+    // accessible title id
+    const titleId = `modal-title-${String(Math.random()).slice(2, 8)}`
+
     dialog.innerHTML = `
       <div class="modal__inner">
-        <h2 class="modal__title">${opts.title}</h2>
+        <h2 class="modal__title" id="${titleId}">${opts.title}</h2>
         <div class="modal__body">${opts.body}</div>
         <div class="modal__actions"></div>
       </div>
     `
+
+    // set dialog accessibility attributes
+    dialog.setAttribute('role', 'dialog')
+    dialog.setAttribute('aria-modal', 'true')
+    dialog.setAttribute('aria-labelledby', titleId)
+    dialog.tabIndex = -1
 
     backdrop.appendChild(dialog)
     document.body.appendChild(backdrop)
@@ -87,10 +97,19 @@ export function renderAdmin() {
     const actionsContainer = dialog.querySelector('.modal__actions') as HTMLElement
     const buttons: HTMLButtonElement[] = []
 
+    // save previously focused element so we can restore on close
+    const previouslyFocused = document.activeElement as HTMLElement | null
+    // prevent page scroll while modal is open
+    const previousBodyOverflow = document.body.style.overflow || ''
+    document.body.style.overflow = 'hidden'
+
     const modalInstance: any = {
       node: backdrop,
       close() {
         if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop)
+        document.body.style.overflow = previousBodyOverflow
+        // restore focus
+        try { if (previouslyFocused && previouslyFocused.focus) previouslyFocused.focus() } catch (e) {}
       },
       _actionButtons: buttons,
     }
@@ -131,6 +150,30 @@ export function renderAdmin() {
       if (ev.target === backdrop) modalInstance.close()
     })
 
+    // keyboard handlers: ESC to close, and focus trap for Tab
+    backdrop.addEventListener('keydown', (ev: KeyboardEvent) => {
+      if (ev.key === 'Escape') {
+        ev.preventDefault()
+        modalInstance.close()
+        return
+      }
+
+      if (ev.key === 'Tab') {
+        // maintain focus inside dialog
+        const focusable = Array.from(dialog.querySelectorAll<HTMLElement>("a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])"))
+        if (!focusable.length) return
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+        if (ev.shiftKey && document.activeElement === first) {
+          ev.preventDefault()
+          last.focus()
+        } else if (!ev.shiftKey && document.activeElement === last) {
+          ev.preventDefault()
+          first.focus()
+        }
+      }
+    })
+
     // small helper to toggle action buttons
     function _setDisabled(m: any, v: boolean) {
       (m._actionButtons || []).forEach((btn: HTMLButtonElement) => (btn.disabled = !!v))
@@ -138,6 +181,16 @@ export function renderAdmin() {
 
     // expose helper for external calls
     ;(modalInstance as any).setDisabled = (v: boolean) => _setDisabled(modalInstance, v)
+
+    // focus first actionable element, or dialog if none
+    setTimeout(() => {
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>("a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])"))
+      if (focusable.length) {
+        focusable[0].focus()
+      } else {
+        dialog.focus()
+      }
+    }, 0)
 
     return modalInstance
   }
@@ -156,12 +209,56 @@ export function renderAdmin() {
       btn.className = 'btn btn--ghost'
       btn.type = 'button'
       btn.textContent = t.label
-      if (t.key === active) btn.classList.add('btn--outline')
+      // ARIA tab roles and keyboard support
+      btn.setAttribute('role', 'tab')
+      btn.setAttribute('aria-controls', 'admin-events')
+      btn.id = `admin-tab-${String(t.key)}`
+      if (t.key === active) {
+        btn.classList.add('btn--outline')
+        btn.setAttribute('aria-selected', 'true')
+        btn.tabIndex = 0
+      } else {
+        btn.setAttribute('aria-selected', 'false')
+        btn.tabIndex = -1
+      }
+
       btn.addEventListener('click', () => {
         active = t.key as any
         renderTabs()
         renderList()
       })
+
+      // keyboard navigation: ArrowLeft/ArrowRight, Home/End, Enter/Space to activate
+      btn.addEventListener('keydown', (ev: KeyboardEvent) => {
+        const idx = tabs.findIndex((x) => x.key === t.key)
+        if (ev.key === 'ArrowRight' || ev.key === 'ArrowDown') {
+          ev.preventDefault()
+          const next = tabs[(idx + 1) % tabs.length]
+          const nextEl = tabsContainer.querySelector(`#admin-tab-${String(next.key)}`) as HTMLElement | null
+          if (nextEl) nextEl.focus()
+        } else if (ev.key === 'ArrowLeft' || ev.key === 'ArrowUp') {
+          ev.preventDefault()
+          const prev = tabs[(idx - 1 + tabs.length) % tabs.length]
+          const prevEl = tabsContainer.querySelector(`#admin-tab-${String(prev.key)}`) as HTMLElement | null
+          if (prevEl) prevEl.focus()
+        } else if (ev.key === 'Home') {
+          ev.preventDefault()
+          const first = tabs[0]
+          const firstEl = tabsContainer.querySelector(`#admin-tab-${String(first.key)}`) as HTMLElement | null
+          if (firstEl) firstEl.focus()
+        } else if (ev.key === 'End') {
+          ev.preventDefault()
+          const last = tabs[tabs.length - 1]
+          const lastEl = tabsContainer.querySelector(`#admin-tab-${String(last.key)}`) as HTMLElement | null
+          if (lastEl) lastEl.focus()
+        } else if (ev.key === 'Enter' || ev.key === ' ') {
+          ev.preventDefault()
+          active = t.key as any
+          renderTabs()
+          renderList()
+        }
+      })
+
       tabsContainer.appendChild(btn)
     })
   }
