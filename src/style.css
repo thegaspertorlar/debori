@@ -3,9 +3,31 @@
 /* App-level overrides and small demo layout */
 body {
   margin: 0;
-  padding: 2rem;
+  padding: 0;
 }
 
 h1 {
   color: var(--color-info);
 }
+
+/* Header */
+.app-header { background: linear-gradient(180deg, white, var(--color-bg)); border-bottom: 1px solid var(--neutral-200); position:sticky; top:0; z-index:50; }
+.app-header-inner { display:flex; align-items:center; gap:12px; height:64px; }
+.app-header .brand { font-weight:700; color:var(--neutral-900); text-decoration:none; font-size:18px }
+.primary-nav { margin-left:auto; display:flex; gap:12px; align-items:center }
+.primary-nav a { color:var(--neutral-700); text-decoration:none; padding:8px 10px; border-radius:8px }
+.primary-nav a:focus { outline: 3px solid rgba(16,163,107,0.12); }
+.primary-nav a.active { background: rgba(16,163,107,0.08); color:var(--brand-700); font-weight:600 }
+.nav-toggle { display:none; background:transparent; border:0; font-size:20px; cursor:pointer }
+
+@media (max-width: 640px) {
+  .app-header-inner { padding-left:12px; padding-right:12px }
+  .nav-toggle { display:block }
+  .primary-nav { position:absolute; right:12px; top:64px; background:white; box-shadow:var(--shadow-card); border-radius:8px; flex-direction:column; align-items:flex-start; padding:8px; display:none }
+  .primary-nav.is-open { display:flex }
+  .primary-nav a { width:160px }
+}
+
+/* Main app layout */
+.app-main { padding:24px 16px; }
+.app-main:focus { outline:none }
