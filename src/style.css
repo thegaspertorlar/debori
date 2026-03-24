@@ -157,3 +157,21 @@ h1 {
 /* Load more container */
 .events-footer { display:flex; justify-content:center; margin-top:16px; }
 }
+
+/* Admin dashboard tweaks */
+.admin-tabs { display:flex; gap:8px }
+.card--compact .btn { height: 36px }
+.event-card .btn { height: 32px }
+.event-card button.btn--destructive { background: linear-gradient(180deg, #ef4444, #dc2626); }
+.event-card .badge { margin-left: 8px }
+
+/* Make status badges more prominent on card header */
+.event-card__body > div:first-child .badge { font-weight:700 }
+
+/* Improve card scanability: tighten meta and actions */
+.event-card__meta { display:flex; flex-direction:column; gap:4px }
+.event-card__body .btn { margin-top: 6px }
+
+@media (max-width: 900px) {
+  .events-grid { grid-template-columns: 1fr; }
+}
