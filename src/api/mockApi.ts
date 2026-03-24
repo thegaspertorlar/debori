@@ -47,13 +47,29 @@ function validateImageReference(img: any) {
 
 export async function listPublicEvents(): Promise<ApiResponse<Event[]>> {
   await delay()
-  // Return events that are published or past (derive past when endDate passed)
+  // Return events that are published and whose endDate is still in the future.
+  // Also derive past status for internal use but exclude past events from the public list.
   const list = events.map((e) => ({ ...e }))
   list.forEach((e) => {
     const derived = deriveStatus(e)
     if (derived === EventStatus.Past) e.status = EventStatus.Past
   })
-  const filtered = list.filter((e) => e.status === EventStatus.Published || e.status === EventStatus.Past)
+  const now = Date.now()
+  const filtered = list
+    .filter((e) => e.status === EventStatus.Published)
+    .filter((e) => {
+      if (!e.endDate) return true // if no end date assume ongoing
+      const end = Date.parse(e.endDate)
+      if (Number.isNaN(end)) return true
+      return end > now
+    })
+    .sort((a, b) => {
+      // sort by upcoming start date (earliest first). If missing, fallback to createdAt.
+      const aKey = a.startDate ? Date.parse(a.startDate) : Date.parse(a.createdAt)
+      const bKey = b.startDate ? Date.parse(b.startDate) : Date.parse(b.createdAt)
+      return (aKey || 0) - (bKey || 0)
+    })
+
   return { ok: true, data: filtered }
 }
 

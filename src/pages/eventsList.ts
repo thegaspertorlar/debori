@@ -1,9 +1,20 @@
 import { listPublicEvents } from '../api/mockApi'
 
-function formatDate(iso?: string) {
-  if (!iso) return ''
-  const d = new Date(iso)
-  return d.toLocaleString()
+function formatDateRange(start?: string, end?: string) {
+  if (!start) return ''
+  const s = new Date(start)
+  const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' }
+  const startStr = s.toLocaleString(undefined, opts)
+  if (!end) return startStr
+  const e = new Date(end)
+  // If same day, show "Mar 24, 6:00–8:00 PM" style
+  const sameDay = s.toDateString() === e.toDateString()
+  if (sameDay) {
+    const endTime = e.toLocaleTimeString(undefined, { hour: 'numeric', minute: 'numeric' })
+    return `${s.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}, ${s.toLocaleTimeString(undefined, { hour: 'numeric', minute: 'numeric' })} - ${endTime}`
+  }
+  const endStr = e.toLocaleString(undefined, opts)
+  return `${startStr} — ${endStr}`
 }
 
 export function renderEventsList() {
@@ -14,12 +25,12 @@ export function renderEventsList() {
       <h1>Events</h1>
       <p class="muted">Browse upcoming and recent events.</p>
     </div>
-    <div id="events-list" class="card">Loading events…</div>
+    <div id="events-list">Loading events…</div>
   `
 
   const list = el.querySelector('#events-list') as HTMLElement
 
-  // Fetch events and render asynchronously
+  // Fetch events and render asynchronously as a responsive grid with pagination
   ;(async () => {
     list.textContent = 'Loading events…'
     const res = await listPublicEvents()
@@ -27,35 +38,97 @@ export function renderEventsList() {
       list.innerHTML = `<p class="muted">Unable to load events. ${res.message || ''}</p>`
       return
     }
-    const events = res.data
-    if (!events.length) {
-      list.innerHTML = `<p class="muted">No events found.</p>`
+    const events = res.data || []
+
+    // Server returns only published events with future endDate; copy and sort client-side
+    const visible = events.slice()
+      .sort((a, b) => {
+        const aKey = a.startDate ? Date.parse(a.startDate) : Date.parse(a.createdAt)
+        const bKey = b.startDate ? Date.parse(b.startDate) : Date.parse(b.createdAt)
+        return (aKey || 0) - (bKey || 0)
+      })
+
+    list.innerHTML = ''
+
+    if (!visible.length) {
+      list.innerHTML = `<div class="card"><h3>No upcoming events</h3><p class="muted">There are no published events ending in the future right now. Check back later or explore other sections of the site.</p></div>`
       return
     }
 
-    const ul = document.createElement('ul')
-    ul.style.listStyle = 'none'
-    ul.style.padding = '0'
-    ul.style.margin = '0'
+    const grid = document.createElement('div')
+    grid.className = 'events-grid'
 
-    events.slice(0, 50).forEach((ev) => {
-      const li = document.createElement('li')
-      li.className = 'card card--compact'
-      li.style.marginBottom = '12px'
-      li.innerHTML = `
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px">
-          <div>
-            <a href="#/events/${ev.id}" data-link style="font-weight:600; color:inherit; text-decoration:none">${ev.title}</a>
-            <div class="muted">${ev.shortDescription || ''}</div>
-          </div>
-          <div class="muted" style="text-align:right">${formatDate(ev.startDate)}<div style="font-size:12px">${ev.location?.city || (ev.isOnline ? 'Online' : '')}</div></div>
-        </div>
-      `
-      ul.appendChild(li)
+    // Pagination state
+    const pageSize = 12
+    let shown = 0
+
+    function renderCardsAppend(count: number) {
+      const slice = visible.slice(shown, shown + count)
+      slice.forEach((ev) => {
+        const a = document.createElement('a')
+        a.className = 'event-card'
+        a.href = `#/events/${ev.id}`
+        a.setAttribute('data-link', '')
+
+        const img = document.createElement('img')
+        img.className = 'event-card__media'
+        img.alt = ev.title || 'Event image'
+        img.src = ev.heroImage || `https://picsum.photos/seed/${encodeURIComponent(ev.id)}/600/380`
+
+        const body = document.createElement('div')
+        body.className = 'event-card__body'
+
+        const title = document.createElement('h3')
+        title.className = 'event-card__title'
+        title.textContent = ev.title || 'Untitled event'
+
+        const meta = document.createElement('div')
+        meta.className = 'event-card__meta'
+        const dateSpan = document.createElement('div')
+        dateSpan.className = 'event-card__date'
+        dateSpan.textContent = formatDateRange(ev.startDate, ev.endDate)
+        const addr = document.createElement('div')
+        addr.textContent = ev.isOnline ? 'Online' : (ev.location?.address || ev.location?.city || '')
+
+        meta.appendChild(dateSpan)
+        meta.appendChild(addr)
+
+        body.appendChild(title)
+        if (ev.shortDescription) {
+          const desc = document.createElement('div')
+          desc.className = 'muted'
+          desc.style.fontSize = '13px'
+          desc.textContent = ev.shortDescription
+          body.appendChild(desc)
+        }
+        body.appendChild(meta)
+
+        a.appendChild(img)
+        a.appendChild(body)
+
+        grid.appendChild(a)
+      })
+      shown += slice.length
+    }
+
+    // initial render
+    renderCardsAppend(pageSize)
+
+    list.appendChild(grid)
+
+    const footer = document.createElement('div')
+    footer.className = 'events-footer'
+    const loadMoreBtn = document.createElement('button')
+    loadMoreBtn.className = 'btn btn--primary'
+    loadMoreBtn.textContent = 'Load more'
+    loadMoreBtn.type = 'button'
+    loadMoreBtn.addEventListener('click', () => {
+      renderCardsAppend(pageSize)
+      if (shown >= visible.length) loadMoreBtn.disabled = true
     })
-
-    list.innerHTML = ''
-    list.appendChild(ul)
+    if (shown >= visible.length) loadMoreBtn.disabled = true
+    footer.appendChild(loadMoreBtn)
+    list.appendChild(footer)
   })()
 
   return el
