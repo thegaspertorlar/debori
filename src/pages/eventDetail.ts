@@ -1,5 +1,6 @@
 import { getEventById } from '../api/mockApi'
 import { createLoadingCard, createErrorCard } from '../uiStates'
+import { isAuthenticated } from '../session'
 
 function formatDateRange(start?: string, end?: string) {
   if (!start) return ''
@@ -87,6 +88,8 @@ export function renderEventDetail(params: Record<string, string>) {
     // Build a more editorial event detail layout
     const heroUrl = ev.heroImage || `https://picsum.photos/seed/${encodeURIComponent(ev.id)}/1400/560`
 
+    const showAdminControls = isAuthenticated()
+
     el.innerHTML = `
       <div class="event-hero" style="background-image: url('${heroUrl}');">
         <!-- subtle gradient & vignette for readable but not heavy overlay -->
@@ -107,10 +110,10 @@ export function renderEventDetail(params: Record<string, string>) {
                 <div><strong>${ev.isOnline ? 'Online' : addressLine(ev.location) || 'TBA'}</strong></div>
                 <div class="muted">${formatDateRange(ev.startDate, ev.endDate)}</div>
               </div>
-              <div class="event-hero__card-actions">
-                <a class="btn btn--primary" href="#/events">Back to events</a>
-                <a class="btn btn--outline" href="#/events/${ev.id}/edit">Edit</a>
-              </div>
+               <div class="event-hero__card-actions">
+                 <a class="btn btn--primary" href="#/events">Back to events</a>
+                 ${showAdminControls ? `<a class="btn btn--outline" href="#/events/${ev.id}/edit">Edit</a>` : ``}
+               </div>
             </div>
           </div>
         </div>
@@ -155,7 +158,7 @@ export function renderEventDetail(params: Record<string, string>) {
 
             <div class="aside-actions">
               <a class="btn btn--primary" href="#/events">Back to events</a>
-              <a class="btn btn--outline" href="#/events/${ev.id}/edit">Edit</a>
+              ${showAdminControls ? `<a class="btn btn--outline" href="#/events/${ev.id}/edit">Edit</a>` : ``}
             </div>
           </aside>
         </div>
