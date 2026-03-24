@@ -20,18 +20,18 @@ export function renderEventCreate() {
 
     <div class="card">
       <form id="event-form" novalidate>
-        <div id="form-error" class="error-text" role="alert" style="display:none; margin-bottom:8px"></div>
-        <div style="display:flex; flex-direction:column; gap:16px">
+        <div id="form-error" class="error-text mb-2" role="alert" style="display:none"></div>
+        <div class="stack">
           <div class="form-field">
             <label class="form-label" for="title">Title</label>
             <input id="title" name="title" class="input" placeholder="Event title" />
             <div id="err-title" class="error-text" aria-live="polite"></div>
           </div>
 
-          <div class="form-field">
-            <label class="form-label" for="descriptionEditor">Description</label>
-            <div style="display:flex; gap:8px; flex-direction:column">
-              <div id="desc-toolbar" style="display:flex; gap:8px;">
+            <div class="form-field">
+              <label class="form-label" for="descriptionEditor">Description</label>
+            <div class="stack stack--sm">
+              <div id="desc-toolbar" class="row row--sm">
                 <button type="button" class="btn btn--ghost btn--sm" data-cmd="bold">B</button>
                 <button type="button" class="btn btn--ghost btn--sm" data-cmd="italic">i</button>
                 <button type="button" class="btn btn--ghost btn--sm" data-cmd="insertUnorderedList">• List</button>
@@ -43,20 +43,20 @@ export function renderEventCreate() {
             </div>
           </div>
 
-          <div class="form-field">
+            <div class="form-field">
             <label class="form-label">Cover image</label>
-            <div style="display:flex; gap:8px; align-items:center;">
+            <div class="row row--sm">
               <input id="heroUrl" class="input" placeholder="Image URL (jpg/png)" />
-              <label style="display:inline-flex; align-items:center; gap:8px;">
+              <label class="row row--sm" style="display:inline-flex;">
                 <input id="heroFile" type="file" accept="image/jpeg,image/png" style="display:none" />
                 <button type="button" class="btn btn--secondary btn--sm" id="choose-file">Upload</button>
               </label>
             </div>
-            <div id="hero-preview" style="margin-top:8px"></div>
+            <div id="hero-preview" class="mt-2"></div>
             <div id="err-heroImage" class="error-text" aria-live="polite"></div>
           </div>
 
-          <div style="display:flex; gap:12px; flex-direction:column">
+          <div class="stack stack--md">
             <div class="form-field">
               <label class="form-label">Start date & time</label>
               <input id="start" type="datetime-local" class="input" />
@@ -75,7 +75,7 @@ export function renderEventCreate() {
             <div id="err-location" class="error-text" aria-live="polite"></div>
           </div>
 
-          <div style="display:flex; gap:8px; justify-content:flex-end;">
+          <div class="actions actions--right">
             <button type="button" id="save-draft" class="btn btn--ghost">Save as draft</button>
             <button type="button" id="publish" class="btn btn--primary">Publish</button>
           </div>
@@ -267,9 +267,7 @@ export function renderEventCreate() {
     heroUrl.value = ''
 
     const container = document.createElement('div')
-    container.style.display = 'flex'
-    container.style.alignItems = 'center'
-    container.style.gap = '12px'
+    container.className = 'row row--md'
 
     const img = document.createElement('img')
     img.style.maxWidth = '240px'
@@ -279,14 +277,11 @@ export function renderEventCreate() {
     img.alt = f.name
 
     const meta = document.createElement('div')
-    meta.style.display = 'flex'
-    meta.style.flexDirection = 'column'
-    meta.style.gap = '6px'
+    meta.className = 'stack stack--sm'
 
     const name = document.createElement('div')
     name.textContent = f.name + ' • ' + (Math.round(f.size / 1024) + ' KB')
-    name.style.fontSize = '13px'
-    name.style.color = 'var(--neutral-700)'
+    name.className = 'muted text-sm'
 
     const ok = document.createElement('div')
     ok.textContent = 'Image ready — preview below.'

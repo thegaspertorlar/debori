@@ -91,13 +91,13 @@ export function renderEventDetail(params: Record<string, string>) {
           <aside class="event-detail__aside">
             <div class="muted">When</div>
             <div class="strong">${formatDateRange(ev.startDate, ev.endDate)}</div>
-            <div style="height:12px"></div>
+            <div class="spacer--sm"></div>
             <div class="muted">Where</div>
             <div class="strong">${ev.isOnline ? 'Online' : addressLine(ev.location) || 'TBA'}</div>
-            ${ev.capacity ? `<div style="height:12px"></div><div class="muted">Capacity</div><div class="strong">${ev.capacity}</div>` : ''}
-            ${typeof ev.priceCents === 'number' ? `<div style="height:12px"></div><div class="muted">Price</div><div class="strong">${(ev.priceCents / 100).toLocaleString(undefined, { style: 'currency', currency: ev.currency || 'USD' })}</div>` : ''}
-            <div style="height:16px"></div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap"><a class="btn btn--primary" href="#/events">Back to events</a><a class="btn btn--outline" href="#/events/${ev.id}/edit">Edit</a></div>
+            ${ev.capacity ? `<div class="spacer--sm"></div><div class="muted">Capacity</div><div class="strong">${ev.capacity}</div>` : ''}
+            ${typeof ev.priceCents === 'number' ? `<div class="spacer--sm"></div><div class="muted">Price</div><div class="strong">${(ev.priceCents / 100).toLocaleString(undefined, { style: 'currency', currency: ev.currency || 'USD' })}</div>` : ''}
+            <div class="spacer--md"></div>
+            <div class="row row--sm row--wrap"><a class="btn btn--primary" href="#/events">Back to events</a><a class="btn btn--outline" href="#/events/${ev.id}/edit">Edit</a></div>
           </aside>
         </div>
       </main>

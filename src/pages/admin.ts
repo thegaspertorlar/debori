@@ -33,19 +33,19 @@ export function renderAdmin() {
   const el = document.createElement('div')
   el.className = 'page'
   el.innerHTML = `
-    <div class="page-title" style="display:flex; align-items:center; justify-content:space-between; gap:16px">
+    <div class="page-title row row--md justify-between">
       <div>
         <h1>Events dashboard</h1>
         <p class="muted">Operational overview — drafts, published and past events.</p>
       </div>
-      <div style="display:flex; gap:8px; align-items:center">
+      <div class="row row--sm">
         <a class="btn btn--primary btn--lg" href="#/events/create" data-link>Create event</a>
       </div>
     </div>
 
-    <div class="card card--compact" style="margin-bottom:16px">
+    <div class="card card--compact mb-4">
       <div class="card-header">
-        <div style="display:flex; gap:8px; align-items:center">
+        <div class="row row--sm">
           <div role="tablist" aria-label="Event status tabs" id="admin-tabs"></div>
         </div>
         <div class="muted">Manager view</div>
@@ -309,9 +309,7 @@ export function renderAdmin() {
       body.className = 'event-card__body'
 
       const head = document.createElement('div')
-      head.style.display = 'flex'
-      head.style.justifyContent = 'space-between'
-      head.style.alignItems = 'center'
+      head.className = 'row row--sm justify-between'
 
       const title = document.createElement('h3')
       title.className = 'event-card__title'
@@ -332,9 +330,7 @@ export function renderAdmin() {
       meta.appendChild(addr)
 
       const actions = document.createElement('div')
-      actions.style.display = 'flex'
-      actions.style.gap = '8px'
-      actions.style.marginTop = '6px'
+      actions.className = 'actions mt-2'
 
       // Edit action: available for Draft and Published (not Past)
       if (ev.status === EventStatus.Draft || ev.status === EventStatus.Published) {
@@ -415,13 +411,12 @@ export function renderAdmin() {
       }
 
       body.appendChild(head)
-      if (ev.shortDescription) {
-        const desc = document.createElement('div')
-        desc.className = 'muted'
-        desc.style.fontSize = '13px'
-        desc.textContent = ev.shortDescription
-        body.appendChild(desc)
-      }
+        if (ev.shortDescription) {
+         const desc = document.createElement('div')
+         desc.className = 'muted text-sm'
+         desc.textContent = ev.shortDescription
+         body.appendChild(desc)
+       }
       body.appendChild(meta)
       body.appendChild(actions)
 

@@ -29,10 +29,10 @@ export function renderLogin() {
   const creds = document.createElement('div')
   creds.className = 'login-credentials'
   creds.innerHTML = `
-    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+    <div class="row row--md justify-between">
       <div>
-        <div class="muted" style="font-size:13px; margin-bottom:6px;">Demo credentials</div>
-        <div style="display:flex; gap:8px; align-items:center; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px;">
+        <div class="muted text-sm" style="margin-bottom:6px;">Demo credentials</div>
+        <div class="row row--sm" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px;">
           <span class="badge">${demoCredentials.email}</span>
           <span class="badge">${demoCredentials.password}</span>
         </div>
@@ -82,9 +82,7 @@ export function renderLogin() {
   passField.appendChild(passInput)
 
   const actions = document.createElement('div')
-  actions.style.display = 'flex'
-  actions.style.gap = '8px'
-  actions.style.marginTop = '12px'
+  actions.className = 'actions mt-3'
   const submit = document.createElement('button')
   submit.className = 'btn btn--primary'
   submit.type = 'submit'
@@ -100,7 +98,7 @@ export function renderLogin() {
   errorEl.id = 'login-error'
   errorEl.className = 'error-text login-error'
   errorEl.setAttribute('role', 'alert')
-  errorEl.style.marginTop = '8px'
+  errorEl.classList.add('mt-2')
   errorEl.style.display = 'none'
 
   form.appendChild(emailField)

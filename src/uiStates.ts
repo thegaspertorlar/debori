@@ -2,11 +2,11 @@ export function createLoadingCard(message = 'Loading…') {
   const c = document.createElement('div')
   c.className = 'card card--loading'
   c.innerHTML = `
-    <div style="display:flex; align-items:center; gap:12px">
-      <div aria-hidden class="spinner" style="width:28px; height:28px; border-radius:14px; border:4px solid rgba(0,0,0,0.06); border-top-color: var(--brand-600); animation: spin 900ms linear infinite"></div>
-      <div style="flex:1">
+    <div class="row row--sm">
+      <div aria-hidden class="spinner"></div>
+      <div class="flex-1">
         <div style="font-weight:600">${message}</div>
-        <div class="muted" style="font-size:13px; margin-top:4px">Please wait — this usually only takes a moment.</div>
+        <div class="muted text-sm mt-2">Please wait — this usually only takes a moment.</div>
       </div>
     </div>
   `
@@ -37,7 +37,7 @@ export function createEmptyCard(title = 'Nothing here yet', message?: string, ct
     a.setAttribute('data-link', '')
     a.textContent = ctaText
     const wrap = document.createElement('div')
-    wrap.style.marginTop = '12px'
+    wrap.className = 'mt-3'
     wrap.appendChild(a)
     c.appendChild(wrap)
   }
