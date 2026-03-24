@@ -60,6 +60,32 @@ h1 {
   font-size: 20px;
   letter-spacing: -0.02em;
 }
+
+/* Admin header variant: visually separate the admin workspace from the public site
+   - Slightly stronger surface and subtle left border to convey a distinct mode
+   - Keep the brand but mute brand color so the admin chrome feels more utilitarian */
+.app-header--admin {
+  background: linear-gradient(180deg, #fff, #fbfbfc);
+  border-bottom: 1px solid rgba(16,24,40,0.04);
+}
+.app-header--admin .brand {
+  color: var(--neutral-900);
+}
+
+/* Subtle return-to-public-site link placed outside the primary nav so the
+   admin workspace still feels separate. Kept intentionally low-contrast. */
+.return-public {
+  display: inline-block;
+  margin-left: 10px;
+  font-size: 13px;
+  color: var(--neutral-600);
+  text-decoration: none;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: background 120ms ease, color 120ms ease;
+}
+.return-public:hover, .return-public:focus { background: rgba(16,24,40,0.03); color: var(--neutral-800) }
+
 .primary-nav {
   margin-left: auto;
   display: flex;
