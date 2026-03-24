@@ -70,7 +70,8 @@ export function renderEventsList() {
     }
 
     const gridWrap = document.createElement('div')
-    gridWrap.className = 'events-grid-wrap'
+    // keep the grid constrained to the page container widths so cards align with page rhythm
+    gridWrap.className = 'events-grid-wrap container'
     const grid = document.createElement('div')
     grid.className = 'events-grid'
 
@@ -97,6 +98,17 @@ export function renderEventsList() {
         img.src = ev.heroImage || `https://picsum.photos/seed/${encodeURIComponent(ev.id)}/1200/675`
         mediaWrap.appendChild(img)
 
+        // date badge overlay for stronger visual hierarchy
+        const badge = document.createElement('div')
+        badge.className = 'event-card__date-badge'
+        if (ev.startDate) {
+          const d = new Date(ev.startDate)
+          const month = d.toLocaleString(undefined, { month: 'short' }).toUpperCase()
+          const day = d.getDate()
+          badge.innerHTML = `<div class="event-card__date-badge-month">${month}</div><div class="event-card__date-badge-day">${day}</div>`
+        }
+        mediaWrap.appendChild(badge)
+
         const body = document.createElement('div')
         body.className = 'event-card__body'
 
@@ -112,6 +124,8 @@ export function renderEventsList() {
         dateSpan.textContent = formatDateRange(ev.startDate, ev.endDate)
 
         const title = document.createElement('h3')
+        // provide a stable id so the card can reference it for accessible labelling
+        title.id = `event-title-${ev.id}`
         title.className = 'event-card__title'
         title.textContent = ev.title || 'Untitled event'
 
@@ -137,6 +151,10 @@ export function renderEventsList() {
 
         meta.appendChild(addr)
         body.appendChild(meta)
+
+        // make the anchor announce itself as an article/card for assistive tech
+        a.setAttribute('role', 'article')
+        a.setAttribute('aria-labelledby', title.id)
 
         a.appendChild(mediaWrap)
         a.appendChild(body)

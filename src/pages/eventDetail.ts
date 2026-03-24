@@ -38,6 +38,7 @@ export function renderEventDetail(params: Record<string, string>) {
   el.className = 'page page--public'
   el.innerHTML = `
     <div class="page-title">
+      <button type="button" class="btn btn--ghost" id="back-btn" aria-label="Go back" title="Go back">←</button>
       <h1>Event</h1>
       <p class="muted">Loading…</p>
     </div>
@@ -46,6 +47,20 @@ export function renderEventDetail(params: Record<string, string>) {
 
   const container = el.querySelector('#event-detail') as HTMLElement
   container.appendChild(createLoadingCard('Loading event'))
+
+  function attachBackHandler() {
+    const b = el.querySelector('#back-btn') as HTMLButtonElement | null
+    if (!b) return
+    b.addEventListener('click', () => {
+      try {
+        if (history.length > 1) history.back()
+        else location.hash = '#/events'
+      } catch (e) { location.hash = '#/events' }
+    })
+  }
+
+  // attach to initial loading UI
+  attachBackHandler()
 
   ;(async () => {
     // show a calm loading card while we fetch
@@ -56,9 +71,10 @@ export function renderEventDetail(params: Record<string, string>) {
       // Distinguish not-found vs other errors
       if ((res.message || '').toLowerCase().includes('not found')) {
         el.innerHTML = `
-          <div class="page-title"><h1>Event not found</h1></div>
+          <div class="page-title"><button type="button" class="btn btn--ghost" id="back-btn" aria-label="Go back" title="Go back">←</button><h1>Event not found</h1></div>
           <div class="card"><p class="muted">${res.message || 'We could not find that event.'}</p><p><a class="btn" href="#/events">Back to events</a></p></div>
         `
+        attachBackHandler()
         return
       }
       container.innerHTML = ''
@@ -76,6 +92,7 @@ export function renderEventDetail(params: Record<string, string>) {
         <!-- subtle gradient & vignette for readable but not heavy overlay -->
         <div class="event-hero__backdrop" aria-hidden="true"></div>
         <div class="event-hero__inner">
+          <button type="button" class="btn btn--ghost" id="back-btn" aria-label="Go back" title="Go back" style="margin-bottom:12px;">←</button>
           <div class="event-hero__content">
             <div class="event-hero__meta">
               <time class="event-hero__pill" datetime="${ev.startDate}">${formatDateRange(ev.startDate, ev.endDate)}</time>
@@ -144,6 +161,9 @@ export function renderEventDetail(params: Record<string, string>) {
         </div>
       </main>
     `
+
+    // attach back handler for the rendered detail view
+    attachBackHandler()
   })()
 
   return el

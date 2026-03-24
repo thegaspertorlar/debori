@@ -18,12 +18,17 @@ h1 {
   position: sticky;
   top: 0;
   z-index: 50;
+  /* expose a single source of truth for header height so other
+     components can size against it (avoids hard-coded 72px values) */
+  --app-header-height: 72px;
 }
   .app-header-inner {
     display: flex;
     align-items: center;
     gap: 16px;
-    height: 72px;
+    /* prefer a flexible header that can grow when items wrap on
+       small screens while remaining at least the design height */
+    min-height: var(--app-header-height);
     padding-left: var(--space-3);
     padding-right: var(--space-3);
   }
@@ -95,10 +100,30 @@ h1 {
 @media (max-width: 640px) {
   .app-header-inner { padding-left:12px; padding-right:12px }
   .nav-toggle { display:block }
-  .primary-nav { position:absolute; right:12px; top:72px; background:white; box-shadow:var(--shadow-card); border-radius:8px; flex-direction:column; align-items:flex-start; padding:10px; display:none; min-width: 200px }
-  .primary-nav.is-open { display:flex }
-  .primary-nav .nav-links a { width:160px }
-  .primary-nav .nav-auth .btn { width:160px }
+  /* Mobile nav: position just below the header using top:100% so the
+     dropdown follows the actual header height when it grows. Make the
+     panel constrained to the viewport and scroll internally rather than
+     causing page-level vertical scrolling. */
+  .primary-nav {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    top: 100%;
+    background: white;
+    box-shadow: var(--shadow-card);
+    border-radius: 8px;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px;
+    display: none;
+    min-width: 200px;
+    max-height: calc(100vh - var(--app-header-height) - 24px);
+    overflow: auto;
+    box-sizing: border-box;
+  }
+  .primary-nav.is-open { display: flex }
+  .primary-nav .nav-links a { width: 100% }
+  .primary-nav .nav-auth .btn { width: 100% }
 }
 
 /* Main app layout */
@@ -174,7 +199,7 @@ h1 {
 .page-title { margin-bottom: var(--space-4); }
 
 /* Auth / login specific layout: center the card for focused, quiet experience */
-.page--login .auth-wrapper { display:flex; align-items:center; justify-content:center; min-height: calc(100vh - 96px); padding-top: 24px; padding-bottom: 24px; }
+.page--login .auth-wrapper { display:flex; align-items:center; justify-content:center; /* fill viewport below header while accounting for internal padding */ min-height: calc(100vh - var(--app-header-height) - 48px); padding-top: 24px; padding-bottom: 24px; }
 .page--login .card { max-width: 520px; width: 100%; }
 .login-credentials { margin-bottom: 12px; background: linear-gradient(180deg, rgba(16,163,107,0.03), transparent); padding: 10px; border-radius: 8px; border: 1px solid rgba(16,163,107,0.06); }
 .login-credentials .badge { background: transparent; border: 1px solid var(--neutral-200); padding: 6px 10px; font-size: 13px; border-radius: var(--radius-sm); color: var(--neutral-800); font-weight: var(--fw-medium); }
@@ -183,19 +208,22 @@ h1 {
 .has-error .input { border-color: var(--color-danger) !important; box-shadow: none !important; }
 
 @media (max-width: 640px) {
-  .page--login .auth-wrapper { padding-left: 12px; padding-right: 12px; min-height: calc(100vh - 72px); }
-.page--login .card { padding: 16px; }
+  .page--login .auth-wrapper { padding-left: 12px; padding-right: 12px; min-height: calc(100vh - var(--app-header-height)); }
+  .page--login .card { padding: 16px; }
+}
 
 /* Events grid and cards */
 .events-grid {
   display: grid;
-  gap: 20px;
-  /* responsive, balanced grid for browsing */
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+  /* Desktop-first 3-column grid to present events as product cards */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch; /* ensure cards fill grid rows for consistent product-card heights */
 }
 .event-card {
   display: flex;
   flex-direction: column;
+  height: 100%; /* stretch to fill grid cell for consistent row heights */
   background: var(--color-surface);
   border: 1px solid var(--neutral-200);
   border-radius: var(--radius-md);
@@ -207,6 +235,8 @@ h1 {
   will-change: transform, box-shadow, border-color;
   cursor: pointer;
 }
+.event-card:focus { outline: none }
+
 .event-card__media-wrap {
   width: 100%;
   /* slightly wider, cinematic crop to feel curated */
@@ -215,6 +245,40 @@ h1 {
   position: relative;
   background: var(--neutral-100);
 }
+
+/* Date badge overlay (month / day) placed on the image for quick scanning */
+.event-card__date-badge {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  background: rgba(255,255,255,0.96);
+  color: var(--neutral-900);
+  border-radius: 10px;
+  padding: 6px 8px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.08);
+  border: 1px solid rgba(16,24,40,0.04);
+  z-index: 3;
+  min-width: 44px;
+}
+.event-card__date-badge-month { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; opacity: 0.9 }
+.event-card__date-badge-day { font-size: 18px; font-weight: 800; line-height: 1; margin-top: 2px }
+
+/* Admin variant: make mediaWrap consistent and sized to match compact layout */
+.event-card--admin .event-card__media-wrap {
+  width: 136px;
+  aspect-ratio: 4/3;
+  flex: 0 0 136px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--neutral-100);
+  position: relative;
+}
+
+.event-card--admin .event-card__media { width: 100%; height: 100%; object-fit: cover; border-radius: 8px }
 .event-card__media-wrap::after {
   /* subtle gradient at image bottom to visually integrate image with body */
   content: '';
@@ -235,10 +299,12 @@ h1 {
   transform-origin: center center;
 }
 .event-card__body {
-  padding: 16px;
+  /* slightly more generous interior padding to match PRD card rhythm */
+  padding: var(--space-5);
   display:flex;
   flex-direction:column;
-  gap:10px;
+  gap:12px;
+  flex: 1 1 auto; /* allow the body to grow so meta can sit at the bottom */
   /* lighten the body so it reads as a calm panel attached to the image */
   background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.98));
 }
@@ -259,7 +325,7 @@ h1 {
   font-size: 13px;
   line-height:1.4;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2; /* keep descriptions short to avoid clutter */
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -297,6 +363,13 @@ h1 {
   filter: saturate(1.03) contrast(1.02);
 }
 
+/* Make the whole anchor focusable and clearly visible when keyboard focused */
+.event-card:focus-visible, .event-card:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(16,163,107,0.10), var(--shadow-elevated);
+  border-color: rgba(16,163,107,0.16);
+}
+
 /* Keyboard focus: visible, accessible ring and subtle elevated state */
 .event-card:focus-visible {
   outline: none; /* we use box-shadow + border to convey focus */
@@ -309,9 +382,9 @@ h1 {
   .event-card, .event-card__media { transition: none !important; transform: none !important; }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 900px) {
   .events-grid { grid-template-columns: 1fr; }
-  .event-card__body { padding: 12px; gap:10px }
+  .event-card__body { padding: var(--space-4); gap:10px }
   .event-card__title { font-size: var(--fs-md) }
 }
 
@@ -479,7 +552,7 @@ h1 {
 
 /* Aside compact card with clear grouping and sticky positioning on desktop */
 .card--compact { background: var(--color-surface); border-radius: 10px; padding: 16px; border: 1px solid var(--neutral-100); box-shadow: var(--shadow-subtle); }
-.event-detail__aside.card--compact { position: sticky; top: 92px; align-self: start; }
+.event-detail__aside.card--compact { position: sticky; top: calc(var(--app-header-height) + 20px); align-self: start; }
 .event-detail__aside .aside-section { margin-bottom: 12px; }
 .event-detail__aside .aside-section .muted { color: var(--neutral-600); font-size: 13px }
 .event-detail__aside .aside-section .strong { font-weight:700; margin-top:6px }
@@ -504,7 +577,6 @@ h1 {
 
 /* Load more container */
 .events-footer { display:flex; justify-content:center; margin-top:16px; }
-}
 
 /* Admin dashboard tweaks */
 .admin-controls { display:block }
@@ -648,11 +720,14 @@ h1 {
 /* Make status badges more prominent on card header */
 .event-card__body > div:first-child .badge { font-weight:700 }
 
-/* Improve card scanability: tighten meta and actions */
-.event-card__meta { display:flex; flex-direction:column; gap:4px }
-.event-card__body .btn { margin-top: 6px }
+/* Improve card scanability: tighten meta and actions
+   NOTE: the admin card variant uses a row-based meta/actions layout.
+   Ensure the generic stacking rule does NOT unintentionally override
+   the admin-specific styles by scoping it to non-admin cards. */
+.event-card:not(.event-card--admin) .event-card__meta { display:flex; flex-direction:column; gap:4px }
+.event-card:not(.event-card--admin) .event-card__body .btn { margin-top: 6px }
 
-# Lightweight editor toolbar and state
+/* Lightweight editor toolbar and state */
 /* The description editor toolbar should feel light and integrated with the form.
    Use a subtle background, increased spacing, and low visual weight for inactive
    controls. Active controls show a soft accent to indicate state. */

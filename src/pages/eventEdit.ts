@@ -30,6 +30,7 @@ export function renderEventEdit(params: Record<string, string>) {
 
   el.innerHTML = `
     <div class="page-title">
+      <button type="button" class="btn btn--ghost" id="back-btn" aria-label="Go back" title="Go back">←</button>
       <h1>Edit event</h1>
       <p class="muted">Edit event details. Changes will update immediately when saved.</p>
     </div>
@@ -221,6 +222,20 @@ export function renderEventEdit(params: Record<string, string>) {
     const html = descEditor.innerHTML
     descInput.value = sanitizeHtml(html)
   }
+
+  function attachBackHandler() {
+    const b = el.querySelector('#back-btn') as HTMLButtonElement | null
+    if (!b) return
+    b.addEventListener('click', () => {
+      try {
+        if (history.length > 1) history.back()
+        else location.hash = '#/admin'
+      } catch (e) { location.hash = '#/admin' }
+    })
+  }
+
+  // attach to initial UI
+  attachBackHandler()
 
   if (descToolbar) {
     descToolbar.addEventListener('click', (ev) => {
@@ -468,9 +483,10 @@ export function renderEventEdit(params: Record<string, string>) {
       if (!res.ok) {
         if ((res.message || '').toLowerCase().includes('not found')) {
           el.innerHTML = `
-            <div class="page-title"><h1>Event not found</h1></div>
+            <div class="page-title"><button type="button" class="btn btn--ghost" id="back-btn" aria-label="Go back" title="Go back">←</button><h1>Event not found</h1></div>
             <div class="card"><p class="muted">${res.message || 'We could not find that event.'}</p><p><a class="btn" href="#/admin">Back to dashboard</a></p></div>
           `
+          attachBackHandler()
           return
         }
         if (container) { container.innerHTML = ''; container.appendChild(createErrorCard('Unable to load event', res.message)) }

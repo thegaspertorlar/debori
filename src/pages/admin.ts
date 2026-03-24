@@ -328,6 +328,10 @@ export function renderAdmin() {
         ;(card as HTMLAnchorElement).setAttribute('href', `#/events/${ev.id}`)
       }
 
+      // media wrapper so admin cards can also host overlays consistently
+      const mediaWrap = document.createElement('div')
+      mediaWrap.className = 'event-card__media-wrap'
+
       const img = document.createElement('img')
       img.className = 'event-card__media'
       img.alt = ev.title || 'Event image'
@@ -456,7 +460,18 @@ export function renderAdmin() {
       body.appendChild(meta)
       body.appendChild(actions)
 
-      card.appendChild(img)
+      // date badge overlay for admin cards
+      const badge = document.createElement('div')
+      badge.className = 'event-card__date-badge'
+      if (ev.startDate) {
+        const d = new Date(ev.startDate)
+        const month = d.toLocaleString(undefined, { month: 'short' }).toUpperCase()
+        const day = d.getDate()
+        badge.innerHTML = `<div class="event-card__date-badge-month">${month}</div><div class="event-card__date-badge-day">${day}</div>`
+      }
+      mediaWrap.appendChild(img)
+      mediaWrap.appendChild(badge)
+      card.appendChild(mediaWrap)
       card.appendChild(body)
 
       grid.appendChild(card)
