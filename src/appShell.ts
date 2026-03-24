@@ -26,12 +26,20 @@ export function createAppShell(container: HTMLElement) {
   header.className = 'app-header'
   header.innerHTML = `
     <div class="container app-header-inner">
-      <a class="brand" href="#/home">Debori</a>
+      <div class="header-left">
+        <a class="brand" href="#/home">Debori</a>
+      </div>
+
       <button class="nav-toggle" aria-expanded="false" aria-label="Toggle navigation">☰</button>
+
       <nav class="primary-nav" aria-label="Main navigation">
-        <a href="#/home" data-link>Home</a>
-        <a href="#/events" data-link>Events</a>
-        <a href="#/login" data-link class="login-link">Login</a>
+        <div class="nav-links">
+          <a href="#/home" data-link>Home</a>
+          <a href="#/events" data-link>Events</a>
+        </div>
+        <div class="nav-auth">
+          <a href="#/login" data-link class="login-link btn btn--ghost btn--sm">Login</a>
+        </div>
       </nav>
     </div>
   `
@@ -97,18 +105,17 @@ export function createAppShell(container: HTMLElement) {
       loginAnchor.setAttribute('href', '#/admin')
       // add logout if not present
       if (!header.querySelector('.logout-link')) {
-        const nav = header.querySelector('.primary-nav') as HTMLElement
+        const navAuth = header.querySelector('.nav-auth') as HTMLElement
         const out = document.createElement('a')
-        out.className = 'logout-link'
+        out.className = 'logout-link btn btn--outline btn--sm'
         out.href = '#/home'
         out.textContent = 'Sign out'
-        out.style.marginLeft = '6px'
         out.addEventListener('click', (e) => {
           e.preventDefault()
           logoutSession()
           location.hash = '/home'
         })
-        nav.appendChild(out)
+        navAuth.appendChild(out)
       }
     } else {
       loginAnchor.textContent = 'Login'

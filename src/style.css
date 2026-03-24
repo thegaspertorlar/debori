@@ -11,19 +11,53 @@ h1 {
 }
 
 /* Header */
-.app-header { background: linear-gradient(180deg, white, var(--color-bg)); border-bottom: 1px solid var(--neutral-200); position:sticky; top:0; z-index:50; }
-.app-header-inner { display:flex; align-items:center; gap:12px; height:64px; }
-.app-header .brand { font-weight:700; color:var(--neutral-900); text-decoration:none; font-size:18px }
-.primary-nav { margin-left:auto; display:flex; gap:12px; align-items:center }
-.primary-nav a { color:var(--neutral-700); text-decoration:none; padding:8px 10px; border-radius:8px }
+.app-header {
+  background: linear-gradient(180deg, white, var(--color-bg));
+  border-bottom: 1px solid var(--neutral-200);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.app-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 72px;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+.app-header .brand {
+  font-weight: 800;
+  color: var(--brand-700);
+  text-decoration: none;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+.primary-nav {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.primary-nav .nav-links { display:flex; gap:16px; align-items:center }
+.primary-nav .nav-auth { display:flex; gap:8px; align-items:center; margin-left:16px }
+.primary-nav a { color: var(--neutral-700); text-decoration: none; padding: 8px 12px; border-radius: 10px; transition: background 140ms ease, color 140ms ease; }
 .primary-nav a:focus { outline: 3px solid rgba(16,163,107,0.12); }
-.primary-nav a.active { background: rgba(16,163,107,0.08); color:var(--brand-700); font-weight:600 }
-.nav-toggle { display:none; background:transparent; border:0; font-size:20px; cursor:pointer }
+.primary-nav a.active { background: rgba(16,163,107,0.08); color: var(--brand-700); font-weight: 600 }
+.nav-toggle { display: none; background: transparent; border: 0; font-size: 20px; cursor: pointer }
+
+/* Slightly larger hit area on auth buttons */
+.btn--sm { height: 36px; padding: 0 12px; }
+.btn--ghost { background: transparent; color: var(--neutral-700); border: none }
+.btn--outline { background: transparent; border: 1px solid var(--neutral-200); color: var(--neutral-800); }
+
+/* Desktop subtle hover */
+.primary-nav a:hover { background: rgba(16,163,107,0.04); color: var(--brand-700); }
 
 @media (max-width: 640px) {
   .app-header-inner { padding-left:12px; padding-right:12px }
   .nav-toggle { display:block }
-  .primary-nav { position:absolute; right:12px; top:64px; background:white; box-shadow:var(--shadow-card); border-radius:8px; flex-direction:column; align-items:flex-start; padding:8px; display:none }
+  .primary-nav { position:absolute; right:12px; top:72px; background:white; box-shadow:var(--shadow-card); border-radius:8px; flex-direction:column; align-items:flex-start; padding:10px; display:none; min-width: 180px }
   .primary-nav.is-open { display:flex }
   .primary-nav a { width:160px }
 }
