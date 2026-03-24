@@ -18,12 +18,17 @@ h1 {
   position: sticky;
   top: 0;
   z-index: 50;
+  /* expose a single source of truth for header height so other
+     components can size against it (avoids hard-coded 72px values) */
+  --app-header-height: 72px;
 }
   .app-header-inner {
     display: flex;
     align-items: center;
     gap: 16px;
-    height: 72px;
+    /* prefer a flexible header that can grow when items wrap on
+       small screens while remaining at least the design height */
+    min-height: var(--app-header-height);
     padding-left: var(--space-3);
     padding-right: var(--space-3);
   }
@@ -95,10 +100,30 @@ h1 {
 @media (max-width: 640px) {
   .app-header-inner { padding-left:12px; padding-right:12px }
   .nav-toggle { display:block }
-  .primary-nav { position:absolute; right:12px; top:72px; background:white; box-shadow:var(--shadow-card); border-radius:8px; flex-direction:column; align-items:flex-start; padding:10px; display:none; min-width: 200px }
-  .primary-nav.is-open { display:flex }
-  .primary-nav .nav-links a { width:160px }
-  .primary-nav .nav-auth .btn { width:160px }
+  /* Mobile nav: position just below the header using top:100% so the
+     dropdown follows the actual header height when it grows. Make the
+     panel constrained to the viewport and scroll internally rather than
+     causing page-level vertical scrolling. */
+  .primary-nav {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    top: 100%;
+    background: white;
+    box-shadow: var(--shadow-card);
+    border-radius: 8px;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px;
+    display: none;
+    min-width: 200px;
+    max-height: calc(100vh - var(--app-header-height) - 24px);
+    overflow: auto;
+    box-sizing: border-box;
+  }
+  .primary-nav.is-open { display: flex }
+  .primary-nav .nav-links a { width: 100% }
+  .primary-nav .nav-auth .btn { width: 100% }
 }
 
 /* Main app layout */
@@ -174,7 +199,7 @@ h1 {
 .page-title { margin-bottom: var(--space-4); }
 
 /* Auth / login specific layout: center the card for focused, quiet experience */
-.page--login .auth-wrapper { display:flex; align-items:center; justify-content:center; min-height: calc(100vh - 96px); padding-top: 24px; padding-bottom: 24px; }
+.page--login .auth-wrapper { display:flex; align-items:center; justify-content:center; /* fill viewport below header while accounting for internal padding */ min-height: calc(100vh - var(--app-header-height) - 48px); padding-top: 24px; padding-bottom: 24px; }
 .page--login .card { max-width: 520px; width: 100%; }
 .login-credentials { margin-bottom: 12px; background: linear-gradient(180deg, rgba(16,163,107,0.03), transparent); padding: 10px; border-radius: 8px; border: 1px solid rgba(16,163,107,0.06); }
 .login-credentials .badge { background: transparent; border: 1px solid var(--neutral-200); padding: 6px 10px; font-size: 13px; border-radius: var(--radius-sm); color: var(--neutral-800); font-weight: var(--fw-medium); }
@@ -183,7 +208,7 @@ h1 {
 .has-error .input { border-color: var(--color-danger) !important; box-shadow: none !important; }
 
 @media (max-width: 640px) {
-  .page--login .auth-wrapper { padding-left: 12px; padding-right: 12px; min-height: calc(100vh - 72px); }
+  .page--login .auth-wrapper { padding-left: 12px; padding-right: 12px; min-height: calc(100vh - var(--app-header-height)); }
   .page--login .card { padding: 16px; }
 }
 
@@ -527,7 +552,7 @@ h1 {
 
 /* Aside compact card with clear grouping and sticky positioning on desktop */
 .card--compact { background: var(--color-surface); border-radius: 10px; padding: 16px; border: 1px solid var(--neutral-100); box-shadow: var(--shadow-subtle); }
-.event-detail__aside.card--compact { position: sticky; top: 92px; align-self: start; }
+.event-detail__aside.card--compact { position: sticky; top: calc(var(--app-header-height) + 20px); align-self: start; }
 .event-detail__aside .aside-section { margin-bottom: 12px; }
 .event-detail__aside .aside-section .muted { color: var(--neutral-600); font-size: 13px }
 .event-detail__aside .aside-section .strong { font-weight:700; margin-top:6px }
