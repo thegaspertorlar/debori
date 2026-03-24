@@ -1,7 +1,6 @@
 import { Router } from './router'
 import { renderHome } from './pages/home'
 import { renderLogin } from './pages/login'
-import { renderAdmin } from './pages/admin'
 import { renderEventsList } from './pages/eventsList'
 import { renderEventDetail } from './pages/eventDetail'
 import { renderEventCreate } from './pages/eventCreate'

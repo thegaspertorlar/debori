@@ -1,6 +1,6 @@
 import './style.css'
 import { Router } from './router'
-import { renderAdmin } from './pages/admin'
+import { renderAdminDashboard } from './pages/adminDashboard'
 import { renderEventsList } from './pages/eventsList'
 import { logoutSession } from './session'
 
@@ -98,7 +98,7 @@ export function createAdminShell(container: HTMLElement) {
   // /login for unauthenticated users.
   const routes = [
     { path: '/admin', render: () => { location.hash = '/admin/dashboard'; const d = document.createElement('div'); return d }, protected: true },
-    { path: '/admin/dashboard', render: renderAdmin, protected: true },
+    { path: '/admin/dashboard', render: renderAdminDashboard, protected: true },
     { path: '/admin/events', render: renderEventsList, protected: true },
   ]
 
