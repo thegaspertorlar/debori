@@ -359,6 +359,33 @@ h4, .h4 { font-size: var(--fs-xl); line-height: 1.3; margin: 0 0 var(--space-2) 
 .spinner { width: 28px; height: 28px; border-radius: 50%; border: 4px solid rgba(0,0,0,0.06); border-top-color: var(--brand-600); animation: spin 900ms linear infinite; }
 .spinner--sm { width: 20px; height: 20px; border-width: 3px; }
 
+/* State components: loading, empty, error — calm, supportive, clear */
+.state-row { display:flex; gap: var(--space-4); align-items:center; }
+.state__icon { flex: 0 0 auto; display:flex; align-items:center; justify-content:center; }
+.state__icon .state__svg { display:block; }
+.state__content { flex: 1 1 auto; min-width: 0 }
+.state__title { margin: 0 0 6px 0; font-size: var(--fs-lg); font-weight: var(--fw-semibold); color: var(--neutral-900); }
+.state__message { margin: 0; color: var(--neutral-600); font-size: var(--fs-sm); line-height:1.4 }
+.state__actions { display:flex; gap: 8px; align-items:center }
+
+/* Loading card specific */
+.card--loading { background: linear-gradient(180deg, rgba(22,163,74,0.02), var(--color-surface)); border: 1px solid rgba(16,163,107,0.06); }
+.card--loading .spinner { border-top-color: var(--brand-600); }
+
+/* Empty card: gentle, quiet illustration and supportive messaging */
+.card--empty { text-align: left; background: var(--color-surface); border: 1px solid var(--neutral-100); }
+.card--empty .state__icon svg { opacity: 0.9 }
+
+/* Error card: calm, non-alarming treatment */
+.card--error { border-left: 4px solid rgba(239,68,68,0.12); background: linear-gradient(180deg, rgba(255,245,245,0.6), var(--color-surface)); }
+.card--error .state__title { color: var(--neutral-800) }
+.card--error .state__message { color: var(--neutral-600) }
+.card--error .btn--primary { background: linear-gradient(180deg, var(--brand-400), var(--brand-500)); }
+
+/* Slightly larger spinner for state usage */
+.spinner--lg { width: 36px; height: 36px; border-width: 4px }
+
+
 /* Page-level container with subtle header spacing */
 .page { padding: var(--space-6) var(--space-4); }
 .page--public { background: linear-gradient(180deg, #fbfcfd, var(--color-bg)); }
