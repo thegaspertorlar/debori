@@ -1,6 +1,6 @@
 import { events as seededEvents, users as seededUsers, demoCredentials } from '../data/seed'
 import { Event, User, EventStatus } from '../models'
-import { isAuthenticated } from '../session'
+import { isAuthenticated, getSession } from '../session'
 
 // In-memory state for the current session only
 const events: Event[] = JSON.parse(JSON.stringify(seededEvents))
@@ -79,8 +79,15 @@ export async function listAdminEvents(): Promise<ApiResponse<Event[]>> {
   // Defensive check: admin listing is manager-only
   if (!isAuthenticated()) return { ok: false, message: 'Unauthorized: manager access required' }
 
-  // Admin sees all events, with derived status applied
-  const list = events.map((e) => ({ ...e }))
+  // Admin sees only events owned by the signed-in manager. Apply derived status.
+  const session = getSession()
+  const currentUserId = session?.user?.id
+  // Defensive: if for some reason there is no user id, deny
+  if (!currentUserId) return { ok: false, message: 'Unauthorized: manager access required' }
+
+  const list = events
+    .map((e) => ({ ...e }))
+    .filter((e) => e.organizerId === currentUserId)
   list.forEach((e) => {
     const derived = deriveStatus(e)
     if (derived === EventStatus.Past) e.status = EventStatus.Past
@@ -97,9 +104,12 @@ export async function getEventById(id: string): Promise<ApiResponse<Event>> {
   const derived = deriveStatus(copy)
   if (derived === EventStatus.Past) copy.status = EventStatus.Past
   // If the event is not published, only an authenticated manager may view it
-  if (copy.status !== EventStatus.Published && !isAuthenticated()) {
-    // Surface as not found so public users don't learn about drafts
-    return { ok: false, message: 'Event not found' }
+  if (copy.status !== EventStatus.Published) {
+    // Only the owning, authenticated manager may view non-published items. Surface as not found otherwise.
+    if (!isAuthenticated()) return { ok: false, message: 'Event not found' }
+    const session = getSession()
+    const currentUserId = session?.user?.id
+    if (!currentUserId || copy.organizerId !== currentUserId) return { ok: false, message: 'Event not found' }
   }
 
   return { ok: true, data: copy }
@@ -175,6 +185,15 @@ export async function createEvent(payload: Partial<Event> & { title: string; org
   if (!isAuthenticated()) return { ok: false, message: 'Unauthorized: manager access required' }
   const errors = validateEventInput(payload, false)
   if (Object.keys(errors).length) return { ok: false, errors }
+  const session = getSession()
+  const currentUserId = session?.user?.id
+  if (!currentUserId) return { ok: false, message: 'Unauthorized: manager access required' }
+
+  // Prevent creating events for other users. If organizerId provided but doesn't match the
+  // signed-in manager, reject.
+  if (payload.organizerId && payload.organizerId !== currentUserId) {
+    return { ok: false, message: 'Cannot create events for another manager' }
+  }
 
   const id = `evt_${Math.random().toString(36).slice(2, 9)}`
   const now = nowIso()
@@ -198,7 +217,8 @@ export async function createEvent(payload: Partial<Event> & { title: string; org
     tags: payload.tags || [],
     heroImage: (payload as any).heroImageUrl || (payload as any).heroImage || undefined,
     images: payload.images || [],
-    organizerId: payload.organizerId,
+    // Ensure new event is owned by the signed-in manager
+    organizerId: payload.organizerId || currentUserId,
   }
   // If published now and no publishedAt, set it
   if (newEvent.status === EventStatus.Published && !newEvent.publishedAt) newEvent.publishedAt = now
@@ -211,6 +231,10 @@ export async function updateEvent(id: string, payload: Partial<Event>): Promise<
   if (!isAuthenticated()) return { ok: false, message: 'Unauthorized: manager access required' }
   const ev = events.find((x) => x.id === id)
   if (!ev) return { ok: false, message: 'Event not found' }
+  // Ownership enforcement: only the organizer/owner may update
+  const session = getSession()
+  const currentUserId = session?.user?.id
+  if (!currentUserId || ev.organizerId !== currentUserId) return { ok: false, message: 'Unauthorized: you do not own this event' }
   const errors = validateEventInput(payload, true)
   if (Object.keys(errors).length) return { ok: false, errors }
 
@@ -231,6 +255,11 @@ export async function updateEvent(id: string, payload: Partial<Event>): Promise<
   if (payload.tags !== undefined) ev.tags = payload.tags
   if ((payload as any).heroImage !== undefined) ev.heroImage = (payload as any).heroImage
   if (payload.images !== undefined) ev.images = payload.images
+
+  // Prevent changing organizer to another user
+  if (payload.organizerId !== undefined && payload.organizerId !== currentUserId) {
+    return { ok: false, message: 'Cannot change event owner' }
+  }
   if (payload.organizerId !== undefined) ev.organizerId = payload.organizerId
 
   // status transitions
@@ -249,6 +278,10 @@ export async function deleteEvent(id: string): Promise<ApiResponse<null>> {
   const idx = events.findIndex((x) => x.id === id)
   if (idx === -1) return { ok: false, message: 'Event not found' }
   const ev = events[idx]
+  // Ownership enforcement: only owner may delete
+  const session = getSession()
+  const currentUserId = session?.user?.id
+  if (!currentUserId || ev.organizerId !== currentUserId) return { ok: false, message: 'Unauthorized: you do not own this event' }
   if (ev.status !== EventStatus.Draft) return { ok: false, message: 'Only draft events can be deleted' }
   events.splice(idx, 1)
   return { ok: true, data: null }
