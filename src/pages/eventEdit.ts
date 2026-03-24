@@ -21,6 +21,8 @@ function formatLocalFromIso(iso?: string | null) {
   return `${yyyy}-${mm}-${dd}T${hh}:${min}`
 }
 
+import { createLoadingCard, createErrorCard } from '../uiStates'
+
 export function renderEventEdit(params: Record<string, string>) {
   const id = params.id
   const el = document.createElement('div')
@@ -34,6 +36,7 @@ export function renderEventEdit(params: Record<string, string>) {
 
     <div class="card">
       <form id="event-form" novalidate>
+        <div id="form-error" class="error-text" role="alert" style="display:none; margin-bottom:8px"></div>
         <div style="display:flex; flex-direction:column; gap:16px">
           <div class="form-field">
             <label class="form-label" for="title">Title</label>
@@ -99,6 +102,7 @@ export function renderEventEdit(params: Record<string, string>) {
 
   // refs
   const form = el.querySelector('#event-form') as HTMLFormElement
+  const formError = el.querySelector('#form-error') as HTMLElement
   const titleInput = el.querySelector('#title') as HTMLInputElement
   const descInput = el.querySelector('#description') as HTMLTextAreaElement
   const heroUrl = el.querySelector('#heroUrl') as HTMLInputElement
@@ -361,7 +365,7 @@ export function renderEventEdit(params: Record<string, string>) {
           })
           focusFirstError(res.errors)
         } else {
-          alert(res.message || 'Unable to update event')
+          if (formError) { formError.textContent = res.message || 'We were unable to update the event. Please try again.'; formError.style.display = 'block' }
         }
         return
       }
@@ -394,14 +398,19 @@ export function renderEventEdit(params: Record<string, string>) {
 
   // Load existing event and populate fields
   ;(async () => {
-    const node = el.querySelector('#event-detail')
+    const container = el.querySelector('.card') as HTMLElement
+    if (container) { container.innerHTML = ''; container.appendChild(createLoadingCard('Loading event')) }
     try {
       const res = await getEventById(id)
       if (!res.ok) {
-        el.innerHTML = `
-          <div class="page-title"><h1>Event not found</h1></div>
-          <div class="card"><p class="muted">${res.message || 'We could not find that event.'}</p><p><a class="btn" href="#/admin">Back to dashboard</a></p></div>
-        `
+        if ((res.message || '').toLowerCase().includes('not found')) {
+          el.innerHTML = `
+            <div class="page-title"><h1>Event not found</h1></div>
+            <div class="card"><p class="muted">${res.message || 'We could not find that event.'}</p><p><a class="btn" href="#/admin">Back to dashboard</a></p></div>
+          `
+          return
+        }
+        if (container) { container.innerHTML = ''; container.appendChild(createErrorCard('Unable to load event', res.message)) }
         return
       }
       const ev = res.data
@@ -417,7 +426,7 @@ export function renderEventEdit(params: Record<string, string>) {
       endInput.value = formatLocalFromIso(ev.endDate)
       addressInput.value = ev.location?.address || ''
     } catch (err) {
-      el.innerHTML = `<div class="card"><p class="muted">Unable to load event.</p></div>`
+      if (container) { container.innerHTML = ''; container.appendChild(createErrorCard('Unable to load event')) }
     }
   })()
 

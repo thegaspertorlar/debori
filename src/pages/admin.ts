@@ -1,5 +1,6 @@
 import { listAdminEvents, deleteEvent, updateEvent } from '../api/mockApi'
 import { EventStatus, Event } from '../models'
+import { createLoadingCard, createErrorCard, createEmptyCard } from '../uiStates'
 
 function formatDateRange(start?: string, end?: string) {
   if (!start) return ''
@@ -170,7 +171,10 @@ export function renderAdmin() {
   }
 
   function renderEmpty(stateLabel: string) {
-    listContainer.innerHTML = `<div class="card"><h3>No ${stateLabel.toLowerCase()} events</h3><p class="muted">There are no ${stateLabel.toLowerCase()} events to show right now.</p></div>`
+    const title = `No ${stateLabel.toLowerCase()} events`
+    const message = `There are no ${stateLabel.toLowerCase()} events to show right now.`
+    listContainer.innerHTML = ''
+    listContainer.appendChild(createEmptyCard(title, message, 'Create event', '#/events/create'))
   }
 
   function renderList() {
@@ -265,8 +269,8 @@ export function renderAdmin() {
                 thisDisabled(m, true)
                 const res = await deleteEvent(ev.id)
                 if (!res.ok) {
-                  alert(res.message || 'Unable to delete event')
                   thisDisabled(m, false)
+                  showModal({ title: 'Unable to delete', body: `<p class="muted">${res.message || 'We were unable to delete this draft.'}</p>` })
                   return
                 }
                 // remove from local state and re-render
@@ -298,8 +302,8 @@ export function renderAdmin() {
                 thisDisabled(m, true)
                 const res = await updateEvent(ev.id, { status: EventStatus.Draft })
                 if (!res.ok) {
-                  alert(res.message || 'Unable to change status')
                   thisDisabled(m, false)
+                  showModal({ title: 'Unable to change status', body: `<p class="muted">${res.message || 'We were unable to change the event status.'}</p>` })
                   return
                 }
                 // update local copy and re-render to reflect new state
@@ -334,10 +338,12 @@ export function renderAdmin() {
   }
 
   ;(async () => {
-    listContainer.textContent = 'Loading events…'
+    listContainer.innerHTML = ''
+    listContainer.appendChild(createLoadingCard('Loading events'))
     const res = await listAdminEvents()
     if (!res.ok) {
-      listContainer.innerHTML = `<p class="muted">Unable to load events. ${res.message || ''}</p>`
+      listContainer.innerHTML = ''
+      listContainer.appendChild(createErrorCard('Unable to load events', res.message))
       return
     }
     events = res.data || []

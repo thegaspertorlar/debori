@@ -24,6 +24,7 @@ function extractParams(routePath: string, actualPath: string) {
 }
 
 import { isAuthenticated } from './session'
+import { renderNotFound } from './pages/notFound'
 
 export class Router {
   routes: Route[]
@@ -59,8 +60,8 @@ export class Router {
       }
     }
     // no match -> fallback to home
-    const home = this.routes.find((x) => x.path === '/home')!
-    this.renderNode(home.render({}))
+    // Render a clear not found experience rather than silently redirecting.
+    this.renderNode(renderNotFound())
   }
 
   navigate(path: string) {

@@ -1,4 +1,5 @@
 import { getEventById } from '../api/mockApi'
+import { createLoadingCard, createErrorCard } from '../uiStates'
 
 function formatDateRange(start?: string, end?: string) {
   if (!start) return ''
@@ -40,19 +41,28 @@ export function renderEventDetail(params: Record<string, string>) {
       <h1>Event</h1>
       <p class="muted">Loading…</p>
     </div>
-    <div id="event-detail">Loading event…</div>
+    <div id="event-detail"></div>
   `
 
   const container = el.querySelector('#event-detail') as HTMLElement
+  container.appendChild(createLoadingCard('Loading event'))
 
   ;(async () => {
-    container.textContent = 'Loading event…'
+    // show a calm loading card while we fetch
+    container.innerHTML = ''
+    container.appendChild(createLoadingCard('Loading event'))
     const res = await getEventById(id)
     if (!res.ok) {
-      el.innerHTML = `
-        <div class="page-title"><h1>Event not found</h1></div>
-        <div class="card"><p class="muted">${res.message || 'We could not find that event.'}</p><p><a class="btn" href="#/events">Back to events</a></p></div>
-      `
+      // Distinguish not-found vs other errors
+      if ((res.message || '').toLowerCase().includes('not found')) {
+        el.innerHTML = `
+          <div class="page-title"><h1>Event not found</h1></div>
+          <div class="card"><p class="muted">${res.message || 'We could not find that event.'}</p><p><a class="btn" href="#/events">Back to events</a></p></div>
+        `
+        return
+      }
+      container.innerHTML = ''
+      container.appendChild(createErrorCard('Unable to load event', res.message))
       return
     }
 

@@ -1,4 +1,5 @@
 import { listPublicEvents } from '../api/mockApi'
+import { createLoadingCard, createErrorCard, createEmptyCard } from '../uiStates'
 
 function formatDateRange(start?: string, end?: string) {
   if (!start) return ''
@@ -25,17 +26,22 @@ export function renderEventsList() {
       <h1>Events</h1>
       <p class="muted">Browse upcoming and recent events.</p>
     </div>
-    <div id="events-list">Loading events…</div>
+    <div id="events-list"></div>
   `
 
   const list = el.querySelector('#events-list') as HTMLElement
+  // initial loading state
+  list.appendChild(createLoadingCard('Loading events'))
 
   // Fetch events and render asynchronously as a responsive grid with pagination
   ;(async () => {
-    list.textContent = 'Loading events…'
+    // replace with loading card while awaiting
+    list.innerHTML = ''
+    list.appendChild(createLoadingCard('Loading events'))
     const res = await listPublicEvents()
     if (!res.ok) {
-      list.innerHTML = `<p class="muted">Unable to load events. ${res.message || ''}</p>`
+      list.innerHTML = ''
+      list.appendChild(createErrorCard('Unable to load events', res.message))
       return
     }
     const events = res.data || []
@@ -51,7 +57,8 @@ export function renderEventsList() {
     list.innerHTML = ''
 
     if (!visible.length) {
-      list.innerHTML = `<div class="card"><h3>No upcoming events</h3><p class="muted">There are no published events ending in the future right now. Check back later or explore other sections of the site.</p></div>`
+      list.innerHTML = ''
+      list.appendChild(createEmptyCard('No upcoming events', 'There are no published events ending in the future right now. Check back later or explore other sections of the site.', 'View admin', '#/admin'))
       return
     }
 

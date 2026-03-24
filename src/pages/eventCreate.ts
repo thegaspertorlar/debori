@@ -20,6 +20,7 @@ export function renderEventCreate() {
 
     <div class="card">
       <form id="event-form" novalidate>
+        <div id="form-error" class="error-text" role="alert" style="display:none; margin-bottom:8px"></div>
         <div style="display:flex; flex-direction:column; gap:16px">
           <div class="form-field">
             <label class="form-label" for="title">Title</label>
@@ -83,8 +84,9 @@ export function renderEventCreate() {
     </div>
   `
 
-  // element refs
-  const form = el.querySelector('#event-form') as HTMLFormElement
+    // element refs
+    const form = el.querySelector('#event-form') as HTMLFormElement
+    const formError = el.querySelector('#form-error') as HTMLElement
   const titleInput = el.querySelector('#title') as HTMLInputElement
   const descInput = el.querySelector('#description') as HTMLTextAreaElement
   const heroUrl = el.querySelector('#heroUrl') as HTMLInputElement
@@ -376,24 +378,30 @@ export function renderEventCreate() {
         return
       }
 
-      const res = await createEvent(payload)
-      if (!res.ok) {
-        // show field errors if provided
-        if (res.errors) {
-          Object.keys(res.errors).forEach((k) => {
-            const key = k === 'heroImage' ? 'heroImage' : k
-            const node = (errMap as any)[key]
-            if (node) node.textContent = (res.errors as any)[k].join('. ')
-          })
-          focusFirstError(res.errors)
-        } else {
-          alert(res.message || 'Unable to create event')
-        }
-        return
-      }
+       const res = await createEvent(payload)
+       if (!res.ok) {
+         // show field errors if provided
+         if (res.errors) {
+           Object.keys(res.errors).forEach((k) => {
+             const key = k === 'heroImage' ? 'heroImage' : k
+             const node = (errMap as any)[key]
+             if (node) node.textContent = (res.errors as any)[k].join('. ')
+           })
+           focusFirstError(res.errors)
+         } else {
+           // surface a calm, human-friendly message
+           formError.textContent = res.message || 'We were unable to create the event. Please try again.'
+           formError.style.display = 'block'
+         }
+         return
+       }
 
       // on success go back to admin dashboard
       location.hash = '/admin'
+    } catch (err) {
+      formError.textContent = 'An unexpected error occurred. Please try again.'
+      formError.style.display = 'block'
+      return
     } finally {
       // restore button labels and re-enable
       saveDraft.textContent = 'Save as draft'
