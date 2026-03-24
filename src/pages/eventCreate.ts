@@ -111,6 +111,27 @@ export function renderEventCreate() {
     Object.values(errMap).forEach((n) => (n.textContent = ''))
   }
 
+  function focusFirstError(errors: Record<string, string[]>) {
+    const order = ['title', 'description', 'heroImage', 'startDate', 'endDate', 'location']
+    for (const k of order) {
+      if (errors[k] && errors[k].length) {
+        const elmap: Record<string, HTMLElement | null> = {
+          title: titleInput,
+          description: descEditor,
+          heroImage: heroUrl,
+          startDate: startInput,
+          endDate: endInput,
+          location: addressInput,
+        }
+        const node = elmap[k]
+        if (node) {
+          node.focus()
+          return
+        }
+      }
+    }
+  }
+
   // Simple HTML sanitizer that allows a small set of tags and ensures links are safe
   function sanitizeHtml(html: string) {
     const allowed = new Set(['B', 'STRONG', 'I', 'EM', 'UL', 'OL', 'LI', 'A', 'P', 'BR'])
@@ -313,6 +334,48 @@ export function renderEventCreate() {
     allButtons.forEach((b) => (b as HTMLButtonElement).disabled = true)
 
     try {
+      // client-side validation to provide quicker, inline feedback
+      const clientErrors: Record<string, string[]> = {}
+      const addErr = (k: string, msg: string) => { clientErrors[k] = clientErrors[k] || []; clientErrors[k].push(msg) }
+
+      if (!payload.title || payload.title.length === 0) addErr('title', 'Title is required')
+      else if (payload.title.length > 150) addErr('title', 'Title must be 150 characters or fewer')
+
+      // If publishing, require description and dates; drafts may omit them
+      if (status === EventStatus.Published) {
+        if (!payload.description || payload.description.length === 0) addErr('description', 'Description is required when publishing')
+        if (!payload.startDate) addErr('startDate', 'Start date and time are required')
+        else if (Number.isNaN(Date.parse(payload.startDate as string))) addErr('startDate', 'Start date is not a valid datetime')
+        if (!payload.endDate) addErr('endDate', 'End date and time are required')
+        else if (Number.isNaN(Date.parse(payload.endDate as string))) addErr('endDate', 'End date is not a valid datetime')
+      } else {
+        // if provided, validate dates' format
+        if (payload.startDate && Number.isNaN(Date.parse(payload.startDate as string))) addErr('startDate', 'Start date is not a valid datetime')
+        if (payload.endDate && Number.isNaN(Date.parse(payload.endDate as string))) addErr('endDate', 'End date is not a valid datetime')
+      }
+      if (payload.startDate && payload.endDate) {
+        const s = Date.parse(payload.startDate as string)
+        const e = Date.parse(payload.endDate as string)
+        if (!Number.isNaN(s) && !Number.isNaN(e) && e <= s) addErr('endDate', 'End date must be after start date')
+      }
+
+      // hero image URL basic check if provided
+      if ((payload as any).heroImageUrl) {
+        const low = String((payload as any).heroImageUrl).toLowerCase()
+        if (!/\.(jpe?g|png)(\?|$)/.test(low)) addErr('heroImage', 'Hero image URL must point to a JPG or PNG')
+      }
+
+      // show client errors and abort before network call
+      if (Object.keys(clientErrors).length) {
+        clearErrors()
+        Object.keys(clientErrors).forEach((k) => {
+          const node = (errMap as any)[k]
+          if (node) node.textContent = clientErrors[k].join('. ')
+        })
+        focusFirstError(clientErrors)
+        return
+      }
+
       const res = await createEvent(payload)
       if (!res.ok) {
         // show field errors if provided
@@ -322,6 +385,7 @@ export function renderEventCreate() {
             const node = (errMap as any)[key]
             if (node) node.textContent = (res.errors as any)[k].join('. ')
           })
+          focusFirstError(res.errors)
         } else {
           alert(res.message || 'Unable to create event')
         }
@@ -331,6 +395,9 @@ export function renderEventCreate() {
       // on success go back to admin dashboard
       location.hash = '/admin'
     } finally {
+      // restore button labels and re-enable
+      saveDraft.textContent = 'Save as draft'
+      publish.textContent = 'Publish'
       allButtons.forEach((b) => (b as HTMLButtonElement).disabled = false)
     }
   }
@@ -339,9 +406,17 @@ export function renderEventCreate() {
   const publish = el.querySelector('#publish') as HTMLButtonElement
 
   saveDraft.addEventListener('click', async () => {
+    // UI: show saving state
+    saveDraft.disabled = true
+    publish.disabled = true
+    saveDraft.textContent = 'Saving…'
     await submit(EventStatus.Draft)
   })
   publish.addEventListener('click', async () => {
+    // UI: show publishing state
+    saveDraft.disabled = true
+    publish.disabled = true
+    publish.textContent = 'Publishing…'
     await submit(EventStatus.Published)
   })
 

@@ -109,22 +109,41 @@ export async function authenticate(email: string, password: string): Promise<Api
 function validateEventInput(payload: Partial<Event>, isUpdate = false) {
   const errors: Record<string, string[]> = {}
   const add = (k: string, msg: string) => { errors[k] = errors[k] || []; errors[k].push(msg) }
+  // Determine effective status (when creating a new event payload.status may be undefined,
+  // default to Draft to allow saving incomplete drafts). Validation rules are stricter when
+  // publishing an event.
+  const effectiveStatus: EventStatus = (payload.status as EventStatus) ?? EventStatus.Draft
 
   if (!isUpdate || payload.title !== undefined) {
     if (!payload.title || String(payload.title).trim() === '') add('title', 'Title is required')
     else if (String(payload.title).length > 150) add('title', 'Title must be 150 characters or fewer')
   }
-  if (!isUpdate || payload.description !== undefined) {
-    if (!payload.description || String(payload.description).trim() === '') add('description', 'Description is required')
+
+  // Description is required when publishing but optional for drafts
+  if (effectiveStatus !== EventStatus.Draft) {
+    if (!isUpdate || payload.description !== undefined) {
+      if (!payload.description || String(payload.description).trim() === '') add('description', 'Description is required')
+    }
   }
-  // start and end required
-  if (!isUpdate || payload.startDate !== undefined) {
-    if (!payload.startDate) add('startDate', 'Start date and time are required')
-    else if (Number.isNaN(Date.parse(payload.startDate as string))) add('startDate', 'Start date is not a valid datetime')
-  }
-  if (!isUpdate || payload.endDate !== undefined) {
-    if (!payload.endDate) add('endDate', 'End date and time are required')
-    else if (Number.isNaN(Date.parse(payload.endDate as string))) add('endDate', 'End date is not a valid datetime')
+
+  // start and end required only for published events (drafts may omit them)
+  if (effectiveStatus !== EventStatus.Draft) {
+    if (!isUpdate || payload.startDate !== undefined) {
+      if (!payload.startDate) add('startDate', 'Start date and time are required')
+      else if (Number.isNaN(Date.parse(payload.startDate as string))) add('startDate', 'Start date is not a valid datetime')
+    }
+    if (!isUpdate || payload.endDate !== undefined) {
+      if (!payload.endDate) add('endDate', 'End date and time are required')
+      else if (Number.isNaN(Date.parse(payload.endDate as string))) add('endDate', 'End date is not a valid datetime')
+    }
+  } else {
+    // If dates are provided even for drafts, validate their format
+    if (isUpdate && payload.startDate !== undefined) {
+      if (payload.startDate && Number.isNaN(Date.parse(payload.startDate as string))) add('startDate', 'Start date is not a valid datetime')
+    }
+    if (isUpdate && payload.endDate !== undefined) {
+      if (payload.endDate && Number.isNaN(Date.parse(payload.endDate as string))) add('endDate', 'End date is not a valid datetime')
+    }
   }
   if (payload.startDate && payload.endDate) {
     const s = Date.parse(payload.startDate as string)
