@@ -36,7 +36,7 @@ export function createAdminShell(container: HTMLElement) {
       </div>
       <div class="header-actions" style="margin-left:auto">
         <div class="account" data-account>
-          <button class="account-trigger" aria-haspopup="true" aria-expanded="false" aria-controls="account-menu">
+          <button id="account-trigger" class="account-trigger" aria-haspopup="true" aria-expanded="false" aria-controls="account-menu">
             <img class="avatar avatar--sm" src="${avatarSrc}" alt="Account">
             <span class="chevron" aria-hidden="true">▾</span>
           </button>
