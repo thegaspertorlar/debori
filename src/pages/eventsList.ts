@@ -86,10 +86,16 @@ export function renderEventsList() {
         a.href = `#/events/${ev.id}`
         a.setAttribute('data-link', '')
 
+        // media wrapper to allow overlay/gradient and precise crop control
+        const mediaWrap = document.createElement('div')
+        mediaWrap.className = 'event-card__media-wrap'
+
         const img = document.createElement('img')
         img.className = 'event-card__media'
         img.alt = ev.title || 'Event image'
-        img.src = ev.heroImage || `https://picsum.photos/seed/${encodeURIComponent(ev.id)}/600/380`
+        img.loading = 'lazy'
+        img.src = ev.heroImage || `https://picsum.photos/seed/${encodeURIComponent(ev.id)}/1200/675`
+        mediaWrap.appendChild(img)
 
         const body = document.createElement('div')
         body.className = 'event-card__body'
@@ -132,7 +138,7 @@ export function renderEventsList() {
         meta.appendChild(addr)
         body.appendChild(meta)
 
-        a.appendChild(img)
+        a.appendChild(mediaWrap)
         a.appendChild(body)
 
       grid.appendChild(a)

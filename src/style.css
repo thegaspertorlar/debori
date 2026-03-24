@@ -207,23 +207,77 @@ h1 {
   will-change: transform, box-shadow, border-color;
   cursor: pointer;
 }
+.event-card__media-wrap {
+  width: 100%;
+  /* slightly wider, cinematic crop to feel curated */
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  position: relative;
+  background: var(--neutral-100);
+}
+.event-card__media-wrap::after {
+  /* subtle gradient at image bottom to visually integrate image with body */
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 34%;
+  background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(6,10,20,0.06) 100%);
+  pointer-events: none;
+}
 .event-card__media {
   width: 100%;
-  /* consistent image ratio for all cards */
-  aspect-ratio: 3/2;
+  height: 100%;
   object-fit: cover;
   display: block;
-  background: var(--neutral-100);
   transition: transform 300ms cubic-bezier(.2,.9,.2,1), filter 300ms cubic-bezier(.2,.9,.2,1);
   transform-origin: center center;
 }
-.event-card__body { padding: 16px; display:flex; flex-direction:column; gap:12px; }
+.event-card__body {
+  padding: 16px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  /* lighten the body so it reads as a calm panel attached to the image */
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.98));
+}
 .event-card__header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
-.event-card__title { font-size: var(--fs-lg); font-weight: var(--fw-semibold); margin:0; color: var(--neutral-900); line-height: 1.18; }
-.event-card__dek { color: var(--neutral-700); font-size: var(--fs-sm); line-height:1.4; }
-.event-card__meta { color: var(--neutral-600); font-size: 13px; line-height: 1.22; display:flex; gap:12px; align-items:center; }
-.event-card__date { font-weight: var(--fw-semibold); color: var(--brand-700); font-size: var(--fs-sm); }
-.event-card__location { color: var(--neutral-600); font-size: var(--fs-sm); }
+.event-card__title {
+  font-size: 18px;
+  font-weight: var(--fw-semibold);
+  margin:0;
+  color: var(--neutral-900);
+  line-height: 1.15;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.event-card__dek {
+  color: var(--neutral-700);
+  font-size: 13px;
+  line-height:1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.event-card__meta { color: var(--neutral-600); font-size: 13px; line-height: 1.22; display:flex; gap:8px; align-items:center; }
+.event-card__date { font-weight: 600; color: var(--brand-700); font-size: 13px; }
+.event-card__location { color: var(--neutral-600); font-size: 13px; }
+
+/* make date and title feel grouped and scanable */
+.event-card__header .flex-1 { min-width: 0 }
+.event-card__date { margin-bottom: 6px }
+
+.event-card__location::before {
+  content: "\1F4CD"; /* location pin emoji */
+  margin-right: 8px;
+  opacity: 0.9;
+  font-size: 14px;
+  vertical-align: -2px;
+}
 
 /* hover & focus affordances to feel like product cards */
 .event-card:hover,
@@ -231,7 +285,8 @@ h1 {
   transform: translateY(-6px);
   box-shadow: var(--shadow-elevated);
   border-color: rgba(16,163,107,0.10);
-  background-color: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0));
+  /* keep the background consistent; elevate via shadow and border */
+  background-color: var(--color-surface);
 }
 .event-card:active { transform: translateY(-2px); }
 
