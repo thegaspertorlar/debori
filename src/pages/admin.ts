@@ -1,4 +1,4 @@
-import { listAdminEvents, deleteEvent } from '../api/mockApi'
+import { listAdminEvents, deleteEvent, updateEvent } from '../api/mockApi'
 import { EventStatus, Event } from '../models'
 
 function formatDateRange(start?: string, end?: string) {
@@ -64,6 +64,89 @@ export function renderAdmin() {
 
   let events: Event[] = []
   let active: EventStatus | 'Draft' | 'Published' | 'Past' = EventStatus.Published
+
+  // Simple modal helper to provide a confirmation / info dialog
+  function showModal(opts: { title: string; body: string; actions?: Array<{ label: string; className?: string; onClick?: (m: any) => void }>; }) {
+    const backdrop = document.createElement('div')
+    backdrop.className = 'modal-backdrop'
+    const dialog = document.createElement('div')
+    dialog.className = 'modal'
+
+    dialog.innerHTML = `
+      <div class="modal__inner">
+        <h2 class="modal__title">${opts.title}</h2>
+        <div class="modal__body">${opts.body}</div>
+        <div class="modal__actions"></div>
+      </div>
+    `
+
+    backdrop.appendChild(dialog)
+    document.body.appendChild(backdrop)
+
+    const actionsContainer = dialog.querySelector('.modal__actions') as HTMLElement
+    const buttons: HTMLButtonElement[] = []
+
+    const modalInstance: any = {
+      node: backdrop,
+      close() {
+        if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop)
+      },
+      _actionButtons: buttons,
+    }
+
+    const makeBtn = (a: any) => {
+      const b = document.createElement('button')
+      b.type = 'button'
+      b.className = a.className || 'btn'
+      b.textContent = a.label
+      b.addEventListener('click', (ev) => {
+        try {
+          if (a.onClick) a.onClick(modalInstance)
+        } catch (err) {
+          console.error(err)
+        }
+      })
+      return b
+    }
+
+    if (opts.actions && opts.actions.length) {
+      opts.actions.forEach((a) => {
+        const b = makeBtn(a)
+        buttons.push(b)
+        actionsContainer.appendChild(b)
+      })
+    } else {
+      const b = document.createElement('button')
+      b.type = 'button'
+      b.className = 'btn'
+      b.textContent = 'Close'
+      b.addEventListener('click', () => modalInstance.close())
+      buttons.push(b)
+      actionsContainer.appendChild(b)
+    }
+
+    // close on backdrop click (but not when clicking inside dialog)
+    backdrop.addEventListener('click', (ev) => {
+      if (ev.target === backdrop) modalInstance.close()
+    })
+
+    // small helper to toggle action buttons
+    function _setDisabled(m: any, v: boolean) {
+      (m._actionButtons || []).forEach((btn: HTMLButtonElement) => (btn.disabled = !!v))
+    }
+
+    // expose helper for external calls
+    ;(modalInstance as any).setDisabled = (v: boolean) => _setDisabled(modalInstance, v)
+
+    return modalInstance
+  }
+
+  // bridge used by inline callbacks to toggle modal action state
+  function thisDisabled(modal: any, v: boolean) {
+    if (!modal) return
+    if (typeof modal.setDisabled === 'function') modal.setDisabled(!!v)
+    else if (modal._actionButtons) modal._actionButtons.forEach((b: HTMLButtonElement) => (b.disabled = !!v))
+  }
 
   function renderTabs() {
     tabsContainer.innerHTML = ''
@@ -162,8 +245,9 @@ export function renderAdmin() {
         actions.appendChild(edit)
       }
 
-      // Delete action: only visible for Draft items
+      // Delete action
       if (ev.status === EventStatus.Draft) {
+        // Draft: allow deletion but require confirmation modal
         const del = document.createElement('button')
         del.className = 'btn btn--destructive btn--sm'
         del.type = 'button'
@@ -171,17 +255,60 @@ export function renderAdmin() {
         del.addEventListener('click', async (e) => {
           e.stopPropagation()
           e.preventDefault()
-          if (!confirm('Delete this draft event? This cannot be undone.')) return
-          del.disabled = true
-          const res = await deleteEvent(ev.id)
-          if (!res.ok) {
-            alert(res.message || 'Unable to delete event')
-            del.disabled = false
-            return
-          }
-          // remove from local state and re-render
-          events = events.filter((x) => x.id !== ev.id)
-          renderList()
+          showModal({
+            title: 'Delete draft? This cannot be undone',
+            body: `<p>Are you sure you want to permanently delete the draft "${(ev.title || 'Untitled event').replace(/</g, '&lt;')}"?</p><p class="muted">This action cannot be recovered.</p>`,
+            actions: [
+              { label: 'Cancel', className: 'btn', onClick: (m) => m.close() },
+              { label: 'Delete event', className: 'btn btn--destructive', async onClick(m) {
+                // perform deletion
+                thisDisabled(m, true)
+                const res = await deleteEvent(ev.id)
+                if (!res.ok) {
+                  alert(res.message || 'Unable to delete event')
+                  thisDisabled(m, false)
+                  return
+                }
+                // remove from local state and re-render
+                events = events.filter((x) => x.id !== ev.id)
+                m.close()
+                renderList()
+              } },
+            ],
+          })
+        })
+        actions.appendChild(del)
+      } else if (ev.status === EventStatus.Published) {
+        // Published: show blocked delete that teaches the next step (move to Draft)
+        const del = document.createElement('button')
+        del.className = 'btn btn--destructive btn--sm'
+        del.type = 'button'
+        del.textContent = 'Delete'
+        // visually indicate it's blocked but still interactive to educate the user
+        del.addEventListener('click', async (e) => {
+          e.stopPropagation()
+          e.preventDefault()
+          showModal({
+            title: 'Published items cannot be deleted directly',
+            body: `<p>The event "${(ev.title || 'Untitled event').replace(/</g, '&lt;')}" is currently published. To delete it, first move it back to <strong>Draft</strong>.</p><p class="muted">You can either edit the event and save as draft, or use the button below to move it to Draft now.</p>`,
+            actions: [
+              { label: 'Close', className: 'btn', onClick: (m) => m.close() },
+              { label: 'Edit event', className: 'btn btn--secondary', onClick: (m) => { m.close(); location.hash = `#/events/${ev.id}/edit` } },
+              { label: 'Move to Draft', className: 'btn btn--primary', async onClick(m) {
+                thisDisabled(m, true)
+                const res = await updateEvent(ev.id, { status: EventStatus.Draft })
+                if (!res.ok) {
+                  alert(res.message || 'Unable to change status')
+                  thisDisabled(m, false)
+                  return
+                }
+                // update local copy and re-render to reflect new state
+                events = events.map((x) => x.id === ev.id ? (res.data as Event) : x)
+                m.close()
+                renderList()
+              } },
+            ],
+          })
         })
         actions.appendChild(del)
       }

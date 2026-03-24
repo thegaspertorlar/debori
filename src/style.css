@@ -165,6 +165,34 @@ h1 {
 .event-card button.btn--destructive { background: linear-gradient(180deg, #ef4444, #dc2626); }
 .event-card .badge { margin-left: 8px }
 
+/* Modal component styles: clear, concise, not alarming */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10,10,10,0.36);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 24px;
+}
+.modal {
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 18px 48px rgba(2,6,23,0.24);
+  max-width: 680px;
+  width: 100%;
+  border: 1px solid var(--neutral-200);
+  overflow: hidden;
+}
+.modal__inner { padding: 20px; }
+.modal__title { margin: 0 0 8px 0; font-size: 18px }
+.modal__body { color: var(--neutral-800); margin-bottom: 16px }
+.modal__actions { display:flex; gap:8px; justify-content:flex-end }
+.modal .btn--destructive { background: linear-gradient(180deg, #ef4444, #dc2626); color: white }
+.modal .btn--primary { background: linear-gradient(180deg, var(--brand-500), var(--brand-600)); color: white }
+.modal p.muted { color: var(--neutral-600); margin:8px 0 0 }
+
 /* Make status badges more prominent on card header */
 .event-card__body > div:first-child .badge { font-weight:700 }
 
