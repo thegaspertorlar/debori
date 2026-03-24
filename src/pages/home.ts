@@ -2,14 +2,19 @@ export function renderHome() {
   const el = document.createElement('div')
   el.className = 'page page--public'
   el.innerHTML = `
-    <div class="page-title">
-      <h1>Welcome to Debori</h1>
-      <p class="muted">Manage community events with a simple, trustworthy product experience.</p>
-    </div>
-    <div class="card">
-      <h2>Get started</h2>
-      <p class="muted">Use the navigation above to browse events or sign in to manage them.</p>
-    </div>
+    <main aria-label="Home" class="hero">
+      <div class="container hero-inner">
+        <div class="hero-content">
+          <h1 class="hero-title">Debori — Simple community events that just work</h1>
+          <p class="hero-sub">Create, discover, and manage local events with a calm, trustworthy experience designed for organizers and attendees.</p>
+
+          <div class="hero-ctas">
+            <a class="btn btn--primary btn--lg" href="#/events">View events</a>
+            <a class="btn btn--secondary btn--lg" href="#/login">Sign in</a>
+          </div>
+        </div>
+      </div>
+    </main>
   `
   return el
 }
