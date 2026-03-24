@@ -1,4 +1,5 @@
 import { demoCredentials } from '../data/seed'
+import { authenticate } from '../api/mockApi'
 
 export function renderLogin() {
   const el = document.createElement('div')
@@ -29,8 +30,30 @@ export function renderLogin() {
   const form = el.querySelector('#demo-login') as HTMLFormElement
   form.addEventListener('submit', (e) => {
     e.preventDefault()
-    // Simple demo: navigate to admin on "successful" sign-in
-    location.hash = '/admin'
+    ;(async () => {
+      const email = (form.querySelector('#email') as HTMLInputElement).value
+      const password = (form.querySelector('#password') as HTMLInputElement).value
+      const submit = form.querySelector('button[type=submit]') as HTMLButtonElement
+      submit.disabled = true
+      submit.textContent = 'Signing in…'
+      const res = await authenticate(email, password)
+      submit.disabled = false
+      submit.textContent = 'Sign in'
+      if (!res.ok) {
+        const err = document.createElement('div')
+        err.className = 'muted'
+        err.style.color = '#a33'
+        err.style.marginTop = '8px'
+        err.textContent = res.message || 'Sign-in failed'
+        const existing = el.querySelector('.login-error')
+        if (existing) existing.remove()
+        err.classList.add('login-error')
+        form.appendChild(err)
+        return
+      }
+      // on success navigate to admin
+      location.hash = '/admin'
+    })()
   })
 
   return el
