@@ -462,39 +462,52 @@ h1 {
 }
 
 .event-detail {
-  max-width: 1100px;
-  margin: 28px auto;
-  padding: 0 16px;
+  /* Slightly wider editorial measure to give the main column breathing room */
+  max-width: 1200px;
+  margin: 36px auto;
+  padding: 0 18px;
 }
 .event-detail__inner {
   display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 32px;
+  grid-template-columns: 1fr 340px; /* a bit wider aside for actions/meta */
+  gap: 36px;
   align-items: start;
-  padding: 20px;
+  padding: 24px;
 }
-.event-detail__main { padding: 6px 2px; }
+.event-detail__main { padding: 8px 4px; }
 .event-detail__content { min-width: 0 }
 
 /* Summary block directly below the hero to give content rhythm */
 .event-summary__dek {
   color: var(--neutral-800);
-  font-size: var(--fs-lg);
-  line-height: 1.5;
-  margin: 0 0 12px 0;
-  max-width: 68ch; /* comfortable reading measure for summary */
+  font-size: calc(var(--fs-lg) + 1px);
+  line-height: 1.55;
+  margin: 0 0 18px 0;
+  max-width: 70ch; /* comfortable reading measure for summary */
 }
-.event-summary__meta { display:block; color: var(--neutral-700); font-size: 14px; }
+
+/* Use a simple grid for label/value pairs to create a clear information hierarchy */
+.event-summary__meta {
+  display: grid;
+  grid-template-columns: 140px 1fr; /* label / value */
+  column-gap: 16px;
+  row-gap: 10px;
+  color: var(--neutral-700);
+  font-size: 14px;
+  align-items: start;
+}
 .event-summary__meta .muted { color: var(--neutral-600); font-size: 13px }
+.event-summary__meta .strong { color: var(--neutral-900); font-weight: 700 }
 
 /* Make the prose column comfortable to read: constrain measure and add rhythm */
 .prose {
   color: var(--neutral-900);
   font-size: var(--fs-md);
-  line-height: 1.7; /* slightly more airy for long reading */
-  max-width: 64ch; /* ideal reading measure */
+  line-height: 1.72; /* slightly more airy for long reading */
+  max-width: 66ch; /* ideal reading measure */
   font-weight: 400;
   -webkit-font-smoothing:antialiased;
+  margin-top: 6px;
 }
 
 /* Paragraphs: consistent rhythm and comfortable spacing */
@@ -564,11 +577,17 @@ h1 {
 
 /* Aside compact card with clear grouping and sticky positioning on desktop */
 .card--compact { background: var(--color-surface); border-radius: 10px; padding: 16px; border: 1px solid var(--neutral-100); box-shadow: var(--shadow-subtle); }
-.event-detail__aside.card--compact { position: sticky; top: calc(var(--app-header-height) + 20px); align-self: start; }
-.event-detail__aside .aside-section { margin-bottom: 12px; }
+.event-detail__aside.card--compact {
+  position: sticky;
+  top: calc(var(--app-header-height) + 20px);
+  align-self: start;
+  padding: 16px;
+}
+.event-detail__aside .aside-section { margin-bottom: 14px; display: flex; flex-direction: row; justify-content: space-between; align-items: center; gap: 12px; }
 .event-detail__aside .aside-section .muted { color: var(--neutral-600); font-size: 13px }
-.event-detail__aside .aside-section .strong { font-weight:700; margin-top:6px }
-.event-detail__aside .aside-actions { display:flex; gap:8px; margin-top: 14px; flex-wrap:wrap }
+.event-detail__aside .aside-section .strong { font-weight:700; margin-top:0; text-align:right }
+.event-detail__aside .aside-actions { display:flex; gap:8px; margin-top: 14px; flex-wrap:wrap; align-items:center }
+.event-detail__aside .aside-actions .btn--primary { min-width: 140px }
 
 
 /* Prose styles for rich description */
@@ -582,9 +601,13 @@ h1 {
 @media (max-width: 900px) {
   .event-hero__inner { padding: 36px 12px }
   .event-detail__inner { grid-template-columns: 1fr; }
-  .event-detail__aside { border-left: none; padding-left: 0; margin-top: 12px; position: static; }
+  .event-detail__aside { border-left: none; padding-left: 0; margin-top: 18px; position: static; width: 100%; }
   .event-summary__dek { max-width: 100%; }
   .prose { max-width: 100%; }
+  .event-detail__aside .aside-section { flex-direction: column; align-items: flex-start; gap: 6px }
+  .event-detail__aside .aside-section .strong { text-align: left }
+  .event-detail__aside .aside-actions { width: 100%; }
+  .event-detail__aside .aside-actions .btn { width: 100%; }
 }
 
 /* Load more container */

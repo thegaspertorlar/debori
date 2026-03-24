@@ -124,13 +124,12 @@ export function renderEventDetail(params: Record<string, string>) {
           <div class="event-detail__main">
             <section class="event-summary">
               ${ev.shortDescription ? `<p class="event-summary__dek">${ev.shortDescription}</p>` : ''}
-              <div class="event-summary__meta">
-                <div class="muted">Date & time</div>
-                <div class="strong">${formatDateRange(ev.startDate, ev.endDate)}</div>
-                <div class="spacer--sm"></div>
-                <div class="muted">Location</div>
-                <div class="strong">${ev.isOnline ? 'Online' : addressLine(ev.location) || 'TBA'}</div>
-              </div>
+              <dl class="event-summary__meta">
+                <dt class="muted">Date &amp; time</dt>
+                <dd class="strong">${formatDateRange(ev.startDate, ev.endDate)}</dd>
+                <dt class="muted">Location</dt>
+                <dd class="strong">${ev.isOnline ? 'Online' : addressLine(ev.location) || 'TBA'}</dd>
+              </dl>
             </section>
 
             <section class="event-description prose">
@@ -152,11 +151,12 @@ export function renderEventDetail(params: Record<string, string>) {
               <div class="strong">${ev.isOnline ? 'Online' : addressLine(ev.location) || 'TBA'}</div>
             </div>
 
-            ${ev.capacity ? `<div class="aside-section"><div class="muted">Capacity</div><div class="strong">${ev.capacity}</div></div>` : ''}
+              ${ev.capacity ? `<div class="aside-section"><div class="muted">Capacity</div><div class="strong">${ev.capacity}</div></div>` : ''}
 
             ${typeof ev.priceCents === 'number' ? `<div class="aside-section"><div class="muted">Price</div><div class="strong">${(ev.priceCents / 100).toLocaleString(undefined, { style: 'currency', currency: ev.currency || 'USD' })}</div></div>` : ''}
 
               <div class="aside-actions">
+                <a class="btn btn--primary" href="#/events/${ev.id}/register" data-link aria-label="Register">Register</a>
                 <a class="nav-link" href="#/events" data-link aria-label="Events">Events</a>
                 ${showAdminControls ? `<a class="btn btn--outline" href="#/events/${ev.id}/edit">Edit</a>` : ``}
               </div>
