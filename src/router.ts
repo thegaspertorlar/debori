@@ -1,6 +1,8 @@
 type Route = {
   path: string
   render: (params: Record<string, string>) => HTMLElement
+  // mark routes that require an authenticated manager session
+  protected?: boolean
 }
 
 function pathToRegex(path: string) {
@@ -20,6 +22,8 @@ function extractParams(routePath: string, actualPath: string) {
   })
   return params
 }
+
+import { isAuthenticated } from './session'
 
 export class Router {
   routes: Route[]
@@ -42,6 +46,12 @@ export class Router {
     for (const r of this.routes) {
       const regex = pathToRegex(r.path)
       if (regex.test(clean)) {
+        // protect routes before rendering so protected screens never flash
+        if (r.protected && !isAuthenticated()) {
+          // redirect to login
+          location.hash = '/login'
+          return
+        }
         const params = extractParams(r.path, clean)
         const node = r.render(params)
         this.renderNode(node)
@@ -58,8 +68,20 @@ export class Router {
   }
 
   private renderNode(node: HTMLElement) {
+    // smooth replace without flashing: create wrapper and animate
+    const wrapper = document.createElement('div')
+    wrapper.className = 'page-wrap page-enter'
+    wrapper.appendChild(node)
+
+    // remove existing content immediately but keep node out of DOM until wrapped
     this.outlet.innerHTML = ''
-    this.outlet.appendChild(node)
+    this.outlet.appendChild(wrapper)
+
+    // trigger enter animation
+    requestAnimationFrame(() => {
+      wrapper.classList.remove('page-enter')
+    })
+
     // focus main for accessibility
     this.outlet.focus()
   }

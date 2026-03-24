@@ -31,3 +31,7 @@ h1 {
 /* Main app layout */
 .app-main { padding:24px 16px; }
 .app-main:focus { outline:none }
+
+/* Page transition helpers used by router to avoid flashes on protected routes */
+.page-wrap { transition: opacity 220ms ease, transform 220ms ease; opacity: 1; transform: translateY(0); }
+.page-wrap.page-enter { opacity: 0; transform: translateY(6px); }

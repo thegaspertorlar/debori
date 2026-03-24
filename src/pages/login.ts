@@ -1,5 +1,6 @@
 import { demoCredentials } from '../data/seed'
 import { authenticate } from '../api/mockApi'
+import { loginSession } from '../session'
 
 export function renderLogin() {
   const el = document.createElement('div')
@@ -51,8 +52,23 @@ export function renderLogin() {
         form.appendChild(err)
         return
       }
-      // on success navigate to admin
-      location.hash = '/admin'
+      // on success create a transient in-memory session and navigate to admin
+      if (res.ok) {
+        const ok = loginSession(res.data.user, res.data.token)
+        // only navigate if session was created (seeded demo account only)
+        if (ok) location.hash = '/admin'
+        else {
+          const err = document.createElement('div')
+          err.className = 'muted'
+          err.style.color = '#a33'
+          err.style.marginTop = '8px'
+          err.textContent = 'Manager access restricted to demo account'
+          const existing = el.querySelector('.login-error')
+          if (existing) existing.remove()
+          err.classList.add('login-error')
+          form.appendChild(err)
+        }
+      }
     })()
   })
 

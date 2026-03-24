@@ -6,10 +6,12 @@ import { renderEventsList } from './pages/eventsList'
 import { renderEventDetail } from './pages/eventDetail'
 import './style.css'
 
+import { isAuthenticated, logoutSession, onSessionChange } from './session'
+
 const routes = [
   { path: '/home', render: renderHome },
   { path: '/login', render: renderLogin },
-  { path: '/admin', render: renderAdmin },
+  { path: '/admin', render: renderAdmin, protected: true },
   { path: '/events', render: renderEventsList },
   { path: '/events/:id', render: renderEventDetail },
   // future: /events/create, /events/:id/edit
@@ -82,6 +84,40 @@ export function createAppShell(container: HTMLElement) {
 
   window.addEventListener('hashchange', updateActive)
   window.addEventListener('popstate', updateActive)
+
+  // Update auth UI (login link -> admin + logout when signed in)
+  function updateAuthUI() {
+    const loginAnchor = header.querySelector('.login-link') as HTMLAnchorElement | null
+    if (!loginAnchor) return
+    if (isAuthenticated()) {
+      loginAnchor.textContent = 'Manager'
+      loginAnchor.setAttribute('href', '#/admin')
+      // add logout if not present
+      if (!header.querySelector('.logout-link')) {
+        const nav = header.querySelector('.primary-nav') as HTMLElement
+        const out = document.createElement('a')
+        out.className = 'logout-link'
+        out.href = '#/home'
+        out.textContent = 'Sign out'
+        out.style.marginLeft = '6px'
+        out.addEventListener('click', (e) => {
+          e.preventDefault()
+          logoutSession()
+          location.hash = '/home'
+        })
+        nav.appendChild(out)
+      }
+    } else {
+      loginAnchor.textContent = 'Login'
+      loginAnchor.setAttribute('href', '#/login')
+      const existing = header.querySelector('.logout-link')
+      if (existing) existing.remove()
+    }
+  }
+
+  // react to session changes
+  onSessionChange(updateAuthUI)
+  updateAuthUI()
 
   // Initialize route (redirect root to /home)
   if (!location.hash || location.hash === '#/' || location.hash === '#') {
