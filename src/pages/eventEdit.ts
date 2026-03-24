@@ -126,8 +126,8 @@ export function renderEventEdit(params: Record<string, string>) {
           </section>
 
           <div class="actions actions--right mt-3">
-            <button type="button" id="save-draft" class="btn btn--ghost">Save as draft</button>
-            <button type="button" id="publish" class="btn btn--primary">Publish</button>
+            <button type="button" id="save-draft" class="btn btn--secondary btn--sm">Save as draft</button>
+            <button type="button" id="publish" class="btn btn--primary btn--lg">Publish</button>
           </div>
         </div>
       </form>

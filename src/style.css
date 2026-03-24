@@ -648,6 +648,39 @@ h1 {
 .form-section__desc { margin: 0 0 12px 0; color: var(--neutral-700); font-size: 13px }
 .mt-3 { margin-top: 12px }
 
+/* Form action bar: clearer hierarchy and spacing
+   - Visually separate the final decision point from the form content
+   - Make Publish clearly the primary, Save as draft secondary but accessible
+*/
+.card form .actions {
+  padding-top: 14px;
+  border-top: 1px solid rgba(16,24,40,0.04);
+  margin-top: 18px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  align-items: center;
+}
+.card form .actions .btn--secondary {
+  /* make secondary action compact and calm */
+  background: var(--color-surface);
+  border-color: var(--neutral-300);
+  color: var(--neutral-800);
+  box-shadow: 0 2px 6px rgba(16,24,40,0.03);
+  font-weight: var(--fw-medium);
+}
+.card form .actions .btn--primary {
+  /* give the primary call-to-action a bit more presence */
+  min-width: 120px;
+}
+.card form .actions .btn--sm { padding: 0 12px; }
+.card form .actions .btn--lg { padding: 0 18px; }
+
+@media (max-width: 680px) {
+  .card form .actions { flex-direction: column-reverse; gap: 10px; align-items: stretch; }
+  .card form .actions .btn { width: 100%; }
+}
+
 /* Cover image upload zone and preview */
 .upload-row { display:flex; gap: 16px; align-items:flex-start; }
 .upload-zone {
