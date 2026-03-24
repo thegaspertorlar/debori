@@ -9,11 +9,12 @@ import { renderEventEdit } from './pages/eventEdit'
 import './style.css'
 
 import { isAuthenticated, logoutSession, onSessionChange } from './session'
+import { createAdminShell } from './adminShell'
 
 const routes = [
   { path: '/home', render: renderHome },
   { path: '/login', render: renderLogin },
-  { path: '/admin', render: renderAdmin, protected: true },
+  // Admin routes are handled by a dedicated admin shell mounted at /admin/*
   { path: '/events', render: renderEventsList },
   { path: '/events/create', render: renderEventCreate, protected: true },
   { path: '/events/:id/edit', render: renderEventEdit, protected: true },
@@ -21,219 +22,183 @@ const routes = [
 ]
 
 export function createAppShell(container: HTMLElement) {
-  // Header
-  const header = document.createElement('header')
-  header.className = 'app-header'
-  header.innerHTML = `
-    <div class="container app-header-inner">
-      <div class="header-left">
-        <a class="brand" href="#/home">Debori</a>
+  // The app can mount either the public shell or the admin shell.
+  // Admin shell lives under the /admin/* namespace and provides a
+  // completely separate layout and router so admin pages never render
+  // the public header/navigation.
+
+  // Track which shell is active: 'public' or 'admin'
+  let activeShell: 'public' | 'admin' | null = null
+  let publicRouter: Router | null = null
+  let adminInstance: any = null
+
+  function mountPublic() {
+    if (activeShell === 'public') return
+    activeShell = 'public'
+    // clear any existing DOM
+    container.innerHTML = ''
+
+    // Header
+    const header = document.createElement('header')
+    header.className = 'app-header'
+    header.innerHTML = `
+      <div class="container app-header-inner">
+        <div class="header-left">
+          <a class="brand" href="#/home">Debori</a>
+        </div>
+
+        <button class="nav-toggle" aria-expanded="false" aria-label="Toggle navigation">☰</button>
+
+        <nav class="primary-nav" aria-label="Main navigation">
+          <div class="nav-links">
+            <a href="#/home" data-link>Home</a>
+            <a href="#/events" data-link>Events</a>
+          </div>
+          <div class="nav-auth">
+          <a href="#/login" data-link class="login-link btn btn--outline btn--sm">Login</a>
+          </div>
+        </nav>
       </div>
+    `
 
-      <button class="nav-toggle" aria-expanded="false" aria-label="Toggle navigation">☰</button>
+    // Main content
+    const main = document.createElement('main')
+    main.className = 'app-main container'
 
-      <nav class="primary-nav" aria-label="Main navigation">
-        <div class="nav-links">
-          <a href="#/home" data-link>Home</a>
-          <a href="#/events" data-link>Events</a>
-        </div>
-        <div class="nav-auth">
-        <a href="#/login" data-link class="login-link btn btn--outline btn--sm">Login</a>
-        </div>
-      </nav>
-    </div>
-  `
+    container.appendChild(header)
+    container.appendChild(main)
 
-  // Main content
-  const main = document.createElement('main')
-  main.className = 'app-main container'
+    publicRouter = new Router(routes, main)
 
-  container.appendChild(header)
-  container.appendChild(main)
-
-  const router = new Router(routes, main)
-
-  // Navigation toggle (mobile)
-  const toggle = header.querySelector('.nav-toggle') as HTMLButtonElement
-  const nav = header.querySelector('.primary-nav') as HTMLElement
-  toggle.addEventListener('click', () => {
-    const open = nav.classList.toggle('is-open')
-    toggle.setAttribute('aria-expanded', String(open))
-    // When the nav opens the header height can change. Keep the
-    // --app-header-height CSS variable in sync so components that
-    // size against the header (e.g. mobile nav max-height) calculate
-    // correctly and avoid introducing page-level overflow.
-    syncHeaderHeight()
-  })
-
-  // Delegate link clicks to router for SPA behavior
-  header.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement
-    const link = target.closest('[data-link]') as HTMLAnchorElement | null
-    if (link) {
-      e.preventDefault()
-      const href = link.getAttribute('href') || '#/home'
-      // update hash (router listens to hashchange)
-      location.hash = href.replace(/^#/, '')
-      // close mobile nav
-      nav.classList.remove('is-open')
-      toggle.setAttribute('aria-expanded', 'false')
-      // ensure header height variable is in sync after the nav closes
-      // (helps avoid a brief mismatch during route changes)
+    // Navigation toggle (mobile)
+    const toggle = header.querySelector('.nav-toggle') as HTMLButtonElement
+    const nav = header.querySelector('.primary-nav') as HTMLElement
+    toggle.addEventListener('click', () => {
+      const open = nav.classList.toggle('is-open')
+      toggle.setAttribute('aria-expanded', String(open))
       syncHeaderHeight()
-    }
-  })
+    })
 
-  // Update active link state on navigation
-  const updateActive = () => {
-    const path = location.hash.replace(/^#/, '') || '/home'
-    const anchors = header.querySelectorAll('nav.primary-nav a')
-    anchors.forEach((a) => {
-      const href = (a as HTMLAnchorElement).getAttribute('href') || '#/home'
-      const clean = href.replace(/^#/, '')
-      if (path === clean || (clean !== '/home' && path.startsWith(clean))) {
-        a.classList.add('active')
-        a.setAttribute('aria-current', 'page')
-      } else {
-        a.classList.remove('active')
-        a.removeAttribute('aria-current')
+    // Delegate link clicks to router for SPA behavior
+    header.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement
+      const link = target.closest('[data-link]') as HTMLAnchorElement | null
+      if (link) {
+        e.preventDefault()
+        const href = link.getAttribute('href') || '#/home'
+        // update hash (router listens to hashchange)
+        location.hash = href.replace(/^#/, '')
+        // close mobile nav
+        nav.classList.remove('is-open')
+        toggle.setAttribute('aria-expanded', 'false')
+        syncHeaderHeight()
       }
     })
-  }
 
-  window.addEventListener('hashchange', updateActive)
-  window.addEventListener('popstate', updateActive)
-
-  // Update auth UI (login link -> admin + logout when signed in)
-  function updateAuthUI() {
-    const loginAnchor = header.querySelector('.login-link') as HTMLAnchorElement | null
-    const navAuth = header.querySelector('.nav-auth') as HTMLElement | null
-    const navLinks = header.querySelector('.nav-links') as HTMLElement | null
-    const headerLeft = header.querySelector('.header-left') as HTMLElement | null
-    if (!loginAnchor || !navAuth || !navLinks || !headerLeft) return
-
-    // Helper: render the public nav (default)
-    function renderPublicNav() {
-      navLinks!.innerHTML = `
-          <a href="#/home" data-link>Home</a>
-          <a href="#/events" data-link>Events</a>
-      `
+    // Update active link state on navigation
+    const updateActive = () => {
+      const path = location.hash.replace(/^#/, '') || '/home'
+      const anchors = header.querySelectorAll('nav.primary-nav a')
+      anchors.forEach((a) => {
+        const href = (a as HTMLAnchorElement).getAttribute('href') || '#/home'
+        const clean = href.replace(/^#/, '')
+        if (path === clean || (clean !== '/home' && path.startsWith(clean))) {
+          a.classList.add('active')
+          a.setAttribute('aria-current', 'page')
+        } else {
+          a.classList.remove('active')
+          a.removeAttribute('aria-current')
+        }
+      })
     }
 
-    // Helper: render the admin-focused nav for managers
-    function renderAdminNav() {
-      // Keep links focused on dashboard tasks. Hide public home/events in primary nav
-      navLinks!.innerHTML = `
-          <a href="#/admin" data-link>Dashboard</a>
-          <a href="#/events" data-link>Events</a>
-          <a href="#/events/create" data-link>Create</a>
-      `
+    window.addEventListener('hashchange', updateActive)
+    window.addEventListener('popstate', updateActive)
+
+    // Update auth UI in public shell. Keep primary nav focused on public
+    // links even when a manager is signed in so the public site feels like
+    // a separate subdomain.
+    function updateAuthUI() {
+      const loginAnchor = header.querySelector('.login-link') as HTMLAnchorElement | null
+      const navAuth = header.querySelector('.nav-auth') as HTMLElement | null
+      if (!loginAnchor || !navAuth) return
+
+      if (isAuthenticated()) {
+        loginAnchor.textContent = 'Manager'
+        loginAnchor.setAttribute('href', '#/admin/dashboard')
+        loginAnchor.classList.remove('btn--outline')
+        loginAnchor.classList.add('btn--primary')
+
+        if (!header.querySelector('.logout-link')) {
+          const out = document.createElement('a')
+          out.className = 'logout-link btn btn--outline btn--sm'
+          out.href = '#/home'
+          out.textContent = 'Sign out'
+          out.addEventListener('click', (e) => {
+            e.preventDefault()
+            logoutSession()
+            location.hash = '/home'
+          })
+          navAuth.appendChild(out)
+        }
+      } else {
+        loginAnchor.textContent = 'Login'
+        loginAnchor.setAttribute('href', '#/login')
+        loginAnchor.classList.remove('btn--primary')
+        loginAnchor.classList.add('btn--outline')
+        const existing = header.querySelector('.logout-link')
+        if (existing) existing.remove()
+      }
+      syncHeaderHeight()
     }
 
-    // Manage subtle return-to-public-site link: visible outside primary nav
-    function ensureReturnLink() {
-      if (!headerLeft!.querySelector('.return-public')) {
-        const ret = document.createElement('a')
-        ret.href = '#/home'
-        ret.className = 'return-public'
-        ret.setAttribute('aria-label', 'Return to public site')
-        ret.textContent = 'Return to public site'
-        // visually subtle and non-primary; put after brand
-        headerLeft!.appendChild(ret)
+    onSessionChange(updateAuthUI)
+    updateAuthUI()
+
+    function syncHeaderHeight() {
+      const rect = header.getBoundingClientRect()
+      if (rect && rect.height) {
+        const value = `${Math.ceil(rect.height)}px`
+        document.documentElement.style.setProperty('--app-header-height', value)
+        header.style.setProperty('--app-header-height', value)
       }
     }
 
-    function removeReturnLink() {
-      const existing = headerLeft!.querySelector('.return-public')
-      if (existing) existing.remove()
-    }
+    const ro = new ResizeObserver(() => syncHeaderHeight())
+    ro.observe(header)
+    window.addEventListener('resize', syncHeaderHeight)
+    setTimeout(syncHeaderHeight, 0)
 
-    if (isAuthenticated()) {
-      // Manager is signed in: switch nav into admin workspace mode
-      loginAnchor.textContent = 'Manager'
-      loginAnchor.setAttribute('href', '#/admin')
-      loginAnchor.classList.remove('btn--outline', 'btn--ghost')
-      loginAnchor.classList.add('btn--primary')
-
-      // Render admin-specific primary nav focused on dashboard tasks
-      renderAdminNav()
-
-      // Keep sign out available
-      if (!header.querySelector('.logout-link')) {
-        const out = document.createElement('a')
-        out.className = 'logout-link btn btn--outline btn--sm'
-        out.href = '#/home'
-        out.textContent = 'Sign out'
-        out.addEventListener('click', (e) => {
-          e.preventDefault()
-          logoutSession()
-          location.hash = '/home'
-        })
-        navAuth.appendChild(out)
-      }
-
-      // Mark header visually as admin so styles can adapt
-      header.classList.add('app-header--admin')
-
-      // Add a subtle return-to-public-site link outside the primary nav
-      // This keeps a clear separation between the admin workspace and public site
-      ensureReturnLink()
+    // Initialize route (redirect root to /home) if nothing is set
+    if (!location.hash || location.hash === '#/' || location.hash === '#') {
+      location.hash = '/home'
     } else {
-      // Restore public navigation
-      loginAnchor.textContent = 'Login'
-      loginAnchor.setAttribute('href', '#/login')
-      loginAnchor.classList.remove('btn--primary', 'btn--ghost')
-      loginAnchor.classList.add('btn--outline')
-      const existing = header.querySelector('.logout-link')
-      if (existing) existing.remove()
-
-      // restore original public nav links
-      renderPublicNav()
-
-      // remove admin visual state and subtle return link
-      header.classList.remove('app-header--admin')
-      removeReturnLink()
+      publicRouter!.handle(location.hash.replace(/^#/, ''))
     }
-
-    // Auth UI changes can affect header height; sync immediately.
-    syncHeaderHeight()
+    updateActive()
   }
 
-  // react to session changes
-  onSessionChange(updateAuthUI)
-  updateAuthUI()
-
-  // Keep the header height stored as a CSS variable so CSS can
-  // reference the real header height (not a fixed design value).
-  // This ensures the sticky header fits the viewport cleanly across
-  // breakpoints and when the mobile nav expands.
-  function syncHeaderHeight() {
-    // Use layout measurement to get the actual rendered height.
-    // Write the measured value to the document root so all parts of the
-    // app (not just the header subtree) can reference the same value. We
-    // also mirror the value on the header itself for backwards-compatibility.
-    const rect = header.getBoundingClientRect()
-    if (rect && rect.height) {
-      const value = `${Math.ceil(rect.height)}px`
-      document.documentElement.style.setProperty('--app-header-height', value)
-      header.style.setProperty('--app-header-height', value)
+  // Shell switcher: mount admin shell when path starts with /admin, otherwise mount public.
+  function ensureCorrectShell() {
+    const path = location.hash.replace(/^#/, '') || '/home'
+    if (path.startsWith('/admin')) {
+      if (activeShell !== 'admin') {
+        adminInstance = createAdminShell(container)
+        activeShell = 'admin'
+      }
+    } else {
+      if (activeShell !== 'public') {
+        mountPublic()
+      }
     }
   }
 
-  // Observe header size changes (e.g. when nav opens, auth UI changes,
-  // or on orientation/viewport resize) and sync the CSS variable.
-  const ro = new ResizeObserver(() => syncHeaderHeight())
-  ro.observe(header)
-  // also update on global resize to cover viewport changes
-  window.addEventListener('resize', syncHeaderHeight)
-  // initial sync after DOM is ready
-  setTimeout(syncHeaderHeight, 0)
+  // Watch for top-level hash changes to mount the right shell. Individual
+  // routers inside each shell will handle route-level guarding and rendering.
+  window.addEventListener('hashchange', () => {
+    ensureCorrectShell()
+  })
 
-  // Initialize route (redirect root to /home)
-  if (!location.hash || location.hash === '#/' || location.hash === '#') {
-    location.hash = '/home'
-  } else {
-    router.handle(location.hash.replace(/^#/, ''))
-  }
-  updateActive()
+  // Initial mount
+  ensureCorrectShell()
 }

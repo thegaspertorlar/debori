@@ -142,7 +142,7 @@ export function renderLogin() {
       // on success create a transient in-memory session and navigate to admin
       if (res.ok) {
         const ok = loginSession(res.data.user, res.data.token)
-        if (ok) location.hash = '/admin'
+        if (ok) location.hash = '/admin/dashboard'
         else {
           errorEl.textContent = 'Manager access restricted to demo account'
           errorEl.style.display = 'block'
