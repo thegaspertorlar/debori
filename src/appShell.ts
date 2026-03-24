@@ -38,7 +38,7 @@ export function createAppShell(container: HTMLElement) {
           <a href="#/events" data-link>Events</a>
         </div>
         <div class="nav-auth">
-          <a href="#/login" data-link class="login-link btn btn--ghost btn--sm">Login</a>
+        <a href="#/login" data-link class="login-link btn btn--outline btn--sm">Login</a>
         </div>
       </nav>
     </div>
@@ -103,6 +103,9 @@ export function createAppShell(container: HTMLElement) {
     if (isAuthenticated()) {
       loginAnchor.textContent = 'Manager'
       loginAnchor.setAttribute('href', '#/admin')
+      // make manager feel like a meaningful action
+      loginAnchor.classList.remove('btn--outline', 'btn--ghost')
+      loginAnchor.classList.add('btn--primary')
       // add logout if not present
       if (!header.querySelector('.logout-link')) {
         const navAuth = header.querySelector('.nav-auth') as HTMLElement
@@ -120,6 +123,9 @@ export function createAppShell(container: HTMLElement) {
     } else {
       loginAnchor.textContent = 'Login'
       loginAnchor.setAttribute('href', '#/login')
+      // quieter, intentional action for login
+      loginAnchor.classList.remove('btn--primary', 'btn--ghost')
+      loginAnchor.classList.add('btn--outline')
       const existing = header.querySelector('.logout-link')
       if (existing) existing.remove()
     }

@@ -37,13 +37,49 @@ h1 {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 20px; /* slightly more breathing room */
 }
-.primary-nav .nav-links { display:flex; gap:16px; align-items:center }
-.primary-nav .nav-auth { display:flex; gap:8px; align-items:center; margin-left:16px }
-.primary-nav a { color: var(--neutral-700); text-decoration: none; padding: 8px 12px; border-radius: 10px; transition: background 140ms ease, color 140ms ease; }
-.primary-nav a:focus { outline: 3px solid rgba(16,163,107,0.12); }
-.primary-nav a.active { background: rgba(16,163,107,0.08); color: var(--brand-700); font-weight: 600 }
+
+.primary-nav .nav-links {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+}
+
+.primary-nav .nav-auth {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-left: 18px;
+}
+
+/* Primary nav links (text links) */
+.primary-nav .nav-links a {
+  color: var(--neutral-700);
+  text-decoration: none;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: var(--fs-md);
+  transition: background 140ms ease, color 140ms ease, transform 120ms ease;
+}
+.primary-nav .nav-links a:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(16,163,107,0.06);
+  border-radius: 8px;
+}
+.primary-nav .nav-links a.active {
+  background: rgba(16,163,107,0.06);
+  color: var(--brand-700);
+  font-weight: 600;
+}
+
+/* Auth/action area: keep button semantics and stronger affordance */
+.primary-nav .nav-auth .btn {
+  height: 36px;
+  padding: 0 12px;
+}
+
 .nav-toggle { display: none; background: transparent; border: 0; font-size: 20px; cursor: pointer }
 
 /* Slightly larger hit area on auth buttons */
@@ -52,14 +88,16 @@ h1 {
 .btn--outline { background: transparent; border: 1px solid var(--neutral-200); color: var(--neutral-800); }
 
 /* Desktop subtle hover */
-.primary-nav a:hover { background: rgba(16,163,107,0.04); color: var(--brand-700); }
+.primary-nav .nav-links a:hover { background: rgba(16,163,107,0.04); color: var(--brand-700); }
+.primary-nav .nav-auth .btn:hover { transform: translateY(0); filter: brightness(0.98); }
 
 @media (max-width: 640px) {
   .app-header-inner { padding-left:12px; padding-right:12px }
   .nav-toggle { display:block }
-  .primary-nav { position:absolute; right:12px; top:72px; background:white; box-shadow:var(--shadow-card); border-radius:8px; flex-direction:column; align-items:flex-start; padding:10px; display:none; min-width: 180px }
+  .primary-nav { position:absolute; right:12px; top:72px; background:white; box-shadow:var(--shadow-card); border-radius:8px; flex-direction:column; align-items:flex-start; padding:10px; display:none; min-width: 200px }
   .primary-nav.is-open { display:flex }
-  .primary-nav a { width:160px }
+  .primary-nav .nav-links a { width:160px }
+  .primary-nav .nav-auth .btn { width:160px }
 }
 
 /* Main app layout */
