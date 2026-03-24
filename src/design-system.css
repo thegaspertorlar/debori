@@ -95,12 +95,27 @@
 }
 
 /* Base reset and typography */
+/* Use border-box globally so padding does not cause unexpected overflow */
+*, *::before, *::after { box-sizing: border-box; }
+
 html, body {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   color: var(--color-text);
   background: var(--color-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent long words or unbroken tokens from pushing layout horizontally */
+html, body, .container, .page, .app-main, .event-hero__inner, .event-hero__content, .event-hero__side, .event-card, .event-card__title, .events-grid {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Allow flex & grid children to shrink below their content size so that
+   responsive layouts don't force the page wider than the viewport. */
+.flex-1, .row, .stack, .app-header-inner, .primary-nav, .event-hero__content, .event-hero__side, .event-card, .event-detail__content {
+  min-width: 0;
 }
 
 /* Headings - clearer hierarchy and spacing */

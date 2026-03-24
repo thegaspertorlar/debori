@@ -1,10 +1,10 @@
 @import './design-system.css';
 
-/* Prevent any page-level horizontal scrolling caused by
-   absolutely positioned elements, large shadows, or outlines. */
-html, body {
-  overflow-x: hidden;
-}
+/* Previously the app hid page-level horizontal overflow globally.
+   Instead of masking layout issues, prefer to fix root causes by
+   enforcing sensible box-sizing and allowing flex/grid children to
+   shrink. Remove the global overflow-x hide and apply targeted
+   rules below to avoid page-level horizontal scrolling. */
 
 /* App-level overrides and small demo layout */
 body {
@@ -40,6 +40,9 @@ h1 {
      and kept in sync by JS. The header itself keeps a min-height that
      respects the measured value. */
 }
+  /* ensure header's immediate children can shrink on small viewports
+     so long nav strings or stacked controls don't force horizontal scroll */
+  .app-header-inner, .primary-nav, .primary-nav .nav-links, .primary-nav .nav-auth { min-width: 0 }
   .app-header-inner {
     display: flex;
     align-items: center;
