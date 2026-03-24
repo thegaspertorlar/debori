@@ -818,6 +818,60 @@ h1 {
 }
 
 
+/* Admin shell layout: top header, left sidebar, main workspace */
+.admin-shell { display: block; min-height: 100vh; background: var(--color-bg); }
+.admin-shell__header { position: sticky; top: 0; z-index: 60 }
+.admin-shell__body { display: flex; align-items: stretch; min-height: calc(100vh - var(--app-header-design-height)); }
+.admin-shell__sidebar {
+  width: 240px;
+  flex: 0 0 240px;
+  border-right: 1px solid var(--neutral-100);
+  background: var(--color-surface);
+  padding: 16px;
+  box-sizing: border-box;
+}
+.admin-sidebar-nav { display:flex; flex-direction:column; gap:8px }
+.admin-sidebar-nav a { color: var(--neutral-700); text-decoration:none; padding:8px 10px; border-radius:8px; font-weight:600 }
+.admin-sidebar-nav a.active { background: rgba(16,163,107,0.06); color: var(--brand-700) }
+.admin-shell__main { flex: 1 1 auto; padding: 24px; box-sizing: border-box; }
+
+/* Mobile: sidebar becomes off-canvas */
+.admin-nav-toggle { display: none; background: transparent; border: 0; font-size: 20px; cursor: pointer; margin-right: 8px }
+
+@media (max-width: 900px) {
+  .admin-shell__body { position: relative }
+  .admin-shell__sidebar {
+    position: fixed;
+    top: var(--app-header-height);
+    bottom: 0;
+    left: 0;
+    width: 80%;
+    max-width: 320px;
+    transform: translateX(-110%);
+    transition: transform 240ms cubic-bezier(.2,.9,.2,1);
+    z-index: 70;
+    box-shadow: var(--shadow-elevated);
+    border-right: 0;
+    padding: 16px 12px;
+  }
+  .admin-shell--sidebar-open .admin-shell__sidebar { transform: translateX(0) }
+  .admin-shell--sidebar-open::after {
+    content: '';
+    position: fixed;
+    inset: var(--app-header-height) 0 0 0;
+    background: rgba(0,0,0,0.24);
+    z-index: 65;
+  }
+  .admin-shell__main { padding: 16px }
+  .admin-nav-toggle { display: inline-block }
+}
+
+/* Ensure admin workspace content is visually separated from chrome */
+.admin-shell__main { background: transparent }
+.admin-shell__main > .card { box-shadow: var(--shadow-card); border-radius: 10px }
+
+
+
 /* Modal component styles: clear, concise, not alarming */
 .modal-backdrop {
   position: fixed;
