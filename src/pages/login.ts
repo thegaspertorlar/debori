@@ -87,9 +87,12 @@ export function renderLogin() {
   const submit = document.createElement('button')
   submit.className = 'btn btn--primary'
   submit.type = 'submit'
-  submit.textContent = 'Sign in'
-  // Make primary action prominent and keyboard-friendly
-  submit.setAttribute('aria-label', 'Sign in')
+  // Use a stable label for the primary authentication CTA and keep an
+  // accessible label in sync. The visual label is wrapped so we can
+  // prepend a spinner during the submitting state without disturbing
+  // other elements.
+  submit.innerHTML = `<span class="btn__label">Login</span>`
+  submit.setAttribute('aria-label', 'Login')
   actions.appendChild(submit)
 
   const errorEl = document.createElement('div')
@@ -127,17 +130,32 @@ export function renderLogin() {
     ;(async () => {
       const email = (form.querySelector('#email') as HTMLInputElement).value
       const password = (form.querySelector('#password') as HTMLInputElement).value
+      // entering submitting state: visually show spinner and a clear
+      // submitting label while keeping the button structure intact
       submit.disabled = true
-      const previous = submit.textContent
-      submit.textContent = 'Signing in…'
+      const label = submit.querySelector('.btn__label') as HTMLElement
+      const previous = label ? label.textContent : submit.textContent
+      // add modest loading affordance
+      submit.classList.add('is-submitting')
+      const spinner = document.createElement('span')
+      spinner.className = 'spinner spinner--sm btn__spinner'
+      spinner.setAttribute('aria-hidden', 'true')
+      if (label) label.textContent = 'Logging in…'
+      // ensure spinner is visible before the label
+      submit.prepend(spinner)
       // clear previous error state
       errorEl.style.display = 'none'
       form.classList.remove('has-error')
 
       const res = await authenticate(email, password)
 
+      // exit submitting state
       submit.disabled = false
-      submit.textContent = previous as string
+      submit.classList.remove('is-submitting')
+      const btnSpinner = submit.querySelector('.btn__spinner')
+      if (btnSpinner) btnSpinner.remove()
+      const labelEnd = submit.querySelector('.btn__label') as HTMLElement
+      if (labelEnd) labelEnd.textContent = previous as string
 
       if (!res.ok) {
         errorEl.textContent = res.message || 'Sign-in failed'

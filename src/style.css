@@ -1020,6 +1020,44 @@ h1 {
   /* give the primary call-to-action a bit more presence */
   min-width: 120px;
 }
+
+/* Login-specific primary CTA refinements
+   - Slightly stronger presence for the authentication CTA to feel
+     polished and branded while remaining consistent with the design system
+   - Define default, hover, focus-visible, disabled and submitting states
+*/
+.page--login .card form .actions .btn--primary {
+  min-width: 140px;
+  background: linear-gradient(180deg, var(--brand-500), var(--brand-600));
+  color: white;
+  border-color: rgba(0,0,0,0.06);
+  box-shadow: 0 8px 26px rgba(16,24,40,0.10);
+  font-weight: var(--fw-semibold);
+}
+.page--login .card form .actions .btn--primary:hover {
+  transform: translateY(-2px);
+  filter: brightness(0.94);
+  box-shadow: 0 12px 36px rgba(16,24,40,0.12);
+}
+.page--login .card form .actions .btn--primary:active { transform: translateY(0); }
+.page--login .card form .actions .btn--primary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 6px rgba(16,163,107,0.10), 0 8px 26px rgba(16,24,40,0.10);
+  border-color: rgba(16,163,107,0.18);
+}
+.page--login .card form .actions .btn--primary[disabled],
+.page--login .card form .actions .btn--primary:disabled {
+  background: linear-gradient(180deg, var(--brand-200), var(--brand-200));
+  color: rgba(255,255,255,0.95);
+  box-shadow: none;
+  opacity: 0.88; /* remain legible while clearly disabled */
+}
+
+/* Submitting state: spinner and subtle progress affordance */
+.page--login .card form .actions .btn--primary.is-submitting { cursor: progress; }
+.page--login .card form .actions .btn--primary .btn__spinner { margin-right: 10px; display: inline-block; vertical-align: middle; }
+.page--login .card form .actions .btn--primary .btn__label { display: inline-block; vertical-align: middle; }
+
 .card form .actions .btn--sm { padding: 0 12px; }
 .card form .actions .btn--lg { padding: 0 18px; }
 
