@@ -11,12 +11,14 @@ export function renderLogin() {
   wrapper.className = 'auth-wrapper container'
 
   const title = document.createElement('div')
-  title.className = 'page-title'
+  title.className = 'page-title page-title--welcome'
   const h1 = document.createElement('h1')
-  h1.textContent = 'Manager sign in'
+  // Provide a warm, product-focused welcome state rather than an internal manager label
+  h1.id = 'signin-heading'
+  h1.textContent = 'Welcome to DEBORI!'
   const hint = document.createElement('p')
-  hint.className = 'muted'
-  hint.textContent = 'Sign in to access admin controls. A demo account is provided for exploration.'
+  hint.className = 'muted page-title__sub'
+  hint.textContent = 'Sign in to continue to your workspace. A demo account is provided for exploration.'
   title.appendChild(h1)
   title.appendChild(hint)
 
