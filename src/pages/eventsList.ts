@@ -1,5 +1,6 @@
 import { listPublicEvents } from '../api/mockApi'
 import { createLoadingCard, createErrorCard, createEmptyCard } from '../uiStates'
+import { isAuthenticated } from '../session'
 
 function formatDateRange(start?: string, end?: string) {
   if (!start) return ''
@@ -65,7 +66,10 @@ export function renderEventsList() {
 
     if (!visible.length) {
       list.innerHTML = ''
-      list.appendChild(createEmptyCard('No upcoming events', 'There are no published events ending in the future right now. Check back later or explore other sections of the site.', 'View admin', '#/admin'))
+      // For guests we don't surface admin/dashboard CTAs — offer login so they can sign in.
+      const ctaText = isAuthenticated() ? 'View dashboard' : 'Login'
+      const ctaHref = isAuthenticated() ? '#/admin' : '#/login'
+      list.appendChild(createEmptyCard('No upcoming events', 'There are no published events ending in the future right now. Check back later or explore other sections of the site.', ctaText, ctaHref))
       return
     }
 
