@@ -72,15 +72,29 @@ export function renderEventEdit(params: Record<string, string>) {
             <p class="form-section__desc muted">Provide an image URL or upload a file to show on the event page.</p>
             <div class="form-field">
               <label class="form-label">Cover image</label>
-              <div class="row row--sm">
-                <input id="heroUrl" class="input" placeholder="Image URL (jpg/png)" />
-                <label class="row row--sm" style="display:inline-flex;">
+              <div class="upload-row">
+                <div class="upload-zone" id="hero-upload-zone" tabindex="0" role="button" aria-label="Upload cover image">
                   <input id="heroFile" type="file" accept="image/jpeg,image/png" style="display:none" />
-                  <button type="button" class="btn btn--secondary btn--sm" id="choose-file">Upload</button>
-                </label>
+                  <div class="upload-zone__inner">
+                    <div class="upload-zone__icon" aria-hidden>🖼️</div>
+                    <div>
+                      <div class="upload-zone__title">Upload an image</div>
+                      <div class="muted helper-text">Click to choose a file or use the field to the right to paste an image URL</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex-1">
+                  <input id="heroUrl" class="input" placeholder="Image URL (jpg/png)" />
+                  <div class="row row--sm mt-2">
+                    <button type="button" class="btn btn--secondary btn--sm" id="choose-file">Upload</button>
+                    <div class="muted helper-text">JPG or PNG • up to 8 MB</div>
+                  </div>
+                </div>
               </div>
-              <div id="hero-preview" class="mt-2"></div>
-              <div id="err-heroImage" class="error-text" aria-live="polite"></div>
+
+              <div id="hero-preview" class="upload-preview mt-2" aria-live="polite"></div>
+              <div id="err-heroImage" class="error-text mt-2" aria-live="polite"></div>
             </div>
           </section>
 
@@ -267,15 +281,14 @@ export function renderEventEdit(params: Record<string, string>) {
   function renderPreviewFromUrl(url: string) {
     heroPreview.innerHTML = ''
     if (!url) return
+    const wrapper = document.createElement('div')
+    wrapper.className = 'upload-preview'
     const img = document.createElement('img')
     img.src = url
     img.alt = 'Cover preview'
-    img.style.maxWidth = '240px'
-    img.style.maxHeight = '140px'
-    img.style.borderRadius = '8px'
-    img.style.objectFit = 'cover'
     img.onerror = () => { heroPreview.textContent = 'Unable to load image preview' }
-    heroPreview.appendChild(img)
+    wrapper.appendChild(img)
+    heroPreview.appendChild(wrapper)
   }
 
   heroUrl.addEventListener('input', () => {
@@ -285,6 +298,14 @@ export function renderEventEdit(params: Record<string, string>) {
   })
 
   chooseFile.addEventListener('click', () => heroFile.click())
+  // make the dashed upload zone interactive
+  const heroUploadZone = el.querySelector('#hero-upload-zone') as HTMLElement | null
+  if (heroUploadZone) {
+    heroUploadZone.addEventListener('click', () => heroFile.click())
+    heroUploadZone.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); heroFile.click() }
+    })
+  }
   heroFile.addEventListener('change', () => {
     const f = heroFile.files && heroFile.files[0]
     heroPreview.innerHTML = ''
@@ -297,7 +318,7 @@ export function renderEventEdit(params: Record<string, string>) {
     heroUrl.value = ''
 
     const container = document.createElement('div')
-    container.className = 'row row--md'
+    container.className = 'upload-preview'
 
     const img = document.createElement('img')
     img.style.maxWidth = '240px'
@@ -307,7 +328,7 @@ export function renderEventEdit(params: Record<string, string>) {
     img.alt = f.name
 
     const meta = document.createElement('div')
-    meta.className = 'stack stack--sm'
+    meta.className = 'upload-meta stack stack--sm'
 
     const name = document.createElement('div')
     name.textContent = f.name + ' • ' + (Math.round(f.size / 1024) + ' KB')

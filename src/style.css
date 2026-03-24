@@ -648,6 +648,36 @@ h1 {
 .form-section__desc { margin: 0 0 12px 0; color: var(--neutral-700); font-size: 13px }
 .mt-3 { margin-top: 12px }
 
+/* Cover image upload zone and preview */
+.upload-row { display:flex; gap: 16px; align-items:flex-start; }
+.upload-zone {
+  min-width: 220px;
+  max-width: 320px;
+  flex: 0 0 280px;
+  border: 1px dashed var(--neutral-200);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(16,24,40,0.01), transparent);
+  padding: 12px;
+  cursor: pointer;
+  transition: border-color 140ms ease, box-shadow 140ms ease, transform 120ms ease;
+}
+.upload-zone:focus, .upload-zone:hover { border-color: rgba(16,163,107,0.18); box-shadow: 0 6px 16px rgba(16,24,40,0.04); outline: none }
+.upload-zone__inner { display:flex; gap: 12px; align-items:center }
+.upload-zone__icon { font-size: 28px; }
+.upload-zone__title { font-weight: 600; color: var(--neutral-900); }
+
+.upload-preview { display:flex; align-items:center; gap: 12px; padding: 10px; border-radius: 10px; background: var(--color-surface); border: 1px solid var(--neutral-100); box-shadow: var(--shadow-subtle); }
+.upload-preview img { width: 240px; height: 140px; object-fit: cover; border-radius: 8px; flex-shrink:0 }
+.upload-preview .upload-meta { display:flex; flex-direction:column; gap:8px }
+.upload-preview .muted { color: var(--neutral-600) }
+
+/* Make upload area stack on small screens */
+@media (max-width: 680px) {
+  .upload-row { flex-direction: column }
+  .upload-zone { width: 100%; max-width: none; flex: none }
+  .upload-preview img { width: 100%; height: auto }
+}
+
 @media (max-width: 900px) {
   .events-grid { grid-template-columns: 1fr; }
 }
