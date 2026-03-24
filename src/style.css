@@ -65,5 +65,24 @@ h1 {
 @media (max-width: 640px) {
   .hero-inner { min-height: 280px; padding-left: 12px; padding-right: 12px; }
   .hero-ctas { flex-direction: column; align-items: stretch; }
-  .hero .btn { width: 100%; justify-content:center; }
+.hero .btn { width: 100%; justify-content:center; }
+}
+
+/* Login / auth specific overrides */
+.page { padding: var(--space-6) var(--space-4); }
+.page--public { background: linear-gradient(180deg, #fbfcfd, var(--color-bg)); }
+.page-title { margin-bottom: var(--space-4); }
+
+/* Auth / login specific layout: center the card for focused, quiet experience */
+.page--login .auth-wrapper { display:flex; align-items:center; justify-content:center; min-height: calc(100vh - 96px); padding-top: 24px; padding-bottom: 24px; }
+.page--login .card { max-width: 520px; width: 100%; }
+.login-credentials { margin-bottom: 12px; background: linear-gradient(180deg, rgba(16,163,107,0.03), transparent); padding: 10px; border-radius: 8px; border: 1px solid rgba(16,163,107,0.06); }
+.login-credentials .badge { background: transparent; border: 1px solid var(--neutral-200); padding: 6px 10px; font-size: 13px; border-radius: 8px; color: var(--neutral-800); }
+
+.login-error { margin-top: 8px; }
+.has-error .input { border-color: var(--color-danger) !important; box-shadow: none !important; }
+
+@media (max-width: 640px) {
+  .page--login .auth-wrapper { padding-left: 12px; padding-right: 12px; min-height: calc(100vh - 72px); }
+  .page--login .card { padding: 16px; }
 }
