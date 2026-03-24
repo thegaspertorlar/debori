@@ -1,7 +1,10 @@
 import './style.css'
 import { Router } from './router'
 import { renderAdminDashboard } from './pages/adminDashboard'
-import { renderEventsList } from './pages/eventsList'
+import { renderAdmin } from './pages/admin'
+import { renderEventCreate } from './pages/eventCreate'
+import { renderEventEdit } from './pages/eventEdit'
+import { renderEventDetail } from './pages/eventDetail'
 import { logoutSession } from './session'
 
 type AdminShell = {
@@ -99,7 +102,11 @@ export function createAdminShell(container: HTMLElement) {
   const routes = [
     { path: '/admin', render: () => { location.hash = '/admin/dashboard'; const d = document.createElement('div'); return d }, protected: true },
     { path: '/admin/dashboard', render: renderAdminDashboard, protected: true },
-    { path: '/admin/events', render: renderEventsList, protected: true },
+    // Admin-scoped event management routes
+    { path: '/admin/events', render: renderAdmin, protected: true },
+    { path: '/admin/events/create', render: renderEventCreate, protected: true },
+    { path: '/admin/events/:id', render: renderEventDetail, protected: true },
+    { path: '/admin/events/:id/edit', render: renderEventEdit, protected: true },
   ]
 
   const router = new Router(routes as any, main)

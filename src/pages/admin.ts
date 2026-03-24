@@ -52,7 +52,7 @@ export function renderAdmin() {
           <p class="muted">Operational overview — drafts, published and past events. Manager-focused controls for quick action.</p>
         </div>
         <div class="events-page__actions">
-          <a class="btn btn--primary" href="#/events/create" data-link>Create event</a>
+          <a class="btn btn--primary" href="#/admin/events/create" data-link>Create event</a>
         </div>
       </div>
     </div>
@@ -295,7 +295,7 @@ export function renderAdmin() {
     const title = `No ${stateLabel.toLowerCase()} events`
     const message = `There are no ${stateLabel.toLowerCase()} events to show right now.`
     listContainer.innerHTML = ''
-    listContainer.appendChild(createEmptyCard(title, message, 'Create event', '#/events/create'))
+    listContainer.appendChild(createEmptyCard(title, message, 'Create event', '#/admin/events/create'))
   }
 
   function renderList() {
@@ -322,7 +322,7 @@ export function renderAdmin() {
       card.className = 'event-card event-card--admin'
       if (card.tagName === 'A') {
         ;(card as HTMLAnchorElement).setAttribute('data-link', '')
-        ;(card as HTMLAnchorElement).setAttribute('href', `#/events/${ev.id}`)
+        ;(card as HTMLAnchorElement).setAttribute('href', `#/admin/events/${ev.id}`)
       }
 
       // media wrapper so admin cards can also host overlays consistently
@@ -372,7 +372,7 @@ export function renderAdmin() {
     // View action: quick access to open the event (useful for scanning)
     const view = document.createElement('a')
     view.className = 'btn btn--ghost btn--sm'
-    view.href = `#/events/${ev.id}`
+    view.href = `#/admin/events/${ev.id}`
     view.setAttribute('data-link', '')
     view.textContent = 'View'
     // prevent the card-level click from also activating when clicking the inner control
@@ -383,7 +383,7 @@ export function renderAdmin() {
     if (ev.status === EventStatus.Draft || ev.status === EventStatus.Published) {
       const edit = document.createElement('a')
       edit.className = 'btn btn--secondary btn--sm'
-      edit.href = `#/events/${ev.id}/edit`
+      edit.href = `#/admin/events/${ev.id}/edit`
       edit.setAttribute('data-link', '')
       edit.textContent = 'Edit'
       edit.addEventListener('click', (e) => { e.stopPropagation() })
@@ -438,7 +438,7 @@ export function renderAdmin() {
             body: `<p>The event "${(ev.title || 'Untitled event').replace(/</g, '&lt;')}" is currently published. To delete it, first move it back to <strong>Draft</strong>.</p><p class="muted">You can either edit the event and save as draft, or use the button below to move it to Draft now.</p>`,
             actions: [
               { label: 'Close', className: 'btn', onClick: (m) => m.close() },
-              { label: 'Edit event', className: 'btn btn--secondary', onClick: (m) => { m.close(); location.hash = `#/events/${ev.id}/edit` } },
+               { label: 'Edit event', className: 'btn btn--secondary', onClick: (m) => { m.close(); location.hash = `#/admin/events/${ev.id}/edit` } },
               { label: 'Move to Draft', className: 'btn btn--primary', async onClick(m) {
                 thisDisabled(m, true)
                 const res = await updateEvent(ev.id, { status: EventStatus.Draft })
