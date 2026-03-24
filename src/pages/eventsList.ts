@@ -85,29 +85,42 @@ export function renderEventsList() {
         const body = document.createElement('div')
         body.className = 'event-card__body'
 
+        // header with date + title for stronger hierarchy
+        const header = document.createElement('div')
+        header.className = 'event-card__header'
+
+        const left = document.createElement('div')
+        left.className = 'flex-1'
+
+        const dateSpan = document.createElement('div')
+        dateSpan.className = 'event-card__date'
+        dateSpan.textContent = formatDateRange(ev.startDate, ev.endDate)
+
         const title = document.createElement('h3')
         title.className = 'event-card__title'
         title.textContent = ev.title || 'Untitled event'
 
-        const meta = document.createElement('div')
-        meta.className = 'event-card__meta'
-        const dateSpan = document.createElement('div')
-        dateSpan.className = 'event-card__date'
-        dateSpan.textContent = formatDateRange(ev.startDate, ev.endDate)
-        const addr = document.createElement('div')
-        addr.textContent = ev.isOnline ? 'Online' : (ev.location?.address || ev.location?.city || '')
+        left.appendChild(dateSpan)
+        left.appendChild(title)
 
-        meta.appendChild(dateSpan)
-        meta.appendChild(addr)
+        header.appendChild(left)
 
-        body.appendChild(title)
+        body.appendChild(header)
+
         if (ev.shortDescription) {
           const desc = document.createElement('div')
-          desc.className = 'muted'
-          desc.style.fontSize = '13px'
+          desc.className = 'event-card__dek'
           desc.textContent = ev.shortDescription
           body.appendChild(desc)
         }
+
+        const meta = document.createElement('div')
+        meta.className = 'event-card__meta'
+        const addr = document.createElement('div')
+        addr.className = 'event-card__location'
+        addr.textContent = ev.isOnline ? 'Online' : (ev.location?.address || ev.location?.city || '')
+
+        meta.appendChild(addr)
         body.appendChild(meta)
 
         a.appendChild(img)

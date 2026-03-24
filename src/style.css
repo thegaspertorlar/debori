@@ -163,8 +163,9 @@ h1 {
 /* Events grid and cards */
 .events-grid {
   display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  /* responsive, balanced grid for browsing */
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 .event-card {
   display: flex;
@@ -176,21 +177,32 @@ h1 {
   box-shadow: var(--shadow-subtle);
   text-decoration: none;
   color: inherit;
+  transition: transform 160ms ease, box-shadow 160ms ease;
 }
 .event-card__media {
   width: 100%;
-  aspect-ratio: 16/10;
+  /* consistent image ratio for all cards */
+  aspect-ratio: 3/2;
   object-fit: cover;
   display: block;
   background: var(--neutral-100);
 }
-.event-card__body { padding: 12px; display:flex; flex-direction:column; gap:8px; }
-.event-card__title { font-size: var(--fs-md); font-weight: var(--fw-semibold); margin:0; color: var(--neutral-900); }
-.event-card__meta { color: var(--neutral-600); font-size: 13px; line-height: 1.22; }
-.event-card__date { font-weight: var(--fw-semibold); color: var(--brand-700); }
+.event-card__body { padding: 16px; display:flex; flex-direction:column; gap:12px; }
+.event-card__header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.event-card__title { font-size: var(--fs-lg); font-weight: var(--fw-semibold); margin:0; color: var(--neutral-900); line-height: 1.18; }
+.event-card__dek { color: var(--neutral-700); font-size: var(--fs-sm); line-height:1.4; }
+.event-card__meta { color: var(--neutral-600); font-size: 13px; line-height: 1.22; display:flex; gap:12px; align-items:center; }
+.event-card__date { font-weight: var(--fw-semibold); color: var(--brand-700); font-size: var(--fs-sm); }
+.event-card__location { color: var(--neutral-600); font-size: var(--fs-sm); }
+
+/* hover & focus affordances to feel like product cards */
+.event-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-elevated); }
+.event-card:active { transform: translateY(-2px); }
 
 @media (max-width: 640px) {
   .events-grid { grid-template-columns: 1fr; }
+  .event-card__body { padding: 12px; gap:10px }
+  .event-card__title { font-size: var(--fs-md) }
 }
 
 /* Event detail / editorial styles */

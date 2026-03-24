@@ -308,25 +308,33 @@ export function renderAdmin() {
       const body = document.createElement('div')
       body.className = 'event-card__body'
 
+      // header groups date + title on the left, status badge on the right
       const head = document.createElement('div')
-      head.className = 'row row--sm justify-between'
+      head.className = 'event-card__header'
+
+      const left = document.createElement('div')
+      left.className = 'flex-1'
+
+      const dateSpan = document.createElement('div')
+      dateSpan.className = 'event-card__date'
+      dateSpan.textContent = formatDateRange(ev.startDate, ev.endDate)
 
       const title = document.createElement('h3')
       title.className = 'event-card__title'
       title.textContent = ev.title || 'Untitled event'
 
-      head.appendChild(title)
+      left.appendChild(dateSpan)
+      left.appendChild(title)
+
+      head.appendChild(left)
       head.appendChild(createStatusBadge(ev.status))
 
       const meta = document.createElement('div')
       meta.className = 'event-card__meta'
-      const dateSpan = document.createElement('div')
-      dateSpan.className = 'event-card__date'
-      dateSpan.textContent = formatDateRange(ev.startDate, ev.endDate)
       const addr = document.createElement('div')
+      addr.className = 'event-card__location'
       addr.textContent = ev.isOnline ? 'Online' : (ev.location?.address || ev.location?.city || '')
 
-      meta.appendChild(dateSpan)
       meta.appendChild(addr)
 
       const actions = document.createElement('div')
