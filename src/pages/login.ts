@@ -71,6 +71,15 @@ export function renderLogin() {
   passLabel.className = 'form-label'
   passLabel.htmlFor = 'password'
   passLabel.textContent = 'Password'
+
+  // Build an input-with-actions control so the password input visually
+  // matches the email field while providing two stable right-side
+  // affordances: a non-interactive status/utility icon and an eye toggle
+  // button to show/hide the password. The action area has fixed width so
+  // icon alignment remains stable across states.
+  const inputWrap = document.createElement('div')
+  inputWrap.className = 'input-with-actions'
+
   const passInput = document.createElement('input')
   passInput.id = 'password'
   passInput.className = 'input'
@@ -79,8 +88,101 @@ export function renderLogin() {
   passInput.value = demoCredentials.password
   passInput.required = true
   passInput.setAttribute('aria-label', 'Password')
+
+  // Non-interactive status icon (reflects neutral/valid/error states)
+  const statusIcon = document.createElement('span')
+  statusIcon.className = 'input-action input-action--status'
+  statusIcon.setAttribute('aria-hidden', 'true')
+  statusIcon.innerHTML = `
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--neutral" aria-hidden="true">
+      <path d="M12 2v20M2 12h20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`
+
+  // Show/hide toggle button (keyboard accessible)
+  const toggleBtn = document.createElement('button')
+  toggleBtn.type = 'button'
+  toggleBtn.className = 'input-action input-action--toggle'
+  toggleBtn.setAttribute('aria-pressed', 'false')
+  toggleBtn.setAttribute('aria-label', 'Show password')
+  toggleBtn.innerHTML = `
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--eye" aria-hidden="true">
+      <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/>
+    </svg>`
+
+  // Assemble wrapper: label, input wrapper (input + actions)
+  inputWrap.appendChild(passInput)
+  const actionsWrap = document.createElement('div')
+  actionsWrap.className = 'input-actions'
+  actionsWrap.appendChild(statusIcon)
+  actionsWrap.appendChild(toggleBtn)
+  inputWrap.appendChild(actionsWrap)
+
   passField.appendChild(passLabel)
-  passField.appendChild(passInput)
+  passField.appendChild(inputWrap)
+
+  // Toggle behavior: swap input type and update accessible attributes/icons
+  function setVisible(visible: boolean) {
+    passInput.type = visible ? 'text' : 'password'
+    toggleBtn.setAttribute('aria-pressed', visible ? 'true' : 'false')
+    toggleBtn.setAttribute('aria-label', visible ? 'Hide password' : 'Show password')
+    // Replace eye icon to reflect state while preserving layout
+    toggleBtn.innerHTML = visible ? `
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--eye-open" aria-hidden="true">
+        <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M17 7l-10 10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>` : `
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--eye-closed" aria-hidden="true">
+        <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M3 3l18 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`
+  }
+
+  toggleBtn.addEventListener('click', () => {
+    setVisible(toggleBtn.getAttribute('aria-pressed') === 'true' ? false : true)
+    // Keep focus on the input after toggling for smoother keyboard flow
+    passInput.focus()
+  })
+
+  // Keyboard: allow Enter/Space to toggle when toggleBtn is focused (native button covers this)
+
+  // Update status icon based on field state: error, non-empty (success), or neutral
+  function updateStatus() {
+    const svg = statusIcon.querySelector('svg') as SVGElement
+    if (passField.classList.contains('has-error')) {
+      statusIcon.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--error" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M9.5 9.5l5 5M14.5 9.5l-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>`
+      statusIcon.classList.add('is-error')
+      statusIcon.classList.remove('is-success')
+    } else if (passInput.value && passInput.value.length > 0) {
+      statusIcon.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--success" aria-hidden="true">
+          <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`
+      statusIcon.classList.remove('is-error')
+      statusIcon.classList.add('is-success')
+    } else {
+      // neutral
+      statusIcon.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--neutral" aria-hidden="true">
+          <path d="M12 2v20M2 12h20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`
+      statusIcon.classList.remove('is-error')
+      statusIcon.classList.remove('is-success')
+    }
+  }
+
+  // Keep status in sync when input changes or field classes change
+  passInput.addEventListener('input', updateStatus)
+  // when errors are applied externally (e.g. after auth), update status
+  const obs = new MutationObserver(updateStatus)
+  obs.observe(passField, { attributes: true, attributeFilter: ['class'] })
+
+  // initialize
+  updateStatus()
 
   const actions = document.createElement('div')
   actions.className = 'actions'
