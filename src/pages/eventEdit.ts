@@ -38,60 +38,80 @@ export function renderEventEdit(params: Record<string, string>) {
       <form id="event-form" novalidate>
         <div id="form-error" class="error-text mb-2" role="alert" style="display:none"></div>
         <div class="stack">
-          <div class="form-field">
-            <label class="form-label" for="title">Title</label>
-            <input id="title" name="title" class="input" placeholder="Event title" />
-            <div id="err-title" class="error-text" aria-live="polite"></div>
-          </div>
+          <section class="form-section">
+            <h2 class="form-section__title">Basic info</h2>
+            <p class="form-section__desc muted">Update the event title used across listings and emails.</p>
+            <div class="form-field">
+              <label class="form-label" for="title">Title</label>
+              <input id="title" name="title" class="input" placeholder="Event title" />
+              <div id="err-title" class="error-text" aria-live="polite"></div>
+            </div>
+          </section>
 
+          <section class="form-section">
+            <h2 class="form-section__title">Description</h2>
+            <p class="form-section__desc muted">Edit the description shown to attendees. Use the toolbar for simple formatting.</p>
             <div class="form-field">
               <label class="form-label" for="descriptionEditor">Description</label>
-            <div class="stack stack--sm">
-               <div id="desc-toolbar" class="row row--sm">
-                <button type="button" class="btn btn--ghost btn--sm" data-cmd="bold">B</button>
-                <button type="button" class="btn btn--ghost btn--sm" data-cmd="italic">i</button>
-                <button type="button" class="btn btn--ghost btn--sm" data-cmd="insertUnorderedList">• List</button>
-                <button type="button" class="btn btn--ghost btn--sm" id="add-link">Link</button>
+              <div class="stack stack--sm">
+                <div id="desc-toolbar" class="row row--sm">
+                  <button type="button" class="btn btn--ghost btn--sm" data-cmd="bold">B</button>
+                  <button type="button" class="btn btn--ghost btn--sm" data-cmd="italic">i</button>
+                  <button type="button" class="btn btn--ghost btn--sm" data-cmd="insertUnorderedList">• List</button>
+                  <button type="button" class="btn btn--ghost btn--sm" id="add-link">Link</button>
+                </div>
+                <div id="descriptionEditor" class="textarea" contenteditable="true" role="textbox" aria-multiline="true" placeholder="Short description and details" style="min-height:120px;"></div>
+                <textarea id="description" name="description" style="display:none"></textarea>
+                <div id="err-description" class="error-text" aria-live="polite"></div>
               </div>
-              <div id="descriptionEditor" class="textarea" contenteditable="true" role="textbox" aria-multiline="true" placeholder="Short description and details" style="min-height:120px;"></div>
-              <textarea id="description" name="description" style="display:none"></textarea>
-              <div id="err-description" class="error-text" aria-live="polite"></div>
             </div>
-          </div>
+          </section>
 
+          <section class="form-section">
+            <h2 class="form-section__title">Cover image</h2>
+            <p class="form-section__desc muted">Provide an image URL or upload a file to show on the event page.</p>
             <div class="form-field">
-            <label class="form-label">Cover image</label>
-            <div class="row row--sm">
-              <input id="heroUrl" class="input" placeholder="Image URL (jpg/png)" />
-              <label class="row row--sm" style="display:inline-flex;">
-                <input id="heroFile" type="file" accept="image/jpeg,image/png" style="display:none" />
-                <button type="button" class="btn btn--secondary btn--sm" id="choose-file">Upload</button>
-              </label>
+              <label class="form-label">Cover image</label>
+              <div class="row row--sm">
+                <input id="heroUrl" class="input" placeholder="Image URL (jpg/png)" />
+                <label class="row row--sm" style="display:inline-flex;">
+                  <input id="heroFile" type="file" accept="image/jpeg,image/png" style="display:none" />
+                  <button type="button" class="btn btn--secondary btn--sm" id="choose-file">Upload</button>
+                </label>
+              </div>
+              <div id="hero-preview" class="mt-2"></div>
+              <div id="err-heroImage" class="error-text" aria-live="polite"></div>
             </div>
-            <div id="hero-preview" class="mt-2"></div>
-            <div id="err-heroImage" class="error-text" aria-live="polite"></div>
-          </div>
+          </section>
 
-          <div class="stack stack--md">
+          <section class="form-section">
+            <h2 class="form-section__title">Date & time</h2>
+            <p class="form-section__desc muted">Set the start and end times. Published events require valid dates.</p>
+            <div class="stack stack--md">
+              <div class="form-field">
+                <label class="form-label">Start date & time</label>
+                <input id="start" type="datetime-local" class="input" />
+                <div id="err-startDate" class="error-text" aria-live="polite"></div>
+              </div>
+              <div class="form-field">
+                <label class="form-label">End date & time</label>
+                <input id="end" type="datetime-local" class="input" />
+                <div id="err-endDate" class="error-text" aria-live="polite"></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="form-section">
+            <h2 class="form-section__title">Location</h2>
+            <p class="form-section__desc muted">Update the venue address or leave blank for online events.</p>
             <div class="form-field">
-              <label class="form-label">Start date & time</label>
-              <input id="start" type="datetime-local" class="input" />
-              <div id="err-startDate" class="error-text" aria-live="polite"></div>
+              <label class="form-label" for="address">Address</label>
+              <input id="address" class="input" placeholder="Street address, city" />
+              <div id="err-location" class="error-text" aria-live="polite"></div>
             </div>
-            <div class="form-field">
-              <label class="form-label">End date & time</label>
-              <input id="end" type="datetime-local" class="input" />
-              <div id="err-endDate" class="error-text" aria-live="polite"></div>
-            </div>
-          </div>
+          </section>
 
-          <div class="form-field">
-            <label class="form-label" for="address">Address</label>
-            <input id="address" class="input" placeholder="Street address, city" />
-            <div id="err-location" class="error-text" aria-live="polite"></div>
-          </div>
-
-          <div class="actions actions--right">
+          <div class="actions actions--right mt-3">
             <button type="button" id="save-draft" class="btn btn--ghost">Save as draft</button>
             <button type="button" id="publish" class="btn btn--primary">Publish</button>
           </div>

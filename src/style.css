@@ -600,6 +600,13 @@ h1 {
 #descriptionEditor { outline: none; }
 .success-text { color: var(--color-success, #0f9d58); font-size: 13px }
 
+/* Form sectioning for clarity */
+.form-section { padding: 14px 0; border-top: 1px solid var(--neutral-100); }
+.form-section:first-child { border-top: none; padding-top: 0; }
+.form-section__title { margin: 0 0 8px 0; font-size: 15px; font-weight: var(--fw-semibold); color: var(--neutral-900); }
+.form-section__desc { margin: 0 0 12px 0; color: var(--neutral-700); font-size: 13px }
+.mt-3 { margin-top: 12px }
+
 @media (max-width: 900px) {
   .events-grid { grid-template-columns: 1fr; }
 }
