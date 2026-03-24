@@ -27,18 +27,18 @@ export function renderLogin() {
   card.setAttribute('role', 'region')
   card.setAttribute('aria-labelledby', 'signin-heading')
 
+  // Use clear form sections to enforce consistent vertical rhythm
+  const cardInner = document.createElement('div')
+  cardInner.className = 'card__inner'
+
   // credentials hint (visible, subtle) — keep demo credentials plainly visible and labelled
   const creds = document.createElement('div')
-  creds.className = 'login-credentials'
+  creds.className = 'login-credentials form-section'
   creds.innerHTML = `
-    <div class="row">
-      <div style="width:100%;">
-        <div class="muted text-sm" style="margin-bottom:6px;">Demo account — use these credentials to sign in</div>
-        <div class="row row--sm" style="flex-direction:column; gap:6px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px;">
-          <div><span class="muted" style="margin-right:8px; font-size:13px;">Email</span><span class="badge" aria-label="demo email">${demoCredentials.email}</span></div>
-          <div><span class="muted" style="margin-right:8px; font-size:13px;">Password</span><span class="badge" aria-label="demo password">${demoCredentials.password}</span></div>
-        </div>
-      </div>
+    <div class="form-section__title muted text-sm">Demo account — use these credentials to sign in</div>
+    <div class="row row--sm" style="flex-direction:column; gap:6px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size:13px; margin-top:6px;">
+      <div><span class="muted" style="margin-right:8px; font-size:13px;">Email</span><span class="badge" aria-label="demo email">${demoCredentials.email}</span></div>
+      <div><span class="muted" style="margin-right:8px; font-size:13px;">Password</span><span class="badge" aria-label="demo password">${demoCredentials.password}</span></div>
     </div>`
 
   const form = document.createElement('form')
@@ -61,6 +61,7 @@ export function renderLogin() {
   emailInput.value = demoCredentials.email
   emailInput.autofocus = true
   emailInput.required = true
+  emailInput.setAttribute('aria-label', 'Email')
   emailField.appendChild(emailLabel)
   emailField.appendChild(emailInput)
 
@@ -77,15 +78,18 @@ export function renderLogin() {
   passInput.type = 'password'
   passInput.value = demoCredentials.password
   passInput.required = true
+  passInput.setAttribute('aria-label', 'Password')
   passField.appendChild(passLabel)
   passField.appendChild(passInput)
 
   const actions = document.createElement('div')
-  actions.className = 'actions mt-3'
+  actions.className = 'actions'
   const submit = document.createElement('button')
   submit.className = 'btn btn--primary'
   submit.type = 'submit'
   submit.textContent = 'Sign in'
+  // Make primary action prominent and keyboard-friendly
+  submit.setAttribute('aria-label', 'Sign in')
   actions.appendChild(submit)
 
   const errorEl = document.createElement('div')
@@ -95,13 +99,22 @@ export function renderLogin() {
   errorEl.classList.add('mt-2')
   errorEl.style.display = 'none'
 
-  form.appendChild(emailField)
-  form.appendChild(passField)
+  // Structure form into logical sections for consistent vertical rhythm
+  const credsSection = creds
+  credsSection.classList.add('form-section')
+
+  const fieldsSection = document.createElement('div')
+  fieldsSection.className = 'form-section'
+  fieldsSection.appendChild(emailField)
+  fieldsSection.appendChild(passField)
+
+  form.appendChild(fieldsSection)
   form.appendChild(actions)
   form.appendChild(errorEl)
 
-  card.appendChild(creds)
-  card.appendChild(form)
+  cardInner.appendChild(credsSection)
+  cardInner.appendChild(form)
+  card.appendChild(cardInner)
 
   wrapper.appendChild(title)
   wrapper.appendChild(card)
