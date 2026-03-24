@@ -690,63 +690,96 @@ h1 {
 .page .card { border-radius: var(--radius-md); border: 1px solid var(--neutral-200); box-shadow: var(--shadow-card); }
 .page #admin-events.card { padding: 16px }
 
-/* Admin card variant: compact, scannable, task-oriented */
+/* Admin card variant: compact, scannable, manager-focused */
 .event-card--admin {
+  display: flex; /* explicit for clarity */
   flex-direction: row;
-  align-items: center;
-  gap: 12px;
-  padding: 8px;
+  align-items: stretch;
+  gap: 14px;
+  padding: 12px;
+  min-height: 104px; /* comfortable touch target and consistent rows */
+}
+
+/* Media treatment: consistent, slightly elevated and cropped for scanning */
+.event-card--admin .event-card__media-wrap {
+  flex: 0 0 140px;
+  width: 140px;
+  aspect-ratio: 4/3;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--neutral-100);
+  box-shadow: inset 0 0 0 1px rgba(16,24,40,0.02);
 }
 .event-card--admin .event-card__media {
-  width: 136px;
-  aspect-ratio: 4/3;
-  object-fit: cover;
-  flex: 0 0 136px;
-  border-radius: 8px;
-}
-.event-card--admin .event-card__body {
-  padding: 8px 10px;
-  gap: 6px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
   width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 220ms ease, filter 220ms ease;
 }
+
+/* Body becomes a two-column grid: content + actions for clear hierarchy */
+.event-card--admin .event-card__body {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 6px 0 6px 0; /* leverage card padding for outer spacing */
+  width: 100%;
+  background: transparent; /* let card surface provide background */
+}
+
 .event-card--admin .event-card__header {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 6px;
 }
 .event-card--admin .flex-1 { min-width: 0 }
-.event-card--admin .event-card__title { font-size: var(--fs-md); margin: 0; }
-.event-card--admin .event-card__date { font-size: 13px }
+.event-card--admin .event-card__title { font-size: 15px; margin: 0; line-height: 1.18 }
+.event-card--admin .event-card__date { font-size: 13px; color: var(--neutral-700); font-weight:600 }
 .event-card--admin .event-card__meta { flex-direction: row; gap: 10px; align-items: center; color: var(--neutral-600); }
 
-/* Actions row: small, inline, aligned to the right for quick access */
-.event-card--admin .actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
-.event-card--admin .actions .btn { height: 30px; padding: 6px 9px; font-size: 13px }
+/* Actions column: compact vertical stack on narrow widths, inline on desktop */
+.event-card--admin .actions { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; justify-content: center; }
+.event-card--admin .actions .btn { height: 34px; padding: 6px 10px; font-size: 13px; border-radius: 8px }
+.event-card--admin .actions .btn--ghost { background: transparent }
+.event-card--admin .actions a.btn--ghost:hover { background: rgba(16,24,40,0.03) }
 
-/* Polished admin-specific refinements to improve scanability */
-.event-card--admin .event-card__title { font-size: 15px; font-weight: 600; color: var(--neutral-900); }
+/* Polished admin-specific refinements: stronger title, restrained date accent */
+.event-card--admin .event-card__title { font-weight: 600; color: var(--neutral-900); }
 .event-card--admin .event-card__date { color: var(--brand-700); font-weight: 700; }
-.event-card--admin .actions a.btn--ghost { border: 1px solid transparent }
-.event-card--admin .actions a.btn--ghost:hover { background: rgba(16,24,40,0.03); border-color: rgba(16,24,40,0.04) }
 .event-card--admin .actions .btn--secondary { box-shadow: 0 3px 8px rgba(2,6,23,0.04) }
 
-/* Status badge: keep visible but more compact and attached to header */
+/* Status badge: compact, aligned with header on the left column */
 .event-card--admin .badge { margin-left: 8px; padding: 6px 8px; font-size: 12px; font-weight: var(--fw-semibold); }
 
-/* Reduce hover motion for manager view to keep the layout stable */
-.event-card--admin:hover,
-.event-card--admin:focus-within {
+/* Reduce hover motion for manager view; subtle emphasis on media and actions */
+.event-card--admin:hover, .event-card--admin:focus-within {
   transform: none;
-  box-shadow: var(--shadow-subtle);
+  box-shadow: 0 6px 18px rgba(2,6,23,0.04);
   border-color: rgba(16,163,107,0.06);
 }
 
+.event-card--admin:hover .event-card__media { transform: scale(1.02) }
+
+/* Make action buttons show a subtle lift on hover rather than elevating entire card */
+.event-card--admin .actions .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(2,6,23,0.06) }
+
+/* Tighten description/meta spacing for scanability */
 /* Tighten description/meta spacing for scanability */
 .event-card--admin .event-card__dek { display: none }
 .event-card--admin .event-card__location { font-size: 13px; color: var(--neutral-600) }
+
+/* Admins shouldn't rely on the location emoji; hide it to keep rows tidy */
+.event-card--admin .event-card__location::before { content: none }
+
+/* Responsive: stack admin cards on narrow screens for readability and touch */
+@media (max-width: 900px) {
+  .event-card--admin { flex-direction: column; padding: 12px; min-height: auto }
+  .event-card--admin .event-card__media-wrap { width: 100%; flex: none; aspect-ratio: 16/9 }
+  .event-card--admin .event-card__body { grid-template-columns: 1fr; gap: 10px }
+  .event-card--admin .actions { flex-direction: row; justify-content: flex-start }
+}
 
 
 /* Modal component styles: clear, concise, not alarming */
