@@ -4,6 +4,7 @@ import { renderLogin } from './pages/login'
 import { renderAdmin } from './pages/admin'
 import { renderEventsList } from './pages/eventsList'
 import { renderEventDetail } from './pages/eventDetail'
+import { renderEventCreate } from './pages/eventCreate'
 import './style.css'
 
 import { isAuthenticated, logoutSession, onSessionChange } from './session'
@@ -13,8 +14,8 @@ const routes = [
   { path: '/login', render: renderLogin },
   { path: '/admin', render: renderAdmin, protected: true },
   { path: '/events', render: renderEventsList },
+  { path: '/events/create', render: renderEventCreate, protected: true },
   { path: '/events/:id', render: renderEventDetail },
-  // future: /events/create, /events/:id/edit
 ]
 
 export function createAppShell(container: HTMLElement) {
