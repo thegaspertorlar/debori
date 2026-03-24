@@ -28,9 +28,18 @@ export function renderEventCreate() {
           </div>
 
           <div class="form-field">
-            <label class="form-label" for="description">Description</label>
-            <textarea id="description" name="description" class="textarea" placeholder="Short description and details"></textarea>
-            <div id="err-description" class="error-text" aria-live="polite"></div>
+            <label class="form-label" for="descriptionEditor">Description</label>
+            <div style="display:flex; gap:8px; flex-direction:column">
+              <div id="desc-toolbar" style="display:flex; gap:8px;">
+                <button type="button" class="btn btn--ghost btn--sm" data-cmd="bold">B</button>
+                <button type="button" class="btn btn--ghost btn--sm" data-cmd="italic">i</button>
+                <button type="button" class="btn btn--ghost btn--sm" data-cmd="insertUnorderedList">• List</button>
+                <button type="button" class="btn btn--ghost btn--sm" id="add-link">Link</button>
+              </div>
+              <div id="descriptionEditor" class="textarea" contenteditable="true" role="textbox" aria-multiline="true" placeholder="Short description and details" style="min-height:120px;"></div>
+              <textarea id="description" name="description" style="display:none"></textarea>
+              <div id="err-description" class="error-text" aria-live="polite"></div>
+            </div>
           </div>
 
           <div class="form-field">
@@ -82,9 +91,12 @@ export function renderEventCreate() {
   const heroFile = el.querySelector('#heroFile') as HTMLInputElement
   const chooseFile = el.querySelector('#choose-file') as HTMLButtonElement
   const heroPreview = el.querySelector('#hero-preview') as HTMLElement
+  const descEditor = el.querySelector('#descriptionEditor') as HTMLElement
   const startInput = el.querySelector('#start') as HTMLInputElement
   const endInput = el.querySelector('#end') as HTMLInputElement
   const addressInput = el.querySelector('#address') as HTMLInputElement
+  const descToolbar = el.querySelector('#desc-toolbar') as HTMLElement
+  const addLinkBtn = el.querySelector('#add-link') as HTMLButtonElement
 
   const errMap: Record<string, HTMLElement> = {
     title: el.querySelector('#err-title') as HTMLElement,
@@ -98,6 +110,94 @@ export function renderEventCreate() {
   function clearErrors() {
     Object.values(errMap).forEach((n) => (n.textContent = ''))
   }
+
+  // Simple HTML sanitizer that allows a small set of tags and ensures links are safe
+  function sanitizeHtml(html: string) {
+    const allowed = new Set(['B', 'STRONG', 'I', 'EM', 'UL', 'OL', 'LI', 'A', 'P', 'BR'])
+    const doc = document.createElement('div')
+    doc.innerHTML = html || ''
+
+    function walk(node: Node) {
+      const toRemove: Node[] = []
+      node.childNodes.forEach((child) => {
+        if (child.nodeType === Node.ELEMENT_NODE) {
+          const el = child as HTMLElement
+          const tag = el.tagName.toUpperCase()
+          if (!allowed.has(tag)) {
+            // unwrap the element: move its children up
+            while (el.firstChild) node.insertBefore(el.firstChild, el)
+            toRemove.push(el)
+          } else {
+            // strip all attributes except href on anchors
+            if (tag === 'A') {
+              const href = el.getAttribute('href') || ''
+              // allow only http(s) and mailto links
+              if (!href.match(/^https?:\/\//) && !href.match(/^mailto:/)) {
+                el.removeAttribute('href')
+              } else {
+                el.setAttribute('rel', 'noopener noreferrer')
+                el.setAttribute('target', '_blank')
+              }
+            } else {
+              // remove attributes
+              Array.from(el.attributes).forEach((a) => el.removeAttribute(a.name))
+            }
+            walk(el)
+          }
+        } else if (child.nodeType === Node.TEXT_NODE) {
+          // ok
+        } else {
+          toRemove.push(child)
+        }
+      })
+      toRemove.forEach((n) => n.parentNode && n.parentNode.removeChild(n))
+    }
+
+    walk(doc)
+    return doc.innerHTML
+  }
+
+  function updateHiddenFromEditor() {
+    if (!descEditor) return
+    // normalize: wrap text nodes into <p>
+    // we will simply take innerHTML and sanitize
+    const html = descEditor.innerHTML
+    descInput.value = sanitizeHtml(html)
+  }
+
+  // wire toolbar
+  if (descToolbar) {
+    descToolbar.addEventListener('click', (ev) => {
+      const btn = (ev.target as HTMLElement).closest('button') as HTMLButtonElement | null
+      if (!btn) return
+      const cmd = btn.getAttribute('data-cmd')
+      if (!cmd) return
+      // use execCommand for lightweight formatting
+      document.execCommand(cmd, false)
+      updateHiddenFromEditor()
+      descEditor.focus()
+    })
+  }
+
+  if (addLinkBtn) {
+    addLinkBtn.addEventListener('click', () => {
+      const url = window.prompt('Enter a URL (https://...)') || ''
+      if (!url) return
+      // basic normalization
+      const safeUrl = url.trim()
+      if (!safeUrl.match(/^https?:\/\//) && !safeUrl.match(/^mailto:/)) {
+        alert('Please enter a valid URL starting with http:// or https://')
+        return
+      }
+      document.execCommand('createLink', false, safeUrl)
+      updateHiddenFromEditor()
+      descEditor.focus()
+    })
+  }
+
+  descEditor.addEventListener('input', () => {
+    updateHiddenFromEditor()
+  })
 
   function renderPreviewFromUrl(url: string) {
     heroPreview.innerHTML = ''
@@ -116,26 +216,80 @@ export function renderEventCreate() {
   heroUrl.addEventListener('input', () => {
     // clear file selection if user typed URL
     heroFile.value = ''
+    errMap.heroImage.textContent = ''
     renderPreviewFromUrl(heroUrl.value.trim())
   })
 
   chooseFile.addEventListener('click', () => heroFile.click())
   heroFile.addEventListener('change', () => {
     const f = heroFile.files && heroFile.files[0]
+    heroPreview.innerHTML = ''
+    errMap.heroImage.textContent = ''
     if (!f) return
+    // client-side validation
+    const MAX_BYTES = 8 * 1024 * 1024 // 8 MB
+    const allowed = ['image/jpeg', 'image/png']
+    if (!allowed.includes(f.type)) {
+      errMap.heroImage.textContent = 'Invalid file type. Only JPEG and PNG are allowed.'
+      heroFile.value = ''
+      return
+    }
+    if (f.size > MAX_BYTES) {
+      errMap.heroImage.textContent = 'File too large. Maximum size is 8 MB.'
+      heroFile.value = ''
+      return
+    }
+
     // clear URL field
     heroUrl.value = ''
-    heroPreview.innerHTML = ''
+
+    const container = document.createElement('div')
+    container.style.display = 'flex'
+    container.style.alignItems = 'center'
+    container.style.gap = '12px'
+
     const img = document.createElement('img')
     img.style.maxWidth = '240px'
     img.style.maxHeight = '140px'
     img.style.borderRadius = '8px'
     img.style.objectFit = 'cover'
     img.alt = f.name
+
+    const meta = document.createElement('div')
+    meta.style.display = 'flex'
+    meta.style.flexDirection = 'column'
+    meta.style.gap = '6px'
+
+    const name = document.createElement('div')
+    name.textContent = f.name + ' • ' + (Math.round(f.size / 1024) + ' KB')
+    name.style.fontSize = '13px'
+    name.style.color = 'var(--neutral-700)'
+
+    const ok = document.createElement('div')
+    ok.textContent = 'Image ready — preview below.'
+    ok.className = 'success-text'
+
+    const clearBtn = document.createElement('button')
+    clearBtn.type = 'button'
+    clearBtn.className = 'btn btn--ghost btn--sm'
+    clearBtn.textContent = 'Remove'
+    clearBtn.addEventListener('click', () => {
+      heroFile.value = ''
+      heroPreview.innerHTML = ''
+      errMap.heroImage.textContent = ''
+    })
+
+    meta.appendChild(name)
+    meta.appendChild(ok)
+    meta.appendChild(clearBtn)
+
     const reader = new FileReader()
     reader.onload = () => { img.src = String(reader.result) }
     reader.readAsDataURL(f)
-    heroPreview.appendChild(img)
+
+    container.appendChild(img)
+    container.appendChild(meta)
+    heroPreview.appendChild(container)
   })
 
   async function submit(status: EventStatus) {

@@ -172,6 +172,15 @@ h1 {
 .event-card__meta { display:flex; flex-direction:column; gap:4px }
 .event-card__body .btn { margin-top: 6px }
 
+/* Lightweight editor toolbar and state */
+#desc-toolbar button { min-width:38px; padding:6px 8px; font-weight:600 }
+#descriptionEditor[placeholder]:empty:before {
+  content: attr(placeholder);
+  color: var(--neutral-500);
+}
+#descriptionEditor { outline: none; }
+.success-text { color: var(--color-success, #0f9d58); font-size: 13px }
+
 @media (max-width: 900px) {
   .events-grid { grid-template-columns: 1fr; }
 }
