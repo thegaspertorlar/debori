@@ -173,7 +173,7 @@ h1 {
 .page--login .auth-wrapper { display:flex; align-items:center; justify-content:center; min-height: calc(100vh - 96px); padding-top: 24px; padding-bottom: 24px; }
 .page--login .card { max-width: 520px; width: 100%; }
 .login-credentials { margin-bottom: 12px; background: linear-gradient(180deg, rgba(16,163,107,0.03), transparent); padding: 10px; border-radius: 8px; border: 1px solid rgba(16,163,107,0.06); }
-.login-credentials .badge { background: transparent; border: 1px solid var(--neutral-200); padding: 6px 10px; font-size: 13px; border-radius: 8px; color: var(--neutral-800); }
+.login-credentials .badge { background: transparent; border: 1px solid var(--neutral-200); padding: 6px 10px; font-size: 13px; border-radius: var(--radius-sm); color: var(--neutral-800); font-weight: var(--fw-medium); }
 
 .login-error { margin-top: 8px; }
 .has-error .input { border-color: var(--color-danger) !important; box-shadow: none !important; }
@@ -541,7 +541,7 @@ h1 {
 .event-card--admin .actions .btn { height: 30px; padding: 6px 9px; font-size: 13px }
 
 /* Status badge: keep visible but more compact and attached to header */
-.event-card--admin .badge { margin-left: 8px; padding: 6px 8px; font-size: 12px }
+.event-card--admin .badge { margin-left: 8px; padding: 6px 8px; font-size: 12px; font-weight: var(--fw-semibold); }
 
 /* Reduce hover motion for manager view to keep the layout stable */
 .event-card--admin:hover,

@@ -286,13 +286,34 @@ h4, .h4 { font-size: var(--fs-xl); line-height: 1.3; margin: 0 0 var(--space-2) 
 
 /* Badge */
 .badge {
-  display: inline-flex; align-items: center; gap:6px; padding: 4px 8px; font-size: var(--fs-xs);
-  border-radius: var(--radius-pill); background: var(--neutral-100); color: var(--neutral-700);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 8px;
+  font-size: var(--fs-xs);
+  line-height: 1;
+  min-height: 20px;
+  font-weight: var(--fw-semibold);
+  border-radius: var(--radius-pill);
+  background: var(--neutral-100);
+  color: var(--neutral-700);
+  border: 1px solid transparent;
 }
-.badge--subtle { background: var(--neutral-100); }
-.badge--success { background: var(--brand-100); color: var(--brand-700); }
-.badge--info { background: #e6f6ff; color: var(--color-info); }
-.badge--danger { background: #fff1f2; color: var(--color-danger); }
+.badge--subtle { background: var(--neutral-100); color: var(--neutral-700); }
+.badge--success { background: var(--brand-100); color: var(--brand-700); border-color: rgba(16,163,107,0.06); }
+.badge--info { background: #e6f6ff; color: var(--color-info); border-color: rgba(14,165,233,0.06); }
+.badge--danger { background: #fff1f2; color: var(--color-danger); border-color: rgba(239,68,68,0.06); }
+
+/* Outline / neutral variant used for credential chips and inline tokens */
+.badge--outline {
+  background: transparent;
+  color: var(--neutral-800);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-weight: var(--fw-medium);
+}
 
 /* Small utility classes */
 .muted { color: var(--neutral-600); }

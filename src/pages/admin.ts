@@ -21,11 +21,23 @@ function formatDateRange(start?: string, end?: string) {
 function createStatusBadge(status: EventStatus) {
   const span = document.createElement('span')
   span.className = 'badge'
+  // semantic modifier + accessible attributes
   if (status === EventStatus.Draft) span.classList.add('badge--subtle')
   if (status === EventStatus.Published) span.classList.add('badge--success')
   if (status === EventStatus.Past) span.classList.add('badge--info')
   if (status === EventStatus.Cancelled) span.classList.add('badge--danger')
-  span.textContent = status.charAt(0).toUpperCase() + status.slice(1)
+
+  // Consistent, predictable label text for badges across the product
+  const labelMap: Record<string, string> = {
+    [EventStatus.Draft]: 'Draft',
+    [EventStatus.Published]: 'Published',
+    [EventStatus.Past]: 'Past',
+    [EventStatus.Cancelled]: 'Cancelled',
+  }
+  const label = labelMap[status] || String(status)
+  span.textContent = label
+  span.setAttribute('data-status', String(status).toLowerCase())
+  span.setAttribute('aria-label', `Status: ${label}`)
   return span
 }
 
