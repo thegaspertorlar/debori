@@ -10,7 +10,7 @@ export function createLoadingCard(message = 'Loading…') {
       </div>
       <div class="state__content">
         <h3 class="state__title">${message}</h3>
-        <p class="muted state__message">Please wait — this usually only takes a moment.</p>
+        <p class="muted state__message">Please wait — this only takes a moment.</p>
       </div>
     </div>
   `
@@ -35,7 +35,7 @@ export function createErrorCard(title = 'Something went wrong', message?: string
         <p class="muted state__message">${message || 'We were unable to complete that request. You can try again or reach out to support if the issue persists.'}</p>
         <div class="state__actions mt-3">
           <button class="btn btn--primary state__retry">Try again</button>
-          <a class="btn btn--ghost" href="#/home">Home</a>
+          <a class="btn btn--secondary" href="#/home">Home</a>
         </div>
       </div>
     </div>
