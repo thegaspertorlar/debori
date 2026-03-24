@@ -345,10 +345,76 @@ h1 {
 .prose {
   color: var(--neutral-900);
   font-size: var(--fs-md);
-  line-height: 1.6;
+  line-height: 1.7; /* slightly more airy for long reading */
   max-width: 64ch; /* ideal reading measure */
+  font-weight: 400;
+  -webkit-font-smoothing:antialiased;
 }
-.prose p { margin: 0 0 18px 0 }
+
+/* Paragraphs: consistent rhythm and comfortable spacing */
+.prose p {
+  margin: 0 0 18px 0;
+  color: var(--neutral-800);
+  line-height: 1.65;
+  font-size: var(--fs-md);
+}
+.prose p:first-child { margin-top: 0 }
+
+/* Headings inside prose should feel part of the content hierarchy but not overpowering */
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  color: var(--neutral-900);
+  margin: 20px 0 8px 0;
+  line-height: 1.25;
+  font-weight: var(--fw-semibold);
+}
+.prose h1 { font-size: 28px }
+.prose h2 { font-size: 20px }
+.prose h3 { font-size: 16px }
+.prose h4 { font-size: 14px }
+
+/* Lists: comfortable spacing and clear markers */
+.prose ul,
+.prose ol {
+  margin: 0 0 18px 0;
+  padding-left: 1.15em; /* preserve nested rhythm */
+}
+.prose li { margin: 0.45em 0 }
+.prose ul ul,
+.prose ol ol { margin-top: 6px }
+
+/* Links: visible but calm, underline on hover for affordance */
+.prose a {
+  color: var(--brand-700);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(16,163,107,0.12);
+  transition: color 140ms ease, border-color 120ms ease;
+}
+.prose a:hover,
+.prose a:focus { color: var(--brand-800); border-color: rgba(16,163,107,0.26); }
+
+/* Blockquote: subtle, readable callout */
+.prose blockquote {
+  border-left: 4px solid rgba(16,163,107,0.10);
+  padding: 10px 16px;
+  margin: 12px 0 18px 0;
+  background: rgba(16,163,107,0.02);
+  color: var(--neutral-800);
+  border-radius: 6px;
+}
+
+/* Code and preformatted text: lightweight, monospaced, contained */
+.prose code { background: rgba(0,0,0,0.04); padding: 2px 6px; border-radius: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', monospace; font-size: 0.95em }
+.prose pre { background: rgba(0,0,0,0.04); padding: 12px; border-radius: 8px; overflow: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', monospace; font-size: 13px; margin: 12px 0 18px 0 }
+
+/* Images: keep them in-flow but not overwhelming */
+.prose img { max-width: 100%; border-radius: 6px; display: block; margin: 12px 0 }
+
+@media (max-width: 900px) {
+  .prose { max-width: 100% }
+}
 
 /* Aside compact card with clear grouping and sticky positioning on desktop */
 .card--compact { background: var(--color-surface); border-radius: 10px; padding: 16px; border: 1px solid var(--neutral-100); box-shadow: var(--shadow-subtle); }
