@@ -70,7 +70,8 @@ export function renderEventsList() {
     }
 
     const gridWrap = document.createElement('div')
-    gridWrap.className = 'events-grid-wrap'
+    // keep the grid constrained to the page container widths so cards align with page rhythm
+    gridWrap.className = 'events-grid-wrap container'
     const grid = document.createElement('div')
     grid.className = 'events-grid'
 
@@ -123,6 +124,8 @@ export function renderEventsList() {
         dateSpan.textContent = formatDateRange(ev.startDate, ev.endDate)
 
         const title = document.createElement('h3')
+        // provide a stable id so the card can reference it for accessible labelling
+        title.id = `event-title-${ev.id}`
         title.className = 'event-card__title'
         title.textContent = ev.title || 'Untitled event'
 
@@ -148,6 +151,10 @@ export function renderEventsList() {
 
         meta.appendChild(addr)
         body.appendChild(meta)
+
+        // make the anchor announce itself as an article/card for assistive tech
+        a.setAttribute('role', 'article')
+        a.setAttribute('aria-labelledby', title.id)
 
         a.appendChild(mediaWrap)
         a.appendChild(body)
