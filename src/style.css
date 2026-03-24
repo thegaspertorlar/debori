@@ -504,6 +504,58 @@ h1 {
 .page .card { border-radius: 10px; border: 1px solid var(--neutral-100); box-shadow: var(--shadow-subtle); }
 .page #admin-events.card { padding: 16px }
 
+/* Admin card variant: compact, scannable, task-oriented */
+.event-card--admin {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+}
+.event-card--admin .event-card__media {
+  width: 136px;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  flex: 0 0 136px;
+  border-radius: 8px;
+}
+.event-card--admin .event-card__body {
+  padding: 8px 10px;
+  gap: 6px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+}
+.event-card--admin .event-card__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.event-card--admin .flex-1 { min-width: 0 }
+.event-card--admin .event-card__title { font-size: var(--fs-md); margin: 0; }
+.event-card--admin .event-card__date { font-size: 13px }
+.event-card--admin .event-card__meta { flex-direction: row; gap: 10px; align-items: center; color: var(--neutral-600); }
+
+/* Actions row: small, inline, aligned to the right for quick access */
+.event-card--admin .actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.event-card--admin .actions .btn { height: 30px; padding: 6px 9px; font-size: 13px }
+
+/* Status badge: keep visible but more compact and attached to header */
+.event-card--admin .badge { margin-left: 8px; padding: 6px 8px; font-size: 12px }
+
+/* Reduce hover motion for manager view to keep the layout stable */
+.event-card--admin:hover,
+.event-card--admin:focus-within {
+  transform: none;
+  box-shadow: var(--shadow-subtle);
+  border-color: rgba(16,163,107,0.06);
+}
+
+/* Tighten description/meta spacing for scanability */
+.event-card--admin .event-card__dek { display: none }
+.event-card--admin .event-card__location { font-size: 13px; color: var(--neutral-600) }
+
+
 /* Modal component styles: clear, concise, not alarming */
 .modal-backdrop {
   position: fixed;

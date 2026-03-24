@@ -309,7 +309,8 @@ export function renderAdmin() {
     filtered.forEach((ev) => {
       // For past events, render as non-clickable card (read-only)
       const card = (ev.status === EventStatus.Past) ? document.createElement('div') : document.createElement('a')
-      card.className = 'event-card'
+      // Admin-specific variant: more compact, task-focused layout
+      card.className = 'event-card event-card--admin'
       if (card.tagName === 'A') {
         ;(card as HTMLAnchorElement).setAttribute('data-link', '')
         ;(card as HTMLAnchorElement).setAttribute('href', `#/events/${ev.id}`)
