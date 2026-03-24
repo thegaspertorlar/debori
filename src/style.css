@@ -448,10 +448,51 @@ h1 {
 /* Admin dashboard tweaks */
 .admin-controls { display:block }
 .admin-controls .btn--primary { box-shadow: 0 6px 18px rgba(2,6,23,0.06); }
-.admin-tabs { display:flex; gap:8px; align-items:center }
-.admin-tabs .btn { padding: 8px 12px; border-radius: 8px }
-.admin-tabs .btn--ghost { color: var(--neutral-700); }
-.admin-tabs .btn--outline { border-radius: 8px; }
+
+/* Admin status tabs: refined visual grouping and compact controls */
+.admin-tabs {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 6px; /* subtle breathing room */
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid rgba(16,163,107,0.04); /* very light grouping line */
+}
+
+.admin-tabs [role="tab"] {
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  min-width: 64px;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--neutral-700);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, box-shadow 140ms ease, transform 120ms ease;
+}
+
+.admin-tabs [role="tab"][aria-selected="true"] {
+  background: linear-gradient(180deg, rgba(16,163,107,0.08), rgba(16,163,107,0.04));
+  color: var(--brand-700);
+  border: 1px solid rgba(16,163,107,0.12);
+  box-shadow: 0 6px 14px rgba(16,163,107,0.04);
+  transform: translateY(-1px);
+}
+
+.admin-tabs [role="tab"]:not([aria-selected="true"]):hover {
+  background: rgba(16,163,107,0.03);
+}
+
+/* Make outline-style fallback consistent with selected state */
+.admin-tabs .btn--outline {
+  border-radius: 8px;
+}
+
 .admin-controls { border-bottom: 1px solid var(--neutral-100); }
 .admin-controls .muted { color: var(--neutral-600); font-size: 13px }
 .card--compact .btn { height: 36px }

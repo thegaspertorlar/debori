@@ -48,7 +48,7 @@ export function renderAdmin() {
     <div class="admin-controls card--compact mb-4">
       <div class="row justify-between" style="align-items:center; gap:12px">
         <div>
-          <div role="tablist" aria-label="Event status tabs" id="admin-tabs"></div>
+          <div role="tablist" aria-label="Event status tabs" id="admin-tabs" class="admin-tabs"></div>
           <div class="muted" style="margin-top:6px">Manager view · quick filters</div>
         </div>
         <div style="display:flex; align-items:center; gap:8px">
