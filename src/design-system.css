@@ -355,6 +355,21 @@ h4, .h4 { font-size: var(--fs-xl); line-height: 1.3; margin: 0 0 var(--space-2) 
 .mb-4 { margin-bottom: var(--space-4); }
 .text-sm { font-size: var(--fs-sm); }
 
+/* Subtle navigation link used in contexts where a non-CTA pattern is preferred
+   - Lightweight, small text link (not a button) to avoid visual weight
+*/
+.nav-link {
+  font-size: var(--fs-sm);
+  color: var(--neutral-600);
+  text-decoration: none;
+  display: inline-block;
+  padding: 4px 0;
+}
+.nav-link:hover {
+  color: var(--neutral-800);
+  text-decoration: underline;
+}
+
 /* Small spinner utility used by loading states */
 .spinner { width: 28px; height: 28px; border-radius: 50%; border: 4px solid rgba(0,0,0,0.06); border-top-color: var(--brand-600); animation: spin 900ms linear infinite; }
 .spinner--sm { width: 20px; height: 20px; border-width: 3px; }

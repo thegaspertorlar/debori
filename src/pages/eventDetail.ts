@@ -73,7 +73,7 @@ export function renderEventDetail(params: Record<string, string>) {
       if ((res.message || '').toLowerCase().includes('not found')) {
         el.innerHTML = `
           <div class="page-title"><button type="button" class="btn btn--ghost" id="back-btn" aria-label="Go back" title="Go back">←</button><h1>Event not found</h1></div>
-          <div class="card"><p class="muted">${res.message || 'We could not find that event.'}</p><p><a class="btn" href="#/events">Back to events</a></p></div>
+          <div class="card"><p class="muted">${res.message || 'We could not find that event.'}</p><p><a class="nav-link" href="#/events" data-link aria-label="Events">Events</a></p></div>
         `
         attachBackHandler()
         return
@@ -111,7 +111,7 @@ export function renderEventDetail(params: Record<string, string>) {
                 <div class="muted">${formatDateRange(ev.startDate, ev.endDate)}</div>
               </div>
                <div class="event-hero__card-actions">
-                 <a class="btn btn--primary" href="#/events">Back to events</a>
+                  <a class="nav-link" href="#/events" data-link aria-label="Events">Events</a>
                  ${showAdminControls ? `<a class="btn btn--outline" href="#/events/${ev.id}/edit">Edit</a>` : ``}
                </div>
             </div>
@@ -156,10 +156,10 @@ export function renderEventDetail(params: Record<string, string>) {
 
             ${typeof ev.priceCents === 'number' ? `<div class="aside-section"><div class="muted">Price</div><div class="strong">${(ev.priceCents / 100).toLocaleString(undefined, { style: 'currency', currency: ev.currency || 'USD' })}</div></div>` : ''}
 
-            <div class="aside-actions">
-              <a class="btn btn--primary" href="#/events">Back to events</a>
-              ${showAdminControls ? `<a class="btn btn--outline" href="#/events/${ev.id}/edit">Edit</a>` : ``}
-            </div>
+              <div class="aside-actions">
+                <a class="nav-link" href="#/events" data-link aria-label="Events">Events</a>
+                ${showAdminControls ? `<a class="btn btn--outline" href="#/events/${ev.id}/edit">Edit</a>` : ``}
+              </div>
           </aside>
         </div>
       </main>
