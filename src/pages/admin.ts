@@ -33,38 +33,47 @@ export function renderAdmin() {
   const el = document.createElement('div')
   el.className = 'page'
   el.innerHTML = `
-    <div class="page-title row row--md justify-between">
-      <div>
-        <h1>Events dashboard</h1>
-        <p class="muted">Operational overview — drafts, published and past events.</p>
-      </div>
-      <div class="row row--sm">
-        <a class="btn btn--primary btn--lg" href="#/events/create" data-link>Create event</a>
+    <div class="page-title">
+      <div class="row row--md justify-between">
+        <div class="events-page__title">
+          <h1>Events dashboard</h1>
+          <p class="muted">Operational overview — drafts, published and past events. Manager-focused controls for quick action.</p>
+        </div>
+        <div class="events-page__actions">
+          <a class="btn btn--primary" href="#/events/create" data-link>Create event</a>
+        </div>
       </div>
     </div>
 
-    <div class="card card--compact mb-4">
-      <div class="card-header">
-        <div class="row row--sm">
+    <div class="admin-controls card--compact mb-4">
+      <div class="row justify-between" style="align-items:center; gap:12px">
+        <div>
           <div role="tablist" aria-label="Event status tabs" id="admin-tabs"></div>
+          <div class="muted" style="margin-top:6px">Manager view · quick filters</div>
         </div>
-        <div class="muted">Manager view</div>
+        <div style="display:flex; align-items:center; gap:8px">
+          <a class="btn btn--ghost" href="#/events?sort=recent" data-link>Recent</a>
+          <a class="btn btn--ghost" href="#/events?filter=team" data-link>My team</a>
+          <a class="btn btn--primary" href="#/events/create" data-link>Create event</a>
+        </div>
       </div>
-      <div id="admin-events" style="min-height:120px">Loading events…</div>
     </div>
+
+    <div id="admin-events" class="card" style="min-height:120px; padding:0">Loading events…</div>
   `
 
   const tabsContainer = el.querySelector('#admin-tabs') as HTMLElement
   const listContainer = el.querySelector('#admin-events') as HTMLElement
 
   const tabs: { key: EventStatus | 'all'; label: string }[] = [
+    { key: 'all', label: 'All' },
     { key: EventStatus.Draft, label: 'Draft' },
     { key: EventStatus.Published, label: 'Published' },
     { key: EventStatus.Past, label: 'Past' },
   ]
 
   let events: Event[] = []
-  let active: EventStatus | 'Draft' | 'Published' | 'Past' = EventStatus.Published
+  let active: EventStatus | 'all' = 'all'
 
   // Simple modal helper to provide a confirmation / info dialog
   function showModal(opts: { title: string; body: string; actions?: Array<{ label: string; className?: string; onClick?: (m: any) => void }>; }) {
@@ -208,7 +217,13 @@ export function renderAdmin() {
       const btn = document.createElement('button')
       btn.className = 'btn btn--ghost'
       btn.type = 'button'
-      btn.textContent = t.label
+      // Compute live counts when available to help managers scan quickly
+      let count = 0
+      if (events && events.length) {
+        if (t.key === 'all') count = events.length
+        else count = events.filter((e) => e.status === (t.key as EventStatus)).length
+      }
+      btn.textContent = t.label + (count ? ` (${count})` : '')
       // ARIA tab roles and keyboard support
       btn.setAttribute('role', 'tab')
       btn.setAttribute('aria-controls', 'admin-events')

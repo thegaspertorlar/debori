@@ -446,11 +446,22 @@ h1 {
 }
 
 /* Admin dashboard tweaks */
-.admin-tabs { display:flex; gap:8px }
+.admin-controls { display:block }
+.admin-controls .btn--primary { box-shadow: 0 6px 18px rgba(2,6,23,0.06); }
+.admin-tabs { display:flex; gap:8px; align-items:center }
+.admin-tabs .btn { padding: 8px 12px; border-radius: 8px }
+.admin-tabs .btn--ghost { color: var(--neutral-700); }
+.admin-tabs .btn--outline { border-radius: 8px; }
+.admin-controls { border-bottom: 1px solid var(--neutral-100); }
+.admin-controls .muted { color: var(--neutral-600); font-size: 13px }
 .card--compact .btn { height: 36px }
 .event-card .btn { height: 32px }
 .event-card button.btn--destructive { background: linear-gradient(180deg, #ef4444, #dc2626); }
 .event-card .badge { margin-left: 8px }
+
+/* Make the events list visually separated from controls */
+.page .card { border-radius: 10px; border: 1px solid var(--neutral-100); box-shadow: var(--shadow-subtle); }
+.page #admin-events.card { padding: 16px }
 
 /* Modal component styles: clear, concise, not alarming */
 .modal-backdrop {
