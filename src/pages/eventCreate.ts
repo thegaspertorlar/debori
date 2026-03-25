@@ -463,8 +463,8 @@ export function renderEventCreate() {
          return
        }
 
-      // on success go back to admin dashboard
-      location.hash = '/admin'
+      // on success go back to the admin events list
+      location.hash = '/admin/events'
     } catch (err) {
       formError.textContent = 'An unexpected error occurred. Please try again.'
       formError.style.display = 'block'

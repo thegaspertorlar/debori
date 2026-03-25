@@ -229,8 +229,8 @@ export function renderEventEdit(params: Record<string, string>) {
     b.addEventListener('click', () => {
       try {
         if (history.length > 1) history.back()
-        else location.hash = '#/admin'
-      } catch (e) { location.hash = '#/admin' }
+        else location.hash = '#/admin/events'
+      } catch (e) { location.hash = '#/admin/events' }
     })
   }
 
@@ -448,8 +448,8 @@ export function renderEventEdit(params: Record<string, string>) {
         return
       }
 
-      // On success navigate back to admin for immediate visibility
-      location.hash = '/admin'
+      // On success navigate back to the admin events list for immediate visibility
+      location.hash = '/admin/events'
     } finally {
       (el.querySelector('#save-draft') as HTMLButtonElement).textContent = 'Save as draft'
       (el.querySelector('#publish') as HTMLButtonElement).textContent = 'Publish'
@@ -484,7 +484,7 @@ export function renderEventEdit(params: Record<string, string>) {
         if ((res.message || '').toLowerCase().includes('not found')) {
           el.innerHTML = `
             <div class="page-title"><button type="button" class="btn btn--ghost" id="back-btn" aria-label="Go back" title="Go back">←</button><h1>Event not found</h1></div>
-            <div class="card"><p class="muted">${res.message || 'We could not find that event.'}</p><p><a class="btn" href="#/admin">Back to dashboard</a></p></div>
+          <div class="card"><p class="muted">${res.message || 'We could not find that event.'}</p><p><a class="btn" href="#/admin/events">Back to events</a></p></div>
           `
           attachBackHandler()
           return

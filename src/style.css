@@ -255,8 +255,31 @@ h1 {
 .page--public { background: linear-gradient(180deg, #fbfcfd, var(--color-bg)); }
 .page-title { margin-bottom: var(--space-4); }
 
+/* Login page: present a warm, product-focused welcome state */
+.page--login .page-title--welcome {
+  text-align: center;
+  width: 100%;
+  max-width: 820px;
+}
+.page--login .page-title--welcome h1 {
+  font-size: clamp(28px, 4.5vw, 40px);
+  margin: 0 0 8px 0;
+  font-weight: 800;
+  color: var(--neutral-900);
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+}
+.page--login .page-title--welcome .page-title__sub {
+  margin: 0;
+  color: var(--neutral-700);
+  font-size: 16px;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 /* Auth / login specific layout: center the card for focused, quiet experience */
-.page--login .auth-wrapper { display:flex; align-items:center; justify-content:center; /* fill viewport below header while accounting for internal padding */ min-height: calc(100vh - var(--app-header-height) - 48px); padding-top: 24px; padding-bottom: 24px; }
+.page--login .auth-wrapper { display:flex; flex-direction: column; align-items:center; justify-content:center; gap:20px; /* fill viewport below header while accounting for internal padding */ min-height: calc(100vh - var(--app-header-height) - 48px); padding-top: 24px; padding-bottom: 24px; }
 .page--login .card { max-width: 520px; width: 100%; }
 .login-credentials { margin-bottom: 12px; background: linear-gradient(180deg, rgba(16,163,107,0.03), transparent); padding: 12px; border-radius: 10px; border: 1px solid rgba(16,163,107,0.06); }
 .login-credentials .badge { background: rgba(255,255,255,0.98); border: 1px solid var(--neutral-200); padding: 6px 10px; font-size: 13px; border-radius: var(--radius-sm); color: var(--neutral-900); font-weight: var(--fw-medium); box-shadow: var(--shadow-subtle); }
@@ -818,6 +841,65 @@ h1 {
 }
 
 
+/* Admin shell layout: top header, left sidebar, main workspace */
+.admin-shell { display: block; min-height: 100vh; background: var(--color-bg); }
+.admin-shell__header { position: sticky; top: 0; z-index: 60 }
+.admin-shell__body { display: flex; align-items: stretch; min-height: calc(100vh - var(--app-header-design-height)); }
+.admin-shell__sidebar {
+  width: 240px;
+  flex: 0 0 240px;
+  border-right: 1px solid var(--neutral-100);
+  background: var(--color-surface);
+  padding: 16px;
+  box-sizing: border-box;
+}
+.admin-sidebar-nav { display:flex; flex-direction:column; gap:8px }
+.admin-sidebar-nav a { color: var(--neutral-700); text-decoration:none; padding:8px 10px; border-radius:8px; font-weight:600 }
+.admin-sidebar-nav a.active { background: rgba(16,163,107,0.06); color: var(--brand-700) }
+.admin-sidebar-nav a:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(16,163,107,0.08);
+  border-radius: 8px;
+}
+.admin-shell__main { flex: 1 1 auto; padding: 24px; box-sizing: border-box; }
+
+/* Mobile: sidebar becomes off-canvas */
+.admin-nav-toggle { display: none; background: transparent; border: 0; font-size: 20px; cursor: pointer; margin-right: 8px }
+
+@media (max-width: 900px) {
+  .admin-shell__body { position: relative }
+  .admin-shell__sidebar {
+    position: fixed;
+    top: var(--app-header-height);
+    bottom: 0;
+    left: 0;
+    width: 80%;
+    max-width: 320px;
+    transform: translateX(-110%);
+    transition: transform 240ms cubic-bezier(.2,.9,.2,1);
+    z-index: 70;
+    box-shadow: var(--shadow-elevated);
+    border-right: 0;
+    padding: 16px 12px;
+  }
+  .admin-shell--sidebar-open .admin-shell__sidebar { transform: translateX(0) }
+  .admin-shell--sidebar-open::after {
+    content: '';
+    position: fixed;
+    inset: var(--app-header-height) 0 0 0;
+    background: rgba(0,0,0,0.24);
+    z-index: 65;
+  }
+  .admin-shell__main { padding: 16px }
+  .admin-nav-toggle { display: inline-block }
+}
+
+/* Ensure admin workspace content is visually separated from chrome */
+.admin-shell__main { background: transparent }
+.admin-shell__main > .card { box-shadow: var(--shadow-card); border-radius: 10px }
+
+
+
 /* Modal component styles: clear, concise, not alarming */
 .modal-backdrop {
   position: fixed;
@@ -938,6 +1020,44 @@ h1 {
   /* give the primary call-to-action a bit more presence */
   min-width: 120px;
 }
+
+/* Login-specific primary CTA refinements
+   - Slightly stronger presence for the authentication CTA to feel
+     polished and branded while remaining consistent with the design system
+   - Define default, hover, focus-visible, disabled and submitting states
+*/
+.page--login .card form .actions .btn--primary {
+  min-width: 140px;
+  background: linear-gradient(180deg, var(--brand-500), var(--brand-600));
+  color: white;
+  border-color: rgba(0,0,0,0.06);
+  box-shadow: 0 8px 26px rgba(16,24,40,0.10);
+  font-weight: var(--fw-semibold);
+}
+.page--login .card form .actions .btn--primary:hover {
+  transform: translateY(-2px);
+  filter: brightness(0.94);
+  box-shadow: 0 12px 36px rgba(16,24,40,0.12);
+}
+.page--login .card form .actions .btn--primary:active { transform: translateY(0); }
+.page--login .card form .actions .btn--primary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 6px rgba(16,163,107,0.10), 0 8px 26px rgba(16,24,40,0.10);
+  border-color: rgba(16,163,107,0.18);
+}
+.page--login .card form .actions .btn--primary[disabled],
+.page--login .card form .actions .btn--primary:disabled {
+  background: linear-gradient(180deg, var(--brand-200), var(--brand-200));
+  color: rgba(255,255,255,0.95);
+  box-shadow: none;
+  opacity: 0.88; /* remain legible while clearly disabled */
+}
+
+/* Submitting state: spinner and subtle progress affordance */
+.page--login .card form .actions .btn--primary.is-submitting { cursor: progress; }
+.page--login .card form .actions .btn--primary .btn__spinner { margin-right: 10px; display: inline-block; vertical-align: middle; }
+.page--login .card form .actions .btn--primary .btn__label { display: inline-block; vertical-align: middle; }
+
 .card form .actions .btn--sm { padding: 0 12px; }
 .card form .actions .btn--lg { padding: 0 18px; }
 
