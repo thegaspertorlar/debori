@@ -29,7 +29,6 @@ export function createAdminShell(container: HTMLElement) {
       <div class="header-left">
         <button class="admin-nav-toggle" aria-label="Toggle admin navigation" aria-expanded="false">☰</button>
         <a class="brand" href="#/admin/dashboard">Debori</a>
-        <a class="return-public" href="#/home" aria-label="Return to public site">Return to public site</a>
       </div>
       <div class="header-actions" style="margin-left:auto">
         <button class="btn btn--outline btn--sm admin-signout" type="button">Logout</button>
