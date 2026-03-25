@@ -316,14 +316,12 @@ export function renderAdmin() {
     grid.className = 'events-grid'
 
     filtered.forEach((ev) => {
-      // For past events, render as non-clickable card (read-only)
-      const card = (ev.status === EventStatus.Past) ? document.createElement('div') : document.createElement('a')
-      // Admin-specific variant: more compact, task-focused layout
-      card.className = 'event-card event-card--admin'
-      if (card.tagName === 'A') {
-        ;(card as HTMLAnchorElement).setAttribute('data-link', '')
-        ;(card as HTMLAnchorElement).setAttribute('href', `#/admin/events/${ev.id}`)
-      }
+      const card = document.createElement('article')
+      // Admin-specific variant: stacked layout optimized for scanning and action stability
+      card.className = 'event-card event-card--admin event-card--admin-layout'
+      const titleId = `admin-event-title-${ev.id}`
+      card.setAttribute('role', 'article')
+      card.setAttribute('aria-labelledby', titleId)
 
       // media wrapper so admin cards can also host overlays consistently
       const mediaWrap = document.createElement('div')
@@ -332,14 +330,18 @@ export function renderAdmin() {
       const img = document.createElement('img')
       img.className = 'event-card__media'
       img.alt = ev.title || 'Event image'
+      img.loading = 'lazy'
+      img.decoding = 'async'
       img.src = ev.heroImage || `https://picsum.photos/seed/${encodeURIComponent(ev.id)}/600/380`
 
       const body = document.createElement('div')
       body.className = 'event-card__body'
 
-      // header groups date + title on the left, status badge on the right
       const head = document.createElement('div')
       head.className = 'event-card__header'
+
+      const eyebrow = document.createElement('div')
+      eyebrow.className = 'event-card__eyebrow'
 
       const left = document.createElement('div')
       left.className = 'flex-1'
@@ -351,33 +353,37 @@ export function renderAdmin() {
       const title = document.createElement('h3')
       title.className = 'event-card__title'
       title.textContent = ev.title || 'Untitled event'
+      title.id = titleId
 
       left.appendChild(dateSpan)
       left.appendChild(title)
 
-      head.appendChild(left)
-      head.appendChild(createStatusBadge(ev.status))
+      eyebrow.appendChild(left)
+      eyebrow.appendChild(createStatusBadge(ev.status))
+
+      head.appendChild(eyebrow)
 
       const meta = document.createElement('div')
       meta.className = 'event-card__meta'
       const addr = document.createElement('div')
       addr.className = 'event-card__location'
-      addr.textContent = ev.isOnline ? 'Online' : (ev.location?.address || ev.location?.city || '')
+      addr.textContent = ev.isOnline ? 'Online' : (ev.location?.address || ev.location?.city || 'Location TBD')
 
       meta.appendChild(addr)
 
-    const actions = document.createElement('div')
-    actions.className = 'actions mt-2'
+      const footer = document.createElement('div')
+      footer.className = 'event-card__footer'
 
-    // View action: quick access to open the event (useful for scanning)
-    const view = document.createElement('a')
-    view.className = 'btn btn--ghost btn--sm'
-    view.href = `#/admin/events/${ev.id}`
-    view.setAttribute('data-link', '')
-    view.textContent = 'View'
-    // prevent the card-level click from also activating when clicking the inner control
-    view.addEventListener('click', (e) => { e.stopPropagation() })
-    actions.appendChild(view)
+      const actions = document.createElement('div')
+      actions.className = 'actions event-card__actions'
+
+      // View action: quick access to open the event (useful for scanning)
+      const view = document.createElement('a')
+      view.className = 'btn btn--ghost btn--sm'
+      view.href = `#/admin/events/${ev.id}`
+      view.setAttribute('data-link', '')
+      view.textContent = 'View'
+      actions.appendChild(view)
 
     // Edit action: available for Draft and Published (not Past)
     if (ev.status === EventStatus.Draft || ev.status === EventStatus.Published) {
@@ -386,7 +392,6 @@ export function renderAdmin() {
       edit.href = `#/admin/events/${ev.id}/edit`
       edit.setAttribute('data-link', '')
       edit.textContent = 'Edit'
-      edit.addEventListener('click', (e) => { e.stopPropagation() })
       actions.appendChild(edit)
     }
 
@@ -397,9 +402,7 @@ export function renderAdmin() {
         del.className = 'btn btn--destructive btn--sm'
         del.type = 'button'
         del.textContent = 'Delete'
-        del.addEventListener('click', async (e) => {
-          e.stopPropagation()
-          e.preventDefault()
+        del.addEventListener('click', async () => {
           showModal({
             title: 'Delete draft? This cannot be undone',
             body: `<p>Are you sure you want to permanently delete the draft "${(ev.title || 'Untitled event').replace(/</g, '&lt;')}"?</p><p class="muted">This action cannot be recovered.</p>`,
@@ -430,9 +433,7 @@ export function renderAdmin() {
         del.type = 'button'
         del.textContent = 'Delete'
         // visually indicate it's blocked but still interactive to educate the user
-        del.addEventListener('click', async (e) => {
-          e.stopPropagation()
-          e.preventDefault()
+        del.addEventListener('click', async () => {
           showModal({
             title: 'Published items cannot be deleted directly',
             body: `<p>The event "${(ev.title || 'Untitled event').replace(/</g, '&lt;')}" is currently published. To delete it, first move it back to <strong>Draft</strong>.</p><p class="muted">You can either edit the event and save as draft, or use the button below to move it to Draft now.</p>`,
@@ -459,26 +460,26 @@ export function renderAdmin() {
       }
 
       body.appendChild(head)
-        if (ev.shortDescription) {
-         const desc = document.createElement('div')
-         desc.className = 'muted text-sm'
-         desc.textContent = ev.shortDescription
-         body.appendChild(desc)
-       }
-      body.appendChild(meta)
-      body.appendChild(actions)
+      if (ev.shortDescription) {
+        const desc = document.createElement('div')
+        desc.className = 'event-card__dek event-card__dek--admin'
+        desc.textContent = ev.shortDescription
+        body.appendChild(desc)
+      }
+      footer.appendChild(meta)
+      footer.appendChild(actions)
+      body.appendChild(footer)
 
-      // date badge overlay for admin cards
-      const badge = document.createElement('div')
-      badge.className = 'event-card__date-badge'
+      mediaWrap.appendChild(img)
       if (ev.startDate) {
+        const badge = document.createElement('div')
+        badge.className = 'event-card__date-badge event-card__date-badge--admin'
         const d = new Date(ev.startDate)
         const month = d.toLocaleString(undefined, { month: 'short' }).toUpperCase()
         const day = d.getDate()
         badge.innerHTML = `<div class="event-card__date-badge-month">${month}</div><div class="event-card__date-badge-day">${day}</div>`
+        mediaWrap.appendChild(badge)
       }
-      mediaWrap.appendChild(img)
-      mediaWrap.appendChild(badge)
       card.appendChild(mediaWrap)
       card.appendChild(body)
 
