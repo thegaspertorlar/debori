@@ -102,7 +102,7 @@ function renderDetailStateHeader(title: string, subtitle: string, inAdmin: boole
   if (inAdmin) classes.push('page-title--detail--admin')
   return `
     <div class="${classes.join(' ')}">
-      ${inAdmin ? '' : '<button type="button" class="btn btn--ghost" id="back-btn" aria-label="Go back" title="Go back">←</button>'}
+      ${inAdmin ? '' : '<button type="button" class="btn btn--ghost" data-back-button aria-label="Back to events" title="Back to events">← <span>Back to events</span></button>'}
       <div>
         <h1>${escapeHtml(title)}</h1>
         <p class="muted">${escapeHtml(subtitle)}</p>
@@ -126,24 +126,36 @@ function renderPublicDetail(ev: Event, inAdmin: boolean) {
     <div class="event-hero event-hero--public" style="background-image: url('${escapeHtml(heroUrl)}');">
       <div class="event-hero__backdrop" aria-hidden="true"></div>
       <div class="event-hero__inner">
-        <button type="button" class="btn btn--ghost" id="back-btn" aria-label="Go back" title="Go back" style="margin-bottom:12px;">←</button>
-        <div class="event-hero__content">
-          <div class="event-hero__meta">
-            <time class="event-hero__pill" datetime="${escapeHtml(ev.startDate || '')}">${escapeHtml(formatFullDateRange(ev.startDate, ev.endDate))}</time>
-            <div class="event-hero__pill">${escapeHtml(locationSummary(ev))}</div>
-          </div>
-          <h1 class="event-hero__title">${escapeHtml(ev.title)}</h1>
-          ${ev.shortDescription ? `<p class="event-hero__dek">${escapeHtml(ev.shortDescription)}</p>` : ''}
+        <div class="event-hero__back-nav">
+          <button
+            type="button"
+            class="event-hero__back-button"
+            data-back-button
+            aria-label="Back to events"
+            title="Back to events"
+          >
+            <span class="event-hero__back-button-icon" aria-hidden="true">←</span>
+            <span class="event-hero__back-button-label">Back to events</span>
+          </button>
         </div>
-        <div class="event-hero__side">
-          <div class="event-hero__card">
-            <div class="event-hero__card-meta">
-              <div><strong>${escapeHtml(locationSummary(ev))}</strong></div>
-              <div class="muted">${escapeHtml(formatFullDateRange(ev.startDate, ev.endDate))}</div>
+        <div class="event-hero__body">
+          <div class="event-hero__content">
+            <div class="event-hero__meta">
+              <time class="event-hero__pill" datetime="${escapeHtml(ev.startDate || '')}">${escapeHtml(formatFullDateRange(ev.startDate, ev.endDate))}</time>
+              <div class="event-hero__pill">${escapeHtml(locationSummary(ev))}</div>
             </div>
-            <div class="event-hero__card-actions">
-              <a class="nav-link" href="${listHref(inAdmin)}" data-link aria-label="Events">Events</a>
-              <a class="btn btn--primary" href="#/events/${escapeHtml(ev.id)}/register" data-link aria-label="Register">Register</a>
+            <h1 class="event-hero__title">${escapeHtml(ev.title)}</h1>
+            ${ev.shortDescription ? `<p class="event-hero__dek">${escapeHtml(ev.shortDescription)}</p>` : ''}
+          </div>
+          <div class="event-hero__side">
+            <div class="event-hero__card">
+              <div class="event-hero__card-meta">
+                <div><strong>${escapeHtml(locationSummary(ev))}</strong></div>
+                <div class="muted">${escapeHtml(formatFullDateRange(ev.startDate, ev.endDate))}</div>
+              </div>
+              <div class="event-hero__card-actions">
+                <a class="btn btn--secondary" href="${listHref(inAdmin)}" data-link aria-label="Browse all events">Browse all events</a>
+              </div>
             </div>
           </div>
         </div>
@@ -183,9 +195,10 @@ function renderPublicDetail(ev: Event, inAdmin: boolean) {
           ${ev.capacity ? `<div class="aside-section"><div class="muted">Capacity</div><div class="strong">${escapeHtml(String(ev.capacity))}</div></div>` : ''}
           ${typeof ev.priceCents === 'number' ? `<div class="aside-section"><div class="muted">Price</div><div class="strong">${escapeHtml(formatCurrency(ev.priceCents, ev.currency || 'USD'))}</div></div>` : ''}
 
-          <div class="aside-actions">
-            <a class="btn btn--primary" href="#/events/${escapeHtml(ev.id)}/register" data-link aria-label="Register">Register</a>
-            <a class="nav-link" href="${listHref(inAdmin)}" data-link aria-label="Events">Events</a>
+          <div class="aside-note">
+            <div class="muted">Planning to attend?</div>
+            <p>Use the schedule and location details here to plan your visit, then explore more upcoming events.</p>
+            <a class="nav-link" href="${listHref(inAdmin)}" data-link aria-label="Browse all events">Browse all events</a>
           </div>
         </aside>
       </div>
@@ -377,19 +390,23 @@ export function renderEventDetail(params: Record<string, string>) {
   let detailFeedbackHtml = ''
 
   function attachBackHandler() {
-    const b = el.querySelector('#back-btn') as HTMLButtonElement | null
-    if (!b) return
-    b.addEventListener('click', () => {
-      try {
-        if (history.length > 1) history.back()
-        else {
+    const buttons = Array.from(el.querySelectorAll<HTMLButtonElement>('[data-back-button]'))
+    if (!buttons.length) return
+    buttons.forEach((button) => {
+      if (button.dataset.backBound === 'true') return
+      button.dataset.backBound = 'true'
+      button.addEventListener('click', () => {
+        try {
+          if (history.length > 1) history.back()
+          else {
+            const inAdmin = location.hash.replace(/^#/, '').startsWith('/admin')
+            location.hash = inAdmin ? '#/admin/events' : '#/events'
+          }
+        } catch (e) {
           const inAdmin = location.hash.replace(/^#/, '').startsWith('/admin')
           location.hash = inAdmin ? '#/admin/events' : '#/events'
         }
-      } catch (e) {
-        const inAdmin = location.hash.replace(/^#/, '').startsWith('/admin')
-        location.hash = inAdmin ? '#/admin/events' : '#/events'
-      }
+      })
     })
   }
 
@@ -445,7 +462,7 @@ export function renderEventDetail(params: Record<string, string>) {
       feedback.innerHTML = detailFeedbackHtml
       bindAdminActions()
     } else {
-      detailStateHeader.innerHTML = renderDetailStateHeader('Event', 'Loading…', false)
+      detailStateHeader.innerHTML = ''
       container.innerHTML = renderPublicDetail(res.data, inAdmin)
     }
 
