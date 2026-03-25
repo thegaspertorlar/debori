@@ -1,6 +1,8 @@
 import { getEventById } from '../api/mockApi'
+import { updateEvent } from '../api/mockApi'
 import { createLoadingCard, createErrorCard } from '../uiStates'
 import { isAuthenticated } from '../session'
+import { EventStatus, type Event } from '../models'
 
 function formatDateRange(start?: string, end?: string) {
   if (!start) return ''
@@ -24,6 +26,269 @@ function addressLine(loc?: any) {
   return parts.join(', ')
 }
 
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }[ch] as string))
+}
+
+function statusLabel(status: EventStatus) {
+  switch (status) {
+    case EventStatus.Draft: return 'Draft'
+    case EventStatus.Published: return 'Published'
+    case EventStatus.Past: return 'Past'
+    case EventStatus.Cancelled: return 'Cancelled'
+    default: return String(status)
+  }
+}
+
+function statusBadgeClass(status: EventStatus) {
+  if (status === EventStatus.Draft) return 'badge badge--subtle'
+  if (status === EventStatus.Published) return 'badge badge--success'
+  if (status === EventStatus.Past) return 'badge badge--info'
+  if (status === EventStatus.Cancelled) return 'badge badge--danger'
+  return 'badge'
+}
+
+function formatCurrency(priceCents?: number | null, currency = 'USD') {
+  if (typeof priceCents !== 'number') return 'Free'
+  return (priceCents / 100).toLocaleString(undefined, { style: 'currency', currency })
+}
+
+function formatDateTime(value?: string) {
+  if (!value) return 'TBA'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'TBA'
+  return date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' })
+}
+
+function formatFullDateRange(start?: string, end?: string) {
+  if (!start) return 'TBA'
+  const s = new Date(start)
+  if (Number.isNaN(s.getTime())) return 'TBA'
+  const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' }
+  const startStr = s.toLocaleString(undefined, opts)
+  if (!end) return startStr
+  const e = new Date(end)
+  if (Number.isNaN(e.getTime())) return startStr
+  const sameDay = s.toDateString() === e.toDateString()
+  if (sameDay) {
+    const endTime = e.toLocaleTimeString(undefined, { hour: 'numeric', minute: 'numeric' })
+    return `${s.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}, ${s.toLocaleTimeString(undefined, { hour: 'numeric', minute: 'numeric' })} — ${endTime}`
+  }
+  return `${startStr} — ${e.toLocaleString(undefined, opts)}`
+}
+
+function locationSummary(ev: Event) {
+  if (ev.isOnline) return 'Online event'
+  return addressLine(ev.location) || 'TBA'
+}
+
+function listHref(inAdmin: boolean) {
+  return inAdmin ? '#/admin/events' : '#/events'
+}
+
+function editHref(inAdmin: boolean, id: string) {
+  return inAdmin ? `#/admin/events/${id}/edit` : `#/events/${id}/edit`
+}
+
+function renderMetaItem(label: string, value: string) {
+  return `
+    <div class="event-admin-meta-item">
+      <div class="muted">${escapeHtml(label)}</div>
+      <div class="strong">${escapeHtml(value)}</div>
+    </div>
+  `
+}
+
+function renderPublicDetail(ev: Event, inAdmin: boolean) {
+  const heroUrl = ev.heroImage || `https://picsum.photos/seed/${encodeURIComponent(ev.id)}/1400/560`
+  return `
+    <div class="event-hero event-hero--public" style="background-image: url('${escapeHtml(heroUrl)}');">
+      <div class="event-hero__backdrop" aria-hidden="true"></div>
+      <div class="event-hero__inner">
+        <button type="button" class="btn btn--ghost" id="back-btn" aria-label="Go back" title="Go back" style="margin-bottom:12px;">←</button>
+        <div class="event-hero__content">
+          <div class="event-hero__meta">
+            <time class="event-hero__pill" datetime="${escapeHtml(ev.startDate || '')}">${escapeHtml(formatFullDateRange(ev.startDate, ev.endDate))}</time>
+            <div class="event-hero__pill">${escapeHtml(locationSummary(ev))}</div>
+          </div>
+          <h1 class="event-hero__title">${escapeHtml(ev.title)}</h1>
+          ${ev.shortDescription ? `<p class="event-hero__dek">${escapeHtml(ev.shortDescription)}</p>` : ''}
+        </div>
+        <div class="event-hero__side">
+          <div class="event-hero__card">
+            <div class="event-hero__card-meta">
+              <div><strong>${escapeHtml(locationSummary(ev))}</strong></div>
+              <div class="muted">${escapeHtml(formatFullDateRange(ev.startDate, ev.endDate))}</div>
+            </div>
+            <div class="event-hero__card-actions">
+              <a class="nav-link" href="${listHref(inAdmin)}" data-link aria-label="Events">Events</a>
+              <a class="btn btn--primary" href="#/events/${escapeHtml(ev.id)}/register" data-link aria-label="Register">Register</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <main class="event-detail event-detail--public">
+      <div class="event-detail__inner card">
+        <div class="event-detail__main">
+          <section class="event-summary">
+            ${ev.shortDescription ? `<p class="event-summary__dek">${escapeHtml(ev.shortDescription)}</p>` : ''}
+            <dl class="event-summary__meta">
+              <dt class="muted">Date &amp; time</dt>
+              <dd class="strong">${escapeHtml(formatFullDateRange(ev.startDate, ev.endDate))}</dd>
+              <dt class="muted">Location</dt>
+              <dd class="strong">${escapeHtml(locationSummary(ev))}</dd>
+            </dl>
+          </section>
+
+          <section class="event-description prose">
+            <h2 class="visually-hidden">Event description</h2>
+            ${toProseHtml(ev.description)}
+          </section>
+        </div>
+
+        <aside class="event-detail__aside card--compact">
+          <div class="aside-section">
+            <div class="muted">When</div>
+            <div class="strong">${escapeHtml(formatFullDateRange(ev.startDate, ev.endDate))}</div>
+          </div>
+
+          <div class="aside-section">
+            <div class="muted">Where</div>
+            <div class="strong">${escapeHtml(locationSummary(ev))}</div>
+          </div>
+
+          ${ev.capacity ? `<div class="aside-section"><div class="muted">Capacity</div><div class="strong">${escapeHtml(String(ev.capacity))}</div></div>` : ''}
+          ${typeof ev.priceCents === 'number' ? `<div class="aside-section"><div class="muted">Price</div><div class="strong">${escapeHtml(formatCurrency(ev.priceCents, ev.currency || 'USD'))}</div></div>` : ''}
+
+          <div class="aside-actions">
+            <a class="btn btn--primary" href="#/events/${escapeHtml(ev.id)}/register" data-link aria-label="Register">Register</a>
+            <a class="nav-link" href="${listHref(inAdmin)}" data-link aria-label="Events">Events</a>
+          </div>
+        </aside>
+      </div>
+    </main>
+  `
+}
+
+function renderAdminDetail(ev: Event, inAdmin: boolean) {
+  const heroUrl = ev.heroImage || `https://picsum.photos/seed/${encodeURIComponent(ev.id)}/1400/560`
+  const canToggleStatus = ev.status === EventStatus.Draft || ev.status === EventStatus.Published
+  const nextStatus = ev.status === EventStatus.Draft ? EventStatus.Published : EventStatus.Draft
+  const toggleLabel = ev.status === EventStatus.Draft ? 'Publish event' : 'Move to draft'
+  const toggleTone = ev.status === EventStatus.Draft ? 'btn btn--primary' : 'btn btn--secondary'
+  const statusText = statusLabel(ev.status)
+  return `
+    <div class="event-detail event-detail--admin">
+      <section class="event-admin-hero card">
+        <div class="event-admin-hero__top">
+          <div class="event-admin-hero__breadcrumbs">
+            <a href="${listHref(inAdmin)}" data-link>Events</a>
+            <span aria-hidden="true">/</span>
+            <span>Event detail</span>
+          </div>
+          <span class="${statusBadgeClass(ev.status)}">${escapeHtml(statusText)}</span>
+        </div>
+
+        <div class="event-admin-hero__body">
+          <div class="event-admin-hero__copy">
+            <p class="event-admin-hero__eyebrow">Event management</p>
+            <h1>${escapeHtml(ev.title)}</h1>
+            ${ev.shortDescription ? `<p class="event-admin-hero__summary">${escapeHtml(ev.shortDescription)}</p>` : '<p class="event-admin-hero__summary muted">No short summary yet.</p>'}
+          </div>
+
+          <div class="event-admin-hero__visual">
+            <div class="event-admin-hero__image" style="background-image: url('${escapeHtml(heroUrl)}');"></div>
+            <div class="event-admin-hero__visual-copy">
+              <div class="muted">${escapeHtml(formatFullDateRange(ev.startDate, ev.endDate))}</div>
+              <div class="strong">${escapeHtml(locationSummary(ev))}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="event-admin-hero__actions">
+          <a class="btn btn--primary" href="${editHref(inAdmin, ev.id)}" data-link>Edit event</a>
+          ${canToggleStatus ? `<button type="button" class="${toggleTone}" data-admin-status-toggle data-next-status="${escapeHtml(nextStatus)}">${escapeHtml(toggleLabel)}</button>` : ''}
+          <a class="btn btn--ghost" href="${listHref(inAdmin)}" data-link>Back to events</a>
+        </div>
+      </section>
+
+      <div class="event-admin-layout">
+        <section class="event-admin-main">
+          <article class="card event-admin-panel">
+            <div class="event-admin-panel__header">
+              <div>
+                <p class="event-admin-panel__eyebrow">Overview</p>
+                <h2>Key details</h2>
+              </div>
+            </div>
+            <div class="event-admin-meta-grid">
+              ${renderMetaItem('Status', statusText)}
+              ${renderMetaItem('Date range', formatFullDateRange(ev.startDate, ev.endDate))}
+              ${renderMetaItem('Location', locationSummary(ev))}
+              ${renderMetaItem('Price', formatCurrency(ev.priceCents, ev.currency || 'USD'))}
+              ${ev.capacity ? renderMetaItem('Capacity', String(ev.capacity)) : renderMetaItem('Capacity', 'Not set')}
+              ${renderMetaItem('Updated', formatDateTime(ev.updatedAt))}
+            </div>
+          </article>
+
+          <article class="card event-admin-panel">
+            <div class="event-admin-panel__header">
+              <div>
+                <p class="event-admin-panel__eyebrow">Description</p>
+                <h2>Event content</h2>
+              </div>
+            </div>
+            <div class="prose event-admin-description">
+              ${toProseHtml(ev.description || '<p class="muted">No description has been added yet.</p>')}
+            </div>
+          </article>
+        </section>
+
+        <aside class="card event-admin-sidebar card--compact">
+          <section class="event-admin-sidebar__section">
+            <p class="event-admin-sidebar__eyebrow">Quick actions</p>
+            <div class="event-admin-sidebar__actions">
+              <a class="btn btn--primary" href="${editHref(inAdmin, ev.id)}" data-link>Edit details</a>
+              ${canToggleStatus ? `<button type="button" class="btn btn--secondary" data-admin-status-toggle data-next-status="${escapeHtml(nextStatus)}">${escapeHtml(toggleLabel)}</button>` : ''}
+              <a class="btn btn--ghost" href="${listHref(inAdmin)}" data-link>Back to list</a>
+            </div>
+          </section>
+
+          <section class="event-admin-sidebar__section">
+            <p class="event-admin-sidebar__eyebrow">Snapshot</p>
+            <dl class="event-admin-sidebar__facts">
+              <div>
+                <dt>Schedule</dt>
+                <dd>${escapeHtml(formatFullDateRange(ev.startDate, ev.endDate))}</dd>
+              </div>
+              <div>
+                <dt>Location</dt>
+                <dd>${escapeHtml(locationSummary(ev))}</dd>
+              </div>
+              <div>
+                <dt>Slug</dt>
+                <dd>${escapeHtml(ev.slug)}</dd>
+              </div>
+              <div>
+                <dt>Published</dt>
+                <dd>${escapeHtml(ev.publishedAt ? formatDateTime(ev.publishedAt) : 'Not yet')}</dd>
+              </div>
+            </dl>
+          </section>
+        </aside>
+      </div>
+    </div>
+  `
+}
+
 function toProseHtml(text?: string) {
   if (!text) return ''
   // Convert plain text to simple HTML paragraphs preserving line breaks.
@@ -36,18 +301,26 @@ function toProseHtml(text?: string) {
 export function renderEventDetail(params: Record<string, string>) {
   const id = params.id
   const el = document.createElement('div')
-  el.className = 'page page--public'
+  const inAdmin = location.hash.replace(/^#/, '').startsWith('/admin')
+  el.className = `page ${inAdmin ? 'page--admin-detail' : 'page--public'}`
   el.innerHTML = `
-    <div class="page-title">
+    <div class="page-title page-title--detail">
       <button type="button" class="btn btn--ghost" id="back-btn" aria-label="Go back" title="Go back">←</button>
-      <h1>Event</h1>
-      <p class="muted">Loading…</p>
+      <div>
+        <h1>${inAdmin ? 'Event details' : 'Event'}</h1>
+        <p class="muted">Loading…</p>
+      </div>
     </div>
     <div id="event-detail"></div>
+    <div id="detail-feedback" class="event-detail__feedback" aria-live="polite"></div>
   `
 
   const container = el.querySelector('#event-detail') as HTMLElement
+  const feedback = el.querySelector('#detail-feedback') as HTMLElement
   container.appendChild(createLoadingCard('Loading event'))
+
+  let currentEvent: Event | null = null
+  let detailFeedbackHtml = ''
 
   function attachBackHandler() {
     const b = el.querySelector('#back-btn') as HTMLButtonElement | null
@@ -66,21 +339,45 @@ export function renderEventDetail(params: Record<string, string>) {
     })
   }
 
-  // attach to initial loading UI
-  attachBackHandler()
+  async function setStatus(nextStatus: EventStatus) {
+    if (!currentEvent) return
+    const res = await updateEvent(currentEvent.id, { status: nextStatus })
+    if (!res.ok) {
+      detailFeedbackHtml = `<div class="notice notice--error card--compact"><strong>Action failed.</strong> <span>${escapeHtml(res.message || 'We could not update this event right now.')}</span></div>`
+      await loadEvent()
+      return
+    }
+    detailFeedbackHtml = `<div class="notice notice--success card--compact"><strong>Updated.</strong> <span>The event status has been changed.</span></div>`
+    await loadEvent()
+  }
 
-  ;(async () => {
-    // show a calm loading card while we fetch
+  function bindAdminActions() {
+    const toggles = Array.from(el.querySelectorAll<HTMLButtonElement>('[data-admin-status-toggle]'))
+    toggles.forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const nextStatus = btn.getAttribute('data-next-status') as EventStatus | null
+        if (!nextStatus) return
+        btn.disabled = true
+        try {
+          await setStatus(nextStatus)
+        } finally {
+          btn.disabled = false
+        }
+      })
+    })
+  }
+
+  async function loadEvent() {
     container.innerHTML = ''
     container.appendChild(createLoadingCard('Loading event'))
+    feedback.innerHTML = ''
     const res = await getEventById(id)
-      if (!res.ok) {
-        // Distinguish not-found vs other errors
-        if ((res.message || '').toLowerCase().includes('not found')) {
-        const eventsHref = location.hash.replace(/^#/, '').startsWith('/admin') ? '#/admin/events' : '#/events'
+    if (!res.ok) {
+      if ((res.message || '').toLowerCase().includes('not found')) {
+        const eventsHref = listHref(inAdmin)
         el.innerHTML = `
-          <div class="page-title"><button type="button" class="btn btn--ghost" id="back-btn" aria-label="Go back" title="Go back">←</button><h1>Event not found</h1></div>
-          <div class="card"><p class="muted">${res.message || 'We could not find that event.'}</p><p><a class="nav-link" href="${eventsHref}" data-link aria-label="Events">Events</a></p></div>
+          <div class="page-title page-title--detail"><button type="button" class="btn btn--ghost" id="back-btn" aria-label="Go back" title="Go back">←</button><div><h1>Event not found</h1><p class="muted">${escapeHtml(res.message || 'We could not find that event.')}</p></div></div>
+          <div class="card"><p class="muted">${escapeHtml(res.message || 'We could not find that event.')}</p><p><a class="nav-link" href="${eventsHref}" data-link aria-label="Events">Events</a></p></div>
         `
         attachBackHandler()
         return
@@ -90,87 +387,25 @@ export function renderEventDetail(params: Record<string, string>) {
       return
     }
 
-    const ev = res.data
+    currentEvent = res.data
+    if (inAdmin) {
+      const adminContainer = document.createElement('div')
+      adminContainer.innerHTML = renderAdminDetail(res.data, inAdmin)
+      container.innerHTML = ''
+      container.appendChild(adminContainer.firstElementChild as HTMLElement)
+      feedback.innerHTML = detailFeedbackHtml
+      bindAdminActions()
+    } else {
+      container.innerHTML = renderPublicDetail(res.data, inAdmin)
+    }
 
-    // Build a more editorial event detail layout
-    const heroUrl = ev.heroImage || `https://picsum.photos/seed/${encodeURIComponent(ev.id)}/1400/560`
-
-    el.innerHTML = `
-      <div class="event-hero" style="background-image: url('${heroUrl}');">
-        <!-- subtle gradient & vignette for readable but not heavy overlay -->
-        <div class="event-hero__backdrop" aria-hidden="true"></div>
-        <div class="event-hero__inner">
-          <button type="button" class="btn btn--ghost" id="back-btn" aria-label="Go back" title="Go back" style="margin-bottom:12px;">←</button>
-          <div class="event-hero__content">
-            <div class="event-hero__meta">
-              <time class="event-hero__pill" datetime="${ev.startDate}">${formatDateRange(ev.startDate, ev.endDate)}</time>
-              <div class="event-hero__pill">${ev.isOnline ? 'Online' : (ev.location?.city || addressLine(ev.location) || 'TBA')}</div>
-            </div>
-            <h1 class="event-hero__title">${ev.title}</h1>
-            ${ev.shortDescription ? `<p class="event-hero__dek">${ev.shortDescription}</p>` : ''}
-          </div>
-          <div class="event-hero__side">
-            <div class="event-hero__card">
-              <div class="event-hero__card-meta">
-                <div><strong>${ev.isOnline ? 'Online' : addressLine(ev.location) || 'TBA'}</strong></div>
-                <div class="muted">${formatDateRange(ev.startDate, ev.endDate)}</div>
-              </div>
-                <div class="event-hero__card-actions">
-                   <a class="nav-link" href="${location.hash.replace(/^#/, '').startsWith('/admin') ? '#/admin/events' : '#/events'}" data-link aria-label="Events">Events</a>
-                </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <main class="event-detail">
-        <div class="event-detail__inner card">
-          <div class="event-detail__main">
-            <section class="event-summary">
-              ${ev.shortDescription ? `<p class="event-summary__dek">${ev.shortDescription}</p>` : ''}
-              <dl class="event-summary__meta">
-                <dt class="muted">Date &amp; time</dt>
-                <dd class="strong">${formatDateRange(ev.startDate, ev.endDate)}</dd>
-                <dt class="muted">Location</dt>
-                <dd class="strong">${ev.isOnline ? 'Online' : addressLine(ev.location) || 'TBA'}</dd>
-              </dl>
-            </section>
-
-            <section class="event-description prose">
-              <h2 class="visually-hidden">Event description</h2>
-              ${toProseHtml(ev.description)}
-            </section>
-
-            
-          </div>
-
-          <aside class="event-detail__aside card--compact">
-            <div class="aside-section">
-              <div class="muted">When</div>
-              <div class="strong">${formatDateRange(ev.startDate, ev.endDate)}</div>
-            </div>
-
-            <div class="aside-section">
-              <div class="muted">Where</div>
-              <div class="strong">${ev.isOnline ? 'Online' : addressLine(ev.location) || 'TBA'}</div>
-            </div>
-
-              ${ev.capacity ? `<div class="aside-section"><div class="muted">Capacity</div><div class="strong">${ev.capacity}</div></div>` : ''}
-
-            ${typeof ev.priceCents === 'number' ? `<div class="aside-section"><div class="muted">Price</div><div class="strong">${(ev.priceCents / 100).toLocaleString(undefined, { style: 'currency', currency: ev.currency || 'USD' })}</div></div>` : ''}
-
-              <div class="aside-actions">
-                 <a class="btn btn--primary" href="#/events/${ev.id}/register" data-link aria-label="Register">Register</a>
-                 <a class="nav-link" href="${location.hash.replace(/^#/, '').startsWith('/admin') ? '#/admin/events' : '#/events'}" data-link aria-label="Events">Events</a>
-              </div>
-          </aside>
-        </div>
-      </main>
-    `
-
-    // attach back handler for the rendered detail view
     attachBackHandler()
-  })()
+  }
+
+  // attach to initial loading UI
+  attachBackHandler()
+
+  loadEvent()
 
   return el
 }

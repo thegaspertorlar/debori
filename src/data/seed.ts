@@ -163,6 +163,7 @@ export const events: Event[] = [
     tags: ['kids', 'education', 'STEM'],
     heroImage:
       'https://images.unsplash.com/photo-1581091228506-7f0b7be9b6f2?w=1200&h=800&fit=crop',
+    organizerId: 'user_001',
   },
 
   {
