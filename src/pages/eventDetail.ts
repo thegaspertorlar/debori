@@ -96,6 +96,20 @@ function editHref(inAdmin: boolean, id: string) {
   return inAdmin ? `#/admin/events/${id}/edit` : `#/events/${id}/edit`
 }
 
+function renderDetailStateHeader(title: string, subtitle: string, inAdmin: boolean) {
+  const classes = ['page-title', 'page-title--detail']
+  if (inAdmin) classes.push('page-title--detail--admin')
+  return `
+    <div class="${classes.join(' ')}">
+      ${inAdmin ? '' : '<button type="button" class="btn btn--ghost" id="back-btn" aria-label="Go back" title="Go back">←</button>'}
+      <div>
+        <h1>${escapeHtml(title)}</h1>
+        <p class="muted">${escapeHtml(subtitle)}</p>
+      </div>
+    </div>
+  `
+}
+
 function renderMetaItem(label: string, value: string) {
   return `
     <div class="event-admin-meta-item">
@@ -216,7 +230,6 @@ function renderAdminDetail(ev: Event, inAdmin: boolean) {
         <div class="event-admin-hero__actions">
           <a class="btn btn--primary" href="${editHref(inAdmin, ev.id)}" data-link>Edit event</a>
           ${canToggleStatus ? `<button type="button" class="${toggleTone}" data-admin-status-toggle data-next-status="${escapeHtml(nextStatus)}">${escapeHtml(toggleLabel)}</button>` : ''}
-          <a class="btn btn--ghost" href="${listHref(inAdmin)}" data-link>Back to events</a>
         </div>
       </section>
 
@@ -258,7 +271,6 @@ function renderAdminDetail(ev: Event, inAdmin: boolean) {
             <div class="event-admin-sidebar__actions">
               <a class="btn btn--primary" href="${editHref(inAdmin, ev.id)}" data-link>Edit details</a>
               ${canToggleStatus ? `<button type="button" class="btn btn--secondary" data-admin-status-toggle data-next-status="${escapeHtml(nextStatus)}">${escapeHtml(toggleLabel)}</button>` : ''}
-              <a class="btn btn--ghost" href="${listHref(inAdmin)}" data-link>Back to list</a>
             </div>
           </section>
 
@@ -304,20 +316,61 @@ export function renderEventDetail(params: Record<string, string>) {
   const inAdmin = location.hash.replace(/^#/, '').startsWith('/admin')
   el.className = `page ${inAdmin ? 'page--admin-detail' : 'page--public'}`
   el.innerHTML = `
-    <div class="page-title page-title--detail">
-      <button type="button" class="btn btn--ghost" id="back-btn" aria-label="Go back" title="Go back">←</button>
-      <div>
-        <h1>${inAdmin ? 'Event details' : 'Event'}</h1>
-        <p class="muted">Loading…</p>
-      </div>
-    </div>
+    <div id="detail-state-header">${renderDetailStateHeader(inAdmin ? 'Event details' : 'Event', inAdmin ? 'Loading event details…' : 'Loading…', inAdmin)}</div>
     <div id="event-detail"></div>
     <div id="detail-feedback" class="event-detail__feedback" aria-live="polite"></div>
   `
 
+  const detailStateHeader = el.querySelector('#detail-state-header') as HTMLElement
   const container = el.querySelector('#event-detail') as HTMLElement
   const feedback = el.querySelector('#detail-feedback') as HTMLElement
-  container.appendChild(createLoadingCard('Loading event'))
+
+  function renderLoadingState() {
+    container.innerHTML = ''
+    if (!inAdmin) {
+      container.appendChild(createLoadingCard('Loading event'))
+      return
+    }
+    const shell = document.createElement('div')
+    shell.className = 'event-detail event-detail--admin'
+    const state = document.createElement('div')
+    state.className = 'event-admin-state'
+    state.appendChild(createLoadingCard('Loading event'))
+    shell.appendChild(state)
+    container.appendChild(shell)
+  }
+
+  function renderErrorState(message?: string) {
+    container.innerHTML = ''
+    if (!inAdmin) {
+      container.appendChild(createErrorCard('Unable to load event', message))
+      return
+    }
+    detailStateHeader.innerHTML = renderDetailStateHeader('Event details', 'We could not load this event right now.', true)
+    const shell = document.createElement('div')
+    shell.className = 'event-detail event-detail--admin'
+    const state = document.createElement('div')
+    state.className = 'event-admin-state'
+    state.appendChild(createErrorCard('Unable to load event', message))
+    shell.appendChild(state)
+    container.appendChild(shell)
+  }
+
+  function renderMissingState(message: string) {
+    detailStateHeader.innerHTML = renderDetailStateHeader('Event not found', message, inAdmin)
+    container.innerHTML = ''
+    if (!inAdmin) {
+      const eventsHref = listHref(false)
+      container.innerHTML = `<div class="card"><p class="muted">${escapeHtml(message)}</p><p><a class="nav-link" href="${eventsHref}" data-link aria-label="Events">Events</a></p></div>`
+      return
+    }
+    const shell = document.createElement('div')
+    shell.className = 'event-detail event-detail--admin'
+    shell.innerHTML = `<div class="event-admin-state"><div class="card"><p class="muted">${escapeHtml(message)}</p></div></div>`
+    container.appendChild(shell)
+  }
+
+  renderLoadingState()
 
   let currentEvent: Event | null = null
   let detailFeedbackHtml = ''
@@ -368,27 +421,22 @@ export function renderEventDetail(params: Record<string, string>) {
   }
 
   async function loadEvent() {
-    container.innerHTML = ''
-    container.appendChild(createLoadingCard('Loading event'))
+    renderLoadingState()
     feedback.innerHTML = ''
     const res = await getEventById(id)
     if (!res.ok) {
       if ((res.message || '').toLowerCase().includes('not found')) {
-        const eventsHref = listHref(inAdmin)
-        el.innerHTML = `
-          <div class="page-title page-title--detail"><button type="button" class="btn btn--ghost" id="back-btn" aria-label="Go back" title="Go back">←</button><div><h1>Event not found</h1><p class="muted">${escapeHtml(res.message || 'We could not find that event.')}</p></div></div>
-          <div class="card"><p class="muted">${escapeHtml(res.message || 'We could not find that event.')}</p><p><a class="nav-link" href="${eventsHref}" data-link aria-label="Events">Events</a></p></div>
-        `
+        renderMissingState(res.message || 'We could not find that event.')
         attachBackHandler()
         return
       }
-      container.innerHTML = ''
-      container.appendChild(createErrorCard('Unable to load event', res.message))
+      renderErrorState(res.message)
       return
     }
 
     currentEvent = res.data
     if (inAdmin) {
+      detailStateHeader.innerHTML = ''
       const adminContainer = document.createElement('div')
       adminContainer.innerHTML = renderAdminDetail(res.data, inAdmin)
       container.innerHTML = ''
@@ -396,6 +444,7 @@ export function renderEventDetail(params: Record<string, string>) {
       feedback.innerHTML = detailFeedbackHtml
       bindAdminActions()
     } else {
+      detailStateHeader.innerHTML = renderDetailStateHeader('Event', 'Loading…', false)
       container.innerHTML = renderPublicDetail(res.data, inAdmin)
     }
 

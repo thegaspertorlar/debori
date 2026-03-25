@@ -793,6 +793,12 @@ h1 {
   gap: 14px;
   flex-wrap: wrap;
 }
+.page-title--detail--admin {
+  max-width: 1200px;
+  margin: 0 auto 20px;
+  padding: 0 18px;
+  gap: 8px;
+}
 .page-title--detail h1 { margin: 0; }
 .page-title--detail .muted { margin: 4px 0 0; }
 
@@ -824,6 +830,10 @@ h1 {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 18px 24px;
+}
+.event-admin-state {
+  display: grid;
+  gap: 16px;
 }
 .event-admin-hero {
   padding: clamp(20px, 3vw, 28px);
@@ -910,6 +920,7 @@ h1 {
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 18px;
+  align-items: center;
 }
 .event-admin-layout {
   display: grid;
@@ -1021,7 +1032,8 @@ h1 {
 
 @media (max-width: 640px) {
   .event-detail--admin,
-  .event-detail__feedback {
+  .event-detail__feedback,
+  .page-title--detail--admin {
     padding-left: 12px;
     padding-right: 12px;
   }
