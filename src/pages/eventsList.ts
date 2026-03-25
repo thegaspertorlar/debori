@@ -68,7 +68,7 @@ export function renderEventsList() {
       list.innerHTML = ''
       // For guests we don't surface admin/dashboard CTAs — offer login so they can sign in.
       const ctaText = isAuthenticated() ? 'View dashboard' : 'Login'
-      const ctaHref = isAuthenticated() ? '#/admin' : '#/login'
+      const ctaHref = isAuthenticated() ? '#/admin/dashboard' : '#/login'
       list.appendChild(createEmptyCard('No upcoming events', 'There are no published events ending in the future right now. Check back later or explore other sections of the site.', ctaText, ctaHref))
       return
     }
