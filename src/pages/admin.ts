@@ -41,6 +41,17 @@ function createStatusBadge(status: EventStatus) {
   return span
 }
 
+type AdminViewMode = 'grid' | 'list'
+
+function createActionButton(label: string, href: string, className: string) {
+  const a = document.createElement('a')
+  a.className = className
+  a.href = href
+  a.setAttribute('data-link', '')
+  a.textContent = label
+  return a
+}
+
 export function renderAdmin() {
   const el = document.createElement('div')
   el.className = 'page'
@@ -58,20 +69,20 @@ export function renderAdmin() {
     </div>
 
     <div class="admin-controls card--compact mb-4">
-      <div class="row justify-between" style="align-items:center; gap:12px">
-        <div>
+      <div class="admin-controls__row">
+        <div class="admin-controls__group">
           <div role="tablist" aria-label="Event status tabs" id="admin-tabs" class="admin-tabs"></div>
           <div class="muted" style="margin-top:6px">Manager view · quick filters</div>
         </div>
-        <!-- toolbar intentionally minimal for manager-focused workflows -->
-        <!-- removed: Recent, My team, and duplicate Create event actions to reduce noise -->
+        <div class="admin-view-toggle" role="group" aria-label="Event view mode" id="admin-view-toggle"></div>
       </div>
     </div>
 
-    <div id="admin-events" class="card" style="min-height:120px; padding:0">Loading events…</div>
+    <div id="admin-events" class="card admin-events-view admin-events-view--grid" style="min-height:120px; padding:0">Loading events…</div>
   `
 
   const tabsContainer = el.querySelector('#admin-tabs') as HTMLElement
+  const viewToggle = el.querySelector('#admin-view-toggle') as HTMLElement
   const listContainer = el.querySelector('#admin-events') as HTMLElement
 
   const tabs: { key: EventStatus | 'all'; label: string }[] = [
@@ -83,6 +94,7 @@ export function renderAdmin() {
 
   let events: Event[] = []
   let active: EventStatus | 'all' = 'all'
+  let viewMode: AdminViewMode = 'grid'
 
   // Simple modal helper to provide a confirmation / info dialog
   function showModal(opts: { title: string; body: string; actions?: Array<{ label: string; className?: string; onClick?: (m: any) => void }>; }) {
@@ -220,6 +232,12 @@ export function renderAdmin() {
     else if (modal._actionButtons) modal._actionButtons.forEach((b: HTMLButtonElement) => (b.disabled = !!v))
   }
 
+  function setViewMode(next: AdminViewMode) {
+    viewMode = next
+    renderViewToggle()
+    renderList()
+  }
+
   function renderTabs() {
     tabsContainer.innerHTML = ''
     tabs.forEach((t) => {
@@ -287,8 +305,35 @@ export function renderAdmin() {
     })
   }
 
+  function renderViewToggle() {
+    viewToggle.innerHTML = ''
+    const options: Array<{ key: AdminViewMode; label: string; title: string }> = [
+      { key: 'grid', label: 'Grid', title: 'Grid görünümü' },
+      { key: 'list', label: 'List', title: 'Liste görünümü' },
+    ]
+
+    options.forEach((opt) => {
+      const btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'btn btn--ghost admin-view-toggle__btn'
+      btn.textContent = opt.label
+      btn.setAttribute('aria-pressed', String(viewMode === opt.key))
+      btn.setAttribute('aria-label', `Switch to ${opt.label.toLowerCase()} view`)
+      btn.setAttribute('title', opt.title)
+      if (viewMode === opt.key) btn.classList.add('admin-view-toggle__btn--active')
+
+      btn.addEventListener('click', () => setViewMode(opt.key))
+      viewToggle.appendChild(btn)
+    })
+  }
+
   function clearList() {
     listContainer.innerHTML = ''
+  }
+
+  function applyViewModeClass() {
+    listContainer.classList.remove('admin-events-view--grid', 'admin-events-view--list')
+    listContainer.classList.add(`admin-events-view--${viewMode}`)
   }
 
   function renderEmpty(stateLabel: string) {
@@ -298,7 +343,155 @@ export function renderAdmin() {
     listContainer.appendChild(createEmptyCard(title, message, 'Create event', '#/admin/events/create'))
   }
 
+  function createAdminEventCard(ev: Event) {
+    const card = document.createElement('article')
+    card.className = `event-card event-card--admin event-card--admin-layout event-card--admin-${viewMode}`
+    const titleId = `admin-event-title-${ev.id}`
+    card.setAttribute('role', 'article')
+    card.setAttribute('aria-labelledby', titleId)
+
+    const mediaWrap = document.createElement('div')
+    mediaWrap.className = 'event-card__media-wrap'
+
+    const img = document.createElement('img')
+    img.className = 'event-card__media'
+    img.alt = ev.title || 'Event image'
+    img.loading = 'lazy'
+    img.decoding = 'async'
+    img.src = ev.heroImage || `https://picsum.photos/seed/${encodeURIComponent(ev.id)}/600/380`
+    mediaWrap.appendChild(img)
+
+    if (ev.startDate) {
+      const badge = document.createElement('div')
+      badge.className = 'event-card__date-badge event-card__date-badge--admin'
+      const d = new Date(ev.startDate)
+      const month = d.toLocaleString(undefined, { month: 'short' }).toUpperCase()
+      const day = d.getDate()
+      badge.innerHTML = `<div class="event-card__date-badge-month">${month}</div><div class="event-card__date-badge-day">${day}</div>`
+      mediaWrap.appendChild(badge)
+    }
+
+    const body = document.createElement('div')
+    body.className = 'event-card__body'
+
+    const header = document.createElement('div')
+    header.className = 'event-card__header'
+
+    const eyebrow = document.createElement('div')
+    eyebrow.className = 'event-card__eyebrow'
+
+    const left = document.createElement('div')
+    left.className = 'flex-1'
+
+    const dateSpan = document.createElement('div')
+    dateSpan.className = 'event-card__date'
+    dateSpan.textContent = formatDateRange(ev.startDate, ev.endDate)
+
+    const title = document.createElement('h3')
+    title.className = 'event-card__title'
+    title.textContent = ev.title || 'Untitled event'
+    title.id = titleId
+
+    left.appendChild(dateSpan)
+    left.appendChild(title)
+    eyebrow.appendChild(left)
+    eyebrow.appendChild(createStatusBadge(ev.status))
+    header.appendChild(eyebrow)
+
+    const meta = document.createElement('div')
+    meta.className = 'event-card__meta'
+    const locationEl = document.createElement('div')
+    locationEl.className = 'event-card__location'
+    locationEl.textContent = ev.isOnline ? 'Online' : (ev.location?.address || ev.location?.city || 'Location TBD')
+    meta.appendChild(locationEl)
+
+    const footer = document.createElement('div')
+    footer.className = 'event-card__footer'
+
+    const actions = document.createElement('div')
+    actions.className = 'actions event-card__actions'
+
+    actions.appendChild(createActionButton('View', `#/admin/events/${ev.id}`, 'btn btn--ghost btn--sm'))
+
+    if (ev.status === EventStatus.Draft || ev.status === EventStatus.Published) {
+      actions.appendChild(createActionButton('Edit', `#/admin/events/${ev.id}/edit`, 'btn btn--secondary btn--sm'))
+    }
+
+    if (ev.status === EventStatus.Draft) {
+      const del = document.createElement('button')
+      del.className = 'btn btn--destructive btn--sm'
+      del.type = 'button'
+      del.textContent = 'Delete'
+      del.addEventListener('click', async () => {
+        showModal({
+          title: 'Delete draft? This cannot be undone',
+          body: `<p>Are you sure you want to permanently delete the draft "${(ev.title || 'Untitled event').replace(/</g, '&lt;')}"?</p><p class="muted">This action cannot be recovered.</p>`,
+          actions: [
+            { label: 'Cancel', className: 'btn', onClick: (m) => m.close() },
+            { label: 'Delete event', className: 'btn btn--destructive', async onClick(m) {
+              thisDisabled(m, true)
+              const res = await deleteEvent(ev.id)
+              if (!res.ok) {
+                thisDisabled(m, false)
+                showModal({ title: 'Unable to delete', body: `<p class="muted">${res.message || 'We were unable to delete this draft.'}</p>` })
+                return
+              }
+              events = events.filter((x) => x.id !== ev.id)
+              m.close()
+              renderList()
+            } },
+          ],
+        })
+      })
+      actions.appendChild(del)
+    } else if (ev.status === EventStatus.Published) {
+      const del = document.createElement('button')
+      del.className = 'btn btn--destructive btn--sm'
+      del.type = 'button'
+      del.textContent = 'Delete'
+      del.addEventListener('click', async () => {
+        showModal({
+          title: 'Published items cannot be deleted directly',
+          body: `<p>The event "${(ev.title || 'Untitled event').replace(/</g, '&lt;')}" is currently published. To delete it, first move it back to <strong>Draft</strong>.</p><p class="muted">You can either edit the event and save as draft, or use the button below to move it to Draft now.</p>`,
+          actions: [
+            { label: 'Close', className: 'btn', onClick: (m) => m.close() },
+            { label: 'Edit event', className: 'btn btn--secondary', onClick: (m) => { m.close(); window.location.hash = `#/admin/events/${ev.id}/edit` } },
+            { label: 'Move to Draft', className: 'btn btn--primary', async onClick(m) {
+              thisDisabled(m, true)
+              const res = await updateEvent(ev.id, { status: EventStatus.Draft })
+              if (!res.ok) {
+                thisDisabled(m, false)
+                showModal({ title: 'Unable to change status', body: `<p class="muted">${res.message || 'We were unable to change the event status.'}</p>` })
+                return
+              }
+              events = events.map((x) => x.id === ev.id ? (res.data as Event) : x)
+              m.close()
+              renderList()
+            } },
+          ],
+        })
+      })
+      actions.appendChild(del)
+    }
+
+    body.appendChild(header)
+    if (ev.shortDescription) {
+      const desc = document.createElement('div')
+      desc.className = 'event-card__dek event-card__dek--admin'
+      desc.textContent = ev.shortDescription
+      body.appendChild(desc)
+    }
+    footer.appendChild(meta)
+    footer.appendChild(actions)
+    body.appendChild(footer)
+
+    card.appendChild(mediaWrap)
+    card.appendChild(body)
+    return card
+  }
+
   function renderList() {
+    applyViewModeClass()
     clearList()
     const filtered = events.filter((e) => {
       if (active === EventStatus.Draft) return e.status === EventStatus.Draft
@@ -313,177 +506,10 @@ export function renderAdmin() {
     }
 
     const grid = document.createElement('div')
-    grid.className = 'events-grid'
+    grid.className = 'admin-events-view__grid'
 
     filtered.forEach((ev) => {
-      const card = document.createElement('article')
-      // Admin-specific variant: stacked layout optimized for scanning and action stability
-      card.className = 'event-card event-card--admin event-card--admin-layout'
-      const titleId = `admin-event-title-${ev.id}`
-      card.setAttribute('role', 'article')
-      card.setAttribute('aria-labelledby', titleId)
-
-      // media wrapper so admin cards can also host overlays consistently
-      const mediaWrap = document.createElement('div')
-      mediaWrap.className = 'event-card__media-wrap'
-
-      const img = document.createElement('img')
-      img.className = 'event-card__media'
-      img.alt = ev.title || 'Event image'
-      img.loading = 'lazy'
-      img.decoding = 'async'
-      img.src = ev.heroImage || `https://picsum.photos/seed/${encodeURIComponent(ev.id)}/600/380`
-
-      const body = document.createElement('div')
-      body.className = 'event-card__body'
-
-      const head = document.createElement('div')
-      head.className = 'event-card__header'
-
-      const eyebrow = document.createElement('div')
-      eyebrow.className = 'event-card__eyebrow'
-
-      const left = document.createElement('div')
-      left.className = 'flex-1'
-
-      const dateSpan = document.createElement('div')
-      dateSpan.className = 'event-card__date'
-      dateSpan.textContent = formatDateRange(ev.startDate, ev.endDate)
-
-      const title = document.createElement('h3')
-      title.className = 'event-card__title'
-      title.textContent = ev.title || 'Untitled event'
-      title.id = titleId
-
-      left.appendChild(dateSpan)
-      left.appendChild(title)
-
-      eyebrow.appendChild(left)
-      eyebrow.appendChild(createStatusBadge(ev.status))
-
-      head.appendChild(eyebrow)
-
-      const meta = document.createElement('div')
-      meta.className = 'event-card__meta'
-      const addr = document.createElement('div')
-      addr.className = 'event-card__location'
-      addr.textContent = ev.isOnline ? 'Online' : (ev.location?.address || ev.location?.city || 'Location TBD')
-
-      meta.appendChild(addr)
-
-      const footer = document.createElement('div')
-      footer.className = 'event-card__footer'
-
-      const actions = document.createElement('div')
-      actions.className = 'actions event-card__actions'
-
-      // View action: quick access to open the event (useful for scanning)
-      const view = document.createElement('a')
-      view.className = 'btn btn--ghost btn--sm'
-      view.href = `#/admin/events/${ev.id}`
-      view.setAttribute('data-link', '')
-      view.textContent = 'View'
-      actions.appendChild(view)
-
-    // Edit action: available for Draft and Published (not Past)
-    if (ev.status === EventStatus.Draft || ev.status === EventStatus.Published) {
-      const edit = document.createElement('a')
-      edit.className = 'btn btn--secondary btn--sm'
-      edit.href = `#/admin/events/${ev.id}/edit`
-      edit.setAttribute('data-link', '')
-      edit.textContent = 'Edit'
-      actions.appendChild(edit)
-    }
-
-      // Delete action
-      if (ev.status === EventStatus.Draft) {
-        // Draft: allow deletion but require confirmation modal
-        const del = document.createElement('button')
-        del.className = 'btn btn--destructive btn--sm'
-        del.type = 'button'
-        del.textContent = 'Delete'
-        del.addEventListener('click', async () => {
-          showModal({
-            title: 'Delete draft? This cannot be undone',
-            body: `<p>Are you sure you want to permanently delete the draft "${(ev.title || 'Untitled event').replace(/</g, '&lt;')}"?</p><p class="muted">This action cannot be recovered.</p>`,
-            actions: [
-              { label: 'Cancel', className: 'btn', onClick: (m) => m.close() },
-              { label: 'Delete event', className: 'btn btn--destructive', async onClick(m) {
-                // perform deletion
-                thisDisabled(m, true)
-                const res = await deleteEvent(ev.id)
-                if (!res.ok) {
-                  thisDisabled(m, false)
-                  showModal({ title: 'Unable to delete', body: `<p class="muted">${res.message || 'We were unable to delete this draft.'}</p>` })
-                  return
-                }
-                // remove from local state and re-render
-                events = events.filter((x) => x.id !== ev.id)
-                m.close()
-                renderList()
-              } },
-            ],
-          })
-        })
-        actions.appendChild(del)
-      } else if (ev.status === EventStatus.Published) {
-        // Published: show blocked delete that teaches the next step (move to Draft)
-        const del = document.createElement('button')
-        del.className = 'btn btn--destructive btn--sm'
-        del.type = 'button'
-        del.textContent = 'Delete'
-        // visually indicate it's blocked but still interactive to educate the user
-        del.addEventListener('click', async () => {
-          showModal({
-            title: 'Published items cannot be deleted directly',
-            body: `<p>The event "${(ev.title || 'Untitled event').replace(/</g, '&lt;')}" is currently published. To delete it, first move it back to <strong>Draft</strong>.</p><p class="muted">You can either edit the event and save as draft, or use the button below to move it to Draft now.</p>`,
-            actions: [
-              { label: 'Close', className: 'btn', onClick: (m) => m.close() },
-               { label: 'Edit event', className: 'btn btn--secondary', onClick: (m) => { m.close(); location.hash = `#/admin/events/${ev.id}/edit` } },
-              { label: 'Move to Draft', className: 'btn btn--primary', async onClick(m) {
-                thisDisabled(m, true)
-                const res = await updateEvent(ev.id, { status: EventStatus.Draft })
-                if (!res.ok) {
-                  thisDisabled(m, false)
-                  showModal({ title: 'Unable to change status', body: `<p class="muted">${res.message || 'We were unable to change the event status.'}</p>` })
-                  return
-                }
-                // update local copy and re-render to reflect new state
-                events = events.map((x) => x.id === ev.id ? (res.data as Event) : x)
-                m.close()
-                renderList()
-              } },
-            ],
-          })
-        })
-        actions.appendChild(del)
-      }
-
-      body.appendChild(head)
-      if (ev.shortDescription) {
-        const desc = document.createElement('div')
-        desc.className = 'event-card__dek event-card__dek--admin'
-        desc.textContent = ev.shortDescription
-        body.appendChild(desc)
-      }
-      footer.appendChild(meta)
-      footer.appendChild(actions)
-      body.appendChild(footer)
-
-      mediaWrap.appendChild(img)
-      if (ev.startDate) {
-        const badge = document.createElement('div')
-        badge.className = 'event-card__date-badge event-card__date-badge--admin'
-        const d = new Date(ev.startDate)
-        const month = d.toLocaleString(undefined, { month: 'short' }).toUpperCase()
-        const day = d.getDate()
-        badge.innerHTML = `<div class="event-card__date-badge-month">${month}</div><div class="event-card__date-badge-day">${day}</div>`
-        mediaWrap.appendChild(badge)
-      }
-      card.appendChild(mediaWrap)
-      card.appendChild(body)
-
-      grid.appendChild(card)
+      grid.appendChild(createAdminEventCard(ev))
     })
 
     listContainer.appendChild(grid)
@@ -503,6 +529,7 @@ export function renderAdmin() {
     if (events.some((e) => e.status === EventStatus.Published)) active = EventStatus.Published
     else if (events.some((e) => e.status === EventStatus.Draft)) active = EventStatus.Draft
     renderTabs()
+    renderViewToggle()
     renderList()
   })()
 

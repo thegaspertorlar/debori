@@ -81,6 +81,108 @@ h1 {
 .app-header--admin .brand {
   color: var(--neutral-900);
 }
+.admin-shell__header .app-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+.admin-shell__header .header-left,
+.admin-shell__header .header-actions {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.admin-shell__header .header-left {
+  gap: 12px;
+  flex: 1 1 auto;
+}
+.admin-shell__header .header-actions {
+  margin-left: auto;
+  flex: 0 0 auto;
+  justify-content: flex-end;
+}
+.admin-shell__header .return-public {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.account {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+.account-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--neutral-200);
+  background: var(--color-surface);
+  color: var(--neutral-800);
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--shadow-subtle);
+}
+.account-trigger:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(16,163,107,0.08), var(--shadow-subtle);
+}
+.account-trigger__label {
+  min-width: 0;
+  white-space: nowrap;
+}
+.account-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 220px;
+  max-width: calc(100vw - 24px);
+  padding: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--neutral-200);
+  border-radius: 12px;
+  box-shadow: var(--shadow-elevated);
+  z-index: 80;
+}
+.account-menu__profile {
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--neutral-100);
+}
+.account-menu__name {
+  font-weight: 600;
+  color: var(--neutral-900);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.account-menu__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .admin-shell__header .header-left {
+    gap: 8px;
+  }
+
+  .admin-shell__header .return-public {
+    max-width: 120px;
+  }
+
+  .account-trigger {
+    padding: 0 12px;
+  }
+}
 
 /* Subtle return-to-public-site link placed outside the primary nav so the
    admin workspace still feels separate. Kept intentionally low-contrast. */
@@ -238,11 +340,46 @@ h1 {
 .events-page__title .muted { margin: 0; color: var(--neutral-700); }
 .events-page__actions { display:flex; align-items:center; gap:12px; }
 
+.admin-controls__row { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.admin-controls__group { display:flex; flex-direction:column; gap:6px; min-width:0; }
+.admin-view-toggle {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px;
+  border-radius:10px;
+  border:1px solid rgba(16,163,107,0.08);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-subtle);
+}
+.admin-view-toggle__btn { min-width:72px; justify-content:center; }
+.admin-view-toggle__btn[aria-pressed="true"],
+.admin-view-toggle__btn--active {
+  background: linear-gradient(180deg, rgba(16,163,107,0.09), rgba(16,163,107,0.05));
+  color: var(--brand-700);
+  border-color: rgba(16,163,107,0.15);
+  box-shadow: 0 6px 14px rgba(16,163,107,0.05);
+}
+
 /* Wrap for grid to provide breathing room between intro and grid */
 .events-grid-wrap { padding-top: 8px; }
 
 /* Slightly more generous grid spacing on larger screens to feel airy */
 .events-grid { gap: 24px; }
+
+.admin-events-view { padding: 16px; }
+.admin-events-view__grid { width: 100%; }
+.admin-events-view--grid .admin-events-view__grid {
+  display:grid;
+  gap:24px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+}
+.admin-events-view--list .admin-events-view__grid {
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
 
 /* Footer wrapper keeps pagination aligned with grid and page width */
 .events-footer-wrap { margin-top: 20px; display:flex; justify-content:center; }
@@ -251,6 +388,9 @@ h1 {
   .events-page__header { flex-direction:column; align-items:flex-start; gap:8px; padding-bottom: 12px }
   .container { padding-left: 12px; padding-right: 12px }
   .events-page__title .muted { max-width: 100%; }
+  .admin-controls__row { align-items:stretch; }
+  .admin-view-toggle { width: 100%; }
+  .admin-view-toggle__btn { flex:1 1 0; min-width:0; }
 }
 .page--public { background: linear-gradient(180deg, #fbfcfd, var(--color-bg)); }
 .page-title { margin-bottom: var(--space-4); }
@@ -578,6 +718,49 @@ h1 {
   transform: none;
   box-shadow: 0 8px 24px rgba(2,6,23,0.06);
   border-color: rgba(16,163,107,0.12);
+}
+
+.admin-events-view--grid .event-card--admin-layout {
+  flex-direction: column;
+}
+
+.admin-events-view--list .event-card--admin-layout {
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.admin-events-view--list .event-card__media-wrap {
+  width: 220px;
+  flex: 0 0 220px;
+  aspect-ratio: 4 / 3;
+}
+
+.admin-events-view--list .event-card__body {
+  padding: 14px 16px;
+}
+
+.admin-events-view--list .event-card__header {
+  gap: 8px;
+}
+
+.admin-events-view--list .event-card__dek {
+  -webkit-line-clamp: 3;
+}
+
+.admin-events-view--list .event-card__footer {
+  align-items: flex-end;
+}
+
+.admin-events-view--list .event-card__meta {
+  flex-wrap: wrap;
+}
+
+.admin-events-view--list .event-card__actions {
+  justify-content: flex-end;
+}
+
+.admin-events-view--list .event-card--admin-layout .event-card__location {
+  white-space: normal;
 }
 
 .event-card--admin-layout:hover .event-card__media,
@@ -920,12 +1103,17 @@ h1 {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
   }
+  .admin-events-view--grid .admin-events-view__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 560px) {
   .event-card--admin-layout .event-card__body { padding: 12px }
   .event-card--admin-layout .event-card__eyebrow { align-items: flex-start }
   .event-card--admin-layout .event-card__actions .btn { flex: 1 1 100% }
+  .admin-events-view--grid .admin-events-view__grid,
+  .admin-events-view--list .admin-events-view__grid { grid-template-columns: 1fr; }
+  .admin-events-view--list .event-card--admin-layout { flex-direction: column; }
+  .admin-events-view--list .event-card__media-wrap { width: 100%; flex-basis: auto; }
 }
 
 
