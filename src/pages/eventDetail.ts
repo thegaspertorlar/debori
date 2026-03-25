@@ -1,5 +1,6 @@
 import { getEventById } from '../api/mockApi'
 import { updateEvent } from '../api/mockApi'
+import { resolveEventHeroImage } from '../eventHeroImage'
 import { createLoadingCard, createErrorCard } from '../uiStates'
 import { isAuthenticated } from '../session'
 import { EventStatus, type Event } from '../models'
@@ -120,7 +121,7 @@ function renderMetaItem(label: string, value: string) {
 }
 
 function renderPublicDetail(ev: Event, inAdmin: boolean) {
-  const heroUrl = ev.heroImage || `https://picsum.photos/seed/${encodeURIComponent(ev.id)}/1400/560`
+  const heroUrl = resolveEventHeroImage(ev)
   return `
     <div class="event-hero event-hero--public" style="background-image: url('${escapeHtml(heroUrl)}');">
       <div class="event-hero__backdrop" aria-hidden="true"></div>
@@ -193,7 +194,7 @@ function renderPublicDetail(ev: Event, inAdmin: boolean) {
 }
 
 function renderAdminDetail(ev: Event, inAdmin: boolean) {
-  const heroUrl = ev.heroImage || `https://picsum.photos/seed/${encodeURIComponent(ev.id)}/1400/560`
+  const heroUrl = resolveEventHeroImage(ev)
   const canToggleStatus = ev.status === EventStatus.Draft || ev.status === EventStatus.Published
   const nextStatus = ev.status === EventStatus.Draft ? EventStatus.Published : EventStatus.Draft
   const toggleLabel = ev.status === EventStatus.Draft ? 'Publish event' : 'Move to draft'

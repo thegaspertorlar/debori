@@ -447,6 +447,7 @@ export const events: Event[] = [
     priceCents: 1500,
     currency: 'USD',
     tags: ['history', 'walk', 'education'],
+    heroImage: '/event-heroes/community-history-walking-tour.svg',
   },
 
   {
@@ -474,6 +475,7 @@ export const events: Event[] = [
     priceCents: 0,
     currency: 'USD',
     tags: ['music', 'classical', 'community'],
+    heroImage: '/event-heroes/open-air-classical-concert.svg',
   },
 
   {

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Community History Walking Tour</title>
+  <desc id="desc">Curated illustrated hero image for the Community History Walking Tour event.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#253618" />
+      <stop offset="100%" stop-color="#627a3b" />
+    </linearGradient>
+    <linearGradient id="panel" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.18)" />
+      <stop offset="100%" stop-color="rgba(255,255,255,0.05)" />
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)" />
+  <circle cx="1360" cy="170" r="210" fill="rgba(245,211,129,0.20)" />
+  <circle cx="1450" cy="760" r="230" fill="rgba(255,255,255,0.08)" />
+  <path d="M1000 460C1100 350 1170 255 1275 215C1370 179 1475 221 1540 315" fill="none" stroke="rgba(245,211,129,0.62)" stroke-linecap="round" stroke-width="42" />
+  <path d="M1050 515C1145 410 1215 318 1310 280" fill="none" stroke="rgba(255,255,255,0.18)" stroke-linecap="round" stroke-width="12" />
+  <g transform="translate(1040 130)">
+    <rect width="320" height="320" rx="36" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.16)" />
+    <path d="M72 220L160 125L243 186" fill="none" stroke="#f5d381" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="160" cy="125" r="26" fill="#f5d381" />
+    <path d="M160 150V240" fill="none" stroke="#ffffff" stroke-width="18" stroke-linecap="round" />
+    <path d="M120 190H200" fill="none" stroke="#ffffff" stroke-width="18" stroke-linecap="round" />
+  </g>
+  <rect x="84" y="92" width="860" height="716" rx="42" fill="url(#panel)" stroke="rgba(255,255,255,0.16)" />
+  <rect x="132" y="146" width="292" height="54" rx="27" fill="rgba(255,255,255,0.14)" />
+  <text x="278" y="180" text-anchor="middle" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="1.8">CITY DISCOVERY</text>
+  <text x="132" y="326" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="80" font-weight="800">Community History</text>
+  <text x="132" y="410" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="80" font-weight="800">Walking Tour</text>
+  <text x="132" y="486" fill="rgba(255,255,255,0.82)" font-family="Inter, Arial, sans-serif" font-size="32" font-weight="600">Petaluma · Guided architecture and storytelling route</text>
+  <rect x="132" y="548" width="240" height="4" rx="2" fill="#f5d381" />
+  <text x="132" y="632" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="36" font-weight="700">Curated neighborhood heritage experience</text>
+  <text x="132" y="690" fill="rgba(255,255,255,0.72)" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="500">Editorial artwork added to close empty media gaps on public event cards.</text>
+</svg>
