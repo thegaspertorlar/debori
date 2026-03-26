@@ -10,52 +10,6 @@ type AdminShell = {
   router?: Router
 }
 
-type AdminHeaderMeta = {
-  title: string
-  ctaLabel: string
-  ctaHref: string
-}
-
-function getAdminHeaderMeta(path: string): AdminHeaderMeta {
-  if (path === '/admin/events') {
-    return {
-      title: 'Events management',
-      ctaLabel: 'Create event',
-      ctaHref: '#/admin/events/create',
-    }
-  }
-
-  if (path === '/admin/events/create') {
-    return {
-      title: 'Create a new event',
-      ctaLabel: 'View events',
-      ctaHref: '#/admin/events',
-    }
-  }
-
-  if (/^\/admin\/events\/[^/]+\/edit$/.test(path)) {
-    return {
-      title: 'Edit event',
-      ctaLabel: 'View event',
-      ctaHref: `#${path.replace(/\/edit$/, '')}`,
-    }
-  }
-
-  if (/^\/admin\/events\/[^/]+$/.test(path)) {
-    return {
-      title: 'Event details',
-      ctaLabel: 'Edit event',
-      ctaHref: `#${path}/edit`,
-    }
-  }
-
-  return {
-    title: 'Events management',
-    ctaLabel: 'Create event',
-    ctaHref: '#/admin/events/create',
-  }
-}
-
 // Admin shell: top header + left sidebar + content outlet.
 // The admin shell fully replaces the public header/navigation so
 // admin screens never show public-site chrome.
@@ -82,10 +36,8 @@ export function createAdminShell(container: HTMLElement) {
           <span class="admin-brand__mark" aria-hidden="true"></span>
           <span class="admin-brand__name">Debori Admin</span>
         </a>
-        <p class="admin-header-title" aria-live="polite">Events management</p>
       </div>
       <div class="header-actions">
-        <a class="btn btn--primary btn--sm admin-header-cta" href="#/admin/events/create" data-link>Create event</a>
         <button class="btn btn--outline btn--sm admin-signout" type="button" aria-label="Log out ${managerName}">Logout</button>
       </div>
     </div>
@@ -116,8 +68,6 @@ export function createAdminShell(container: HTMLElement) {
   container.appendChild(shell)
 
   const signoutBtn = header.querySelector('.admin-signout') as HTMLButtonElement | null
-  const contextTitle = header.querySelector('.admin-header-title') as HTMLElement | null
-  const contextCta = header.querySelector('.admin-header-cta') as HTMLAnchorElement | null
   if (signoutBtn) {
     signoutBtn.addEventListener('click', (e) => {
       e.preventDefault()
@@ -183,14 +133,6 @@ export function createAdminShell(container: HTMLElement) {
   }
 
   function updateHeaderContext() {
-    const path = location.hash.replace(/^#/, '') || '/admin/events'
-    const meta = getAdminHeaderMeta(path)
-    if (contextTitle) contextTitle.textContent = meta.title
-    if (contextCta) {
-      contextCta.textContent = meta.ctaLabel
-      contextCta.setAttribute('href', meta.ctaHref)
-      contextCta.setAttribute('aria-label', meta.ctaLabel)
-    }
     syncHeaderHeight()
   }
 
