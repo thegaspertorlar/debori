@@ -1,4 +1,5 @@
 import { events as seededEvents, users as seededUsers, demoCredentials } from '../data/seed'
+import { normalizeEventHeroImage } from '../eventHeroImage'
 import { Event, User, EventStatus } from '../models'
 import { isAuthenticated, getSession } from '../session'
 
@@ -33,18 +34,18 @@ function validateImageReference(img: any) {
   const errors: string[] = []
   if (typeof img === 'string') {
     const lower = img.trim().toLowerCase()
-    const hasSupportedExtension = /\.(png|jpe?g|webp|gif|svg|avif)(?:[?#]|$)/.test(lower)
-    const isDataImage = /^data:image\//.test(lower)
+    const hasSupportedExtension = /\.svg(?:[?#]|$)/.test(lower)
+    const isDataImage = /^data:image\/svg\+xml(?:;charset=[^,;]+)?(?:;base64)?,/.test(lower)
     const isRenderablePath = /^(https?:\/\/|\/|\.\/|\.\.\/)/.test(lower)
-    if (!isDataImage && !(isRenderablePath && hasSupportedExtension)) errors.push('Hero image must be a valid image URL or uploaded image.')
+    if (!isDataImage && !(isRenderablePath && hasSupportedExtension)) errors.push('Hero image must be a valid SVG URL or uploaded SVG image.')
     return errors
   }
   const { size, type, name } = img
-  const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif', 'image/svg+xml'])
+  const allowedTypes = new Set(['image/svg+xml'])
   if (typeof size !== 'number') errors.push('Image size unknown')
-  if (typeof type === 'string' && !allowedTypes.has(type)) errors.push('Image must be PNG, JPG, WEBP, GIF, AVIF, or SVG')
+  if (typeof type === 'string' && type && !allowedTypes.has(type) && !(name && /\.svg$/i.test(name))) errors.push('Image must be an SVG')
   if (typeof size === 'number' && size > 10 * 1024 * 1024) errors.push('Image must be 10 MB or smaller')
-  if (name && !/\.(png|jpe?g|webp|gif|svg|avif)$/i.test(name)) errors.push('Image filename must end with a supported image extension')
+  if (name && !/\.svg$/i.test(name)) errors.push('Image filename must end with .svg')
   return errors
 }
 
@@ -232,6 +233,7 @@ export async function createEvent(payload: Partial<Event> & { title: string; org
     // Ensure new event is owned by the signed-in manager
     organizerId: payload.organizerId || currentUserId,
   }
+  newEvent.heroImage = normalizeEventHeroImage(newEvent)
   // If published now and no publishedAt, set it
   if (newEvent.status === EventStatus.Published && !newEvent.publishedAt) newEvent.publishedAt = now
   events.push(newEvent)
@@ -280,6 +282,7 @@ export async function updateEvent(id: string, payload: Partial<Event>): Promise<
     if (ev.status === EventStatus.Published && !ev.publishedAt) ev.publishedAt = nowIso()
   }
 
+  ev.heroImage = normalizeEventHeroImage(ev)
   ev.updatedAt = nowIso()
   return { ok: true, data: { ...ev } }
 }

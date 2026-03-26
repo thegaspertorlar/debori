@@ -2,7 +2,7 @@ import { createEvent } from '../api/mockApi'
 import { EventStatus } from '../models'
 
 const MAX_HERO_IMAGE_BYTES = 10 * 1024 * 1024
-const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif', 'image/svg+xml']
+const ACCEPTED_IMAGE_TYPES = ['image/svg+xml']
 
 function combineDateAndTime(dateValue: string, timeValue: string) {
   if (!dateValue && !timeValue) return undefined
@@ -138,15 +138,15 @@ export function renderEventCreate() {
                   <span class="meta--caps">Media</span>
                   <h2>Event cover image</h2>
                 </div>
-                <p class="muted">Upload a cover that makes your listing instantly recognizable.</p>
+                <p class="muted">Upload an SVG cover so the artwork stays crisp and reliable across public and admin event views.</p>
               </div>
 
               <div class="create-event-upload" id="hero-upload-zone" tabindex="0" role="button" aria-label="Upload event cover image">
-                <input id="heroFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif,image/svg+xml" style="display:none" />
+                <input id="heroFile" type="file" accept="image/svg+xml,.svg" style="display:none" />
                 <div class="create-event-upload__icon" aria-hidden="true">🖼️</div>
                 <div class="create-event-upload__content">
-                  <div class="create-event-upload__title">Drop an image here or click to upload</div>
-                  <p class="muted">PNG, JPG, WEBP, GIF, AVIF, or SVG • up to 10 MB</p>
+                  <div class="create-event-upload__title">Drop an SVG here or click to upload</div>
+                  <p class="muted">SVG only • up to 10 MB</p>
                 </div>
                 <button type="button" class="btn btn--secondary btn--sm" id="choose-file">Choose file</button>
               </div>
@@ -489,7 +489,8 @@ export function renderEventCreate() {
 
   function validateImageFile(file?: File) {
     if (!file) return undefined
-    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) return 'Please upload a PNG, JPG, WEBP, GIF, AVIF, or SVG image.'
+    const isSvgFile = ACCEPTED_IMAGE_TYPES.includes(file.type) || /\.svg$/i.test(file.name)
+    if (!isSvgFile) return 'Please upload an SVG image.'
     if (file.size > MAX_HERO_IMAGE_BYTES) return 'Cover image must be 10 MB or smaller.'
     return undefined
   }

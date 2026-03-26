@@ -337,7 +337,8 @@ export function renderEventEdit(params: Record<string, string>) {
     if (!f) return
     const MAX_BYTES = 8 * 1024 * 1024
     const allowed = ['image/svg+xml']
-    if (!allowed.includes(f.type)) { errMap.heroImage.textContent = 'Invalid file type. Only SVG files are allowed.'; heroFile.value = ''; return }
+    const isSvgFile = allowed.includes(f.type) || /\.svg$/i.test(f.name)
+    if (!isSvgFile) { errMap.heroImage.textContent = 'Invalid file type. Only SVG files are allowed.'; heroFile.value = ''; return }
     if (f.size > MAX_BYTES) { errMap.heroImage.textContent = 'File too large. Maximum size is 8 MB.'; heroFile.value = ''; return }
     heroUrl.value = ''
 

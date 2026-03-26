@@ -214,13 +214,21 @@ export function buildEventHeroSvgDataUri(event: EventHeroLike) {
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`
 }
 
-function isRenderableImageSource(source: string) {
-  return /^data:image\//i.test(source) || /^(https?:\/\/|\/|\.\/|\.\.\/)/i.test(source)
+function isSvgDataUri(source: string) {
+  return /^data:image\/svg\+xml(?:;charset=[^,;]+)?(?:;base64)?,/i.test(source)
+}
+
+function isSvgUrl(source: string) {
+  return /^(https?:\/\/|\/|\.\/|\.\.\/).+\.svg(?:[?#].*)?$/i.test(source)
+}
+
+function isSvgSource(source: string) {
+  return isSvgDataUri(source) || isSvgUrl(source)
 }
 
 export function normalizeEventHeroImage(event: EventHeroLike) {
   const source = typeof event.heroImage === 'string' ? event.heroImage.trim() : ''
-  if (source && isRenderableImageSource(source)) return source
+  if (source && isSvgSource(source)) return source
   return buildEventHeroSvgDataUri(event)
 }
 
