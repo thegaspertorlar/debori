@@ -12,7 +12,6 @@ type AdminShell = {
 }
 
 type AdminHeaderMeta = {
-  section: string
   title: string
   ctaLabel: string
   ctaHref: string
@@ -21,7 +20,6 @@ type AdminHeaderMeta = {
 function getAdminHeaderMeta(path: string): AdminHeaderMeta {
   if (path === '/admin/dashboard') {
     return {
-      section: 'Overview',
       title: 'Admin dashboard',
       ctaLabel: 'Create event',
       ctaHref: '#/admin/events/create',
@@ -30,7 +28,6 @@ function getAdminHeaderMeta(path: string): AdminHeaderMeta {
 
   if (path === '/admin/events') {
     return {
-      section: 'Events',
       title: 'Events management',
       ctaLabel: 'Create event',
       ctaHref: '#/admin/events/create',
@@ -39,7 +36,6 @@ function getAdminHeaderMeta(path: string): AdminHeaderMeta {
 
   if (path === '/admin/events/create') {
     return {
-      section: 'Editor',
       title: 'Create a new event',
       ctaLabel: 'View events',
       ctaHref: '#/admin/events',
@@ -48,7 +44,6 @@ function getAdminHeaderMeta(path: string): AdminHeaderMeta {
 
   if (/^\/admin\/events\/[^/]+\/edit$/.test(path)) {
     return {
-      section: 'Editor',
       title: 'Edit event',
       ctaLabel: 'View event',
       ctaHref: `#${path.replace(/\/edit$/, '')}`,
@@ -57,7 +52,6 @@ function getAdminHeaderMeta(path: string): AdminHeaderMeta {
 
   if (/^\/admin\/events\/[^/]+$/.test(path)) {
     return {
-      section: 'Events',
       title: 'Event details',
       ctaLabel: 'Edit event',
       ctaHref: `#${path}/edit`,
@@ -65,7 +59,6 @@ function getAdminHeaderMeta(path: string): AdminHeaderMeta {
   }
 
   return {
-    section: 'Workspace',
     title: 'Admin workspace',
     ctaLabel: 'Go to dashboard',
     ctaHref: '#/admin/dashboard',
@@ -87,7 +80,6 @@ export function createAdminShell(container: HTMLElement) {
 
   const session = getSession()
   const managerName = session?.user?.name || 'Demo Manager'
-  const managerFirstName = managerName.trim().split(/\s+/)[0] || 'Manager'
 
   header.innerHTML = `
     <div class="container app-header-inner">
@@ -97,20 +89,13 @@ export function createAdminShell(container: HTMLElement) {
         </button>
         <a class="brand admin-brand" href="#/admin/dashboard" aria-label="Go to admin dashboard">
           <span class="admin-brand__mark" aria-hidden="true"></span>
-          <span class="admin-brand__text">
-            <span class="admin-brand__name">Debori Admin</span>
-            <span class="admin-brand__meta">Simple event workspace</span>
-          </span>
+          <span class="admin-brand__name">Debori Admin</span>
         </a>
-      </div>
-      <div class="admin-header-summary" aria-live="polite">
-        <span class="admin-header-summary__label">Workspace</span>
-        <p class="admin-header-summary__title">Admin workspace</p>
+        <p class="admin-header-title" aria-live="polite">Admin workspace</p>
       </div>
       <div class="header-actions">
-        <span class="admin-header-user">Hi, ${managerFirstName}</span>
         <a class="btn btn--primary btn--sm admin-header-cta" href="#/admin/events/create" data-link>Create event</a>
-        <button class="btn btn--outline btn--sm admin-signout" type="button">Logout</button>
+        <button class="btn btn--outline btn--sm admin-signout" type="button" aria-label="Log out ${managerName}">Logout</button>
       </div>
     </div>
   `
@@ -141,8 +126,7 @@ export function createAdminShell(container: HTMLElement) {
   container.appendChild(shell)
 
   const signoutBtn = header.querySelector('.admin-signout') as HTMLButtonElement | null
-  const contextLabel = header.querySelector('.admin-header-summary__label') as HTMLElement | null
-  const contextTitle = header.querySelector('.admin-header-summary__title') as HTMLElement | null
+  const contextTitle = header.querySelector('.admin-header-title') as HTMLElement | null
   const contextCta = header.querySelector('.admin-header-cta') as HTMLAnchorElement | null
   if (signoutBtn) {
     signoutBtn.addEventListener('click', (e) => {
@@ -212,7 +196,6 @@ export function createAdminShell(container: HTMLElement) {
   function updateHeaderContext() {
     const path = location.hash.replace(/^#/, '') || '/admin/dashboard'
     const meta = getAdminHeaderMeta(path)
-    if (contextLabel) contextLabel.textContent = meta.section
     if (contextTitle) contextTitle.textContent = meta.title
     if (contextCta) {
       contextCta.textContent = meta.ctaLabel
