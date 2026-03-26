@@ -588,7 +588,6 @@ function renderAdminDetail(ev: Event, inAdmin: boolean) {
 
           <div class="event-admin-header__actions">
             <a class="btn btn--primary" href="${editHref(inAdmin, ev.id)}" data-link>Edit event</a>
-            <a class="btn btn--secondary" href="${previewHref(ev.id)}" data-link>Preview event</a>
             ${canToggleStatus ? `<button type="button" class="${toggleTone}" data-admin-status-toggle data-next-status="${escapeHtml(nextStatus)}">${escapeHtml(toggleLabel)}</button>` : ''}
           </div>
         </div>

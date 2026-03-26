@@ -66,7 +66,7 @@ export function renderAdmin() {
     <div class="page-title">
       <div class="row row--md justify-between">
         <div class="events-page__title">
-          <h1>Events dashboard</h1>
+          <h1>Events management</h1>
           <p class="muted">Operational overview — drafts, published and past events. Manager-focused controls for quick action.</p>
         </div>
         <div class="events-page__actions">
