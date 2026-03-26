@@ -1,6 +1,6 @@
 import type { Event } from './models'
 
-type EventHeroLike = Pick<Event, 'id' | 'title' | 'slug' | 'heroImage' | 'tags' | 'location' | 'isOnline'>
+export type EventHeroLike = Pick<Event, 'id' | 'title' | 'slug' | 'heroImage' | 'tags' | 'location' | 'isOnline'>
 
 type HeroTheme = {
   label: string
@@ -179,7 +179,7 @@ function motifMarkup(theme: HeroTheme) {
   }
 }
 
-function buildFallbackHeroImage(event: EventHeroLike) {
+export function buildEventHeroSvgDataUri(event: EventHeroLike) {
   const theme = pickTheme(event)
   const title = escapeSvg(truncate(event.title || 'Featured event', 48))
   const city = event.isOnline ? 'Online event' : event.location?.city || theme.label
@@ -214,8 +214,16 @@ function buildFallbackHeroImage(event: EventHeroLike) {
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`
 }
 
+function isSvgImageSource(source: string) {
+  return /^data:image\/svg\+xml/i.test(source) || /\.svg(?:[?#]|$)/i.test(source)
+}
+
+export function normalizeEventHeroImage(event: EventHeroLike) {
+  const source = typeof event.heroImage === 'string' ? event.heroImage.trim() : ''
+  if (source && isSvgImageSource(source)) return source
+  return buildEventHeroSvgDataUri(event)
+}
+
 export function resolveEventHeroImage(event: EventHeroLike) {
-  const source = event.heroImage?.trim()
-  if (source) return source
-  return buildFallbackHeroImage(event)
+  return normalizeEventHeroImage(event)
 }

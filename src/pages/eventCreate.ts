@@ -53,26 +53,26 @@ export function renderEventCreate() {
 
           <section class="form-section">
             <h2 class="form-section__title">Cover image</h2>
-            <p class="form-section__desc muted">Add an image to make the event listing more engaging. Use a JPG or PNG.</p>
+            <p class="form-section__desc muted">Add an SVG cover image so event artwork stays crisp across public and admin views.</p>
             <div class="form-field">
               <label class="form-label">Cover image</label>
               <div class="upload-row">
                 <div class="upload-zone" id="hero-upload-zone" tabindex="0" role="button" aria-label="Upload cover image">
-                  <input id="heroFile" type="file" accept="image/jpeg,image/png" style="display:none" />
+                  <input id="heroFile" type="file" accept="image/svg+xml,.svg" style="display:none" />
                   <div class="upload-zone__inner">
                     <div class="upload-zone__icon" aria-hidden>🖼️</div>
                     <div>
-                      <div class="upload-zone__title">Upload an image</div>
-                      <div class="muted helper-text">Click to choose a file or use the field to the right to paste an image URL</div>
+                      <div class="upload-zone__title">Upload an SVG</div>
+                      <div class="muted helper-text">Click to choose a file or use the field to the right to paste an SVG image URL</div>
                     </div>
                   </div>
                 </div>
 
                 <div class="flex-1">
-                  <input id="heroUrl" class="input" placeholder="Image URL (jpg/png)" />
+                  <input id="heroUrl" class="input" placeholder="Image URL (.svg)" />
                   <div class="row row--sm mt-2">
                     <button type="button" class="btn btn--secondary btn--sm" id="choose-file">Upload</button>
-                    <div class="muted helper-text">JPG or PNG • up to 8 MB</div>
+                    <div class="muted helper-text">SVG • up to 8 MB</div>
                   </div>
                 </div>
               </div>
@@ -145,6 +145,15 @@ export function renderEventCreate() {
 
   function clearErrors() {
     Object.values(errMap).forEach((n) => (n.textContent = ''))
+  }
+
+  function readFileAsDataUrl(file: File) {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onerror = () => reject(new Error('Unable to read selected file'))
+      reader.onload = () => resolve(String(reader.result || ''))
+      reader.readAsDataURL(file)
+    })
   }
 
   function focusFirstError(errors: Record<string, string[]>) {
@@ -323,9 +332,9 @@ export function renderEventCreate() {
     if (!f) return
     // client-side validation
     const MAX_BYTES = 8 * 1024 * 1024 // 8 MB
-    const allowed = ['image/jpeg', 'image/png']
+    const allowed = ['image/svg+xml']
     if (!allowed.includes(f.type)) {
-      errMap.heroImage.textContent = 'Invalid file type. Only JPEG and PNG are allowed.'
+      errMap.heroImage.textContent = 'Invalid file type. Only SVG files are allowed.'
       heroFile.value = ''
       return
     }
@@ -393,16 +402,16 @@ export function renderEventCreate() {
       location: { address: addressInput.value.trim() },
     }
 
-    // hero: prefer file if set, else URL
     const file = heroFile.files && heroFile.files[0]
-    if (file) payload.heroImage = { name: file.name, size: file.size, type: file.type }
-    else if (heroUrl.value.trim()) payload.heroImageUrl = heroUrl.value.trim()
 
     // disable UI
     const allButtons = el.querySelectorAll('button')
     allButtons.forEach((b) => (b as HTMLButtonElement).disabled = true)
 
     try {
+      if (file) payload.heroImage = await readFileAsDataUrl(file)
+      else if (heroUrl.value.trim()) payload.heroImage = heroUrl.value.trim()
+
       // client-side validation to provide quicker, inline feedback
       const clientErrors: Record<string, string[]> = {}
       const addErr = (k: string, msg: string) => { clientErrors[k] = clientErrors[k] || []; clientErrors[k].push(msg) }
@@ -428,10 +437,9 @@ export function renderEventCreate() {
         if (!Number.isNaN(s) && !Number.isNaN(e) && e <= s) addErr('endDate', 'End date must be after start date')
       }
 
-      // hero image URL basic check if provided
-      if ((payload as any).heroImageUrl) {
-        const low = String((payload as any).heroImageUrl).toLowerCase()
-        if (!/\.(jpe?g|png)(\?|$)/.test(low)) addErr('heroImage', 'Hero image URL must point to a JPG or PNG')
+      if ((payload as any).heroImage && typeof (payload as any).heroImage === 'string') {
+        const low = String((payload as any).heroImage).toLowerCase()
+        if (!low.startsWith('data:image/svg+xml') && !/\.svg(?:[?#]|$)/.test(low)) addErr('heroImage', 'Hero image must point to an SVG')
       }
 
       // show client errors and abort before network call

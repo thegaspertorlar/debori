@@ -34,15 +34,15 @@ function validateImageReference(img: any) {
   const errors: string[] = []
   if (typeof img === 'string') {
     const lower = img.toLowerCase()
-    if (!/\.(jpe?g|png)(\?|$)/.test(lower)) errors.push('Hero image must be a JPG or PNG URL')
+    if (!/^data:image\/svg\+xml/.test(lower) && !/\.svg(?:[?#]|$)/.test(lower)) errors.push('Hero image must be an SVG URL')
     return errors
   }
   // file-like object
   const { size, type, name } = img
   if (typeof size !== 'number') errors.push('Image size unknown')
-  if (typeof type === 'string' && !/(image\/jpeg|image\/png)/.test(type)) errors.push('Image must be JPEG or PNG')
+  if (typeof type === 'string' && type !== 'image/svg+xml') errors.push('Image must be SVG')
   if (typeof size === 'number' && size > 8 * 1024 * 1024) errors.push('Image must be 8 MB or smaller')
-  if (name && !/\.(jpe?g|png)$/i.test(name)) errors.push('Image filename must end with .jpg, .jpeg or .png')
+  if (name && !/\.svg$/i.test(name)) errors.push('Image filename must end with .svg')
   return errors
 }
 

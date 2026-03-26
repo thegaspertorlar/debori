@@ -1,4 +1,5 @@
 import { Event, EventStatus, User } from '../models'
+import { normalizeEventHeroImage } from '../eventHeroImage'
 
 const now = new Date()
 const iso = (d: Date) => d.toISOString()
@@ -37,7 +38,7 @@ export const users: User[] = [
 let eid = 1
 const mkid = (prefix = 'evt') => `${prefix}_${(eid++).toString().padStart(3, '0')}`
 
-export const events: Event[] = [
+const baseEvents: Event[] = [
   // Published - upcoming
   {
     id: mkid(),
@@ -912,6 +913,11 @@ export const events: Event[] = [
     tags: ['film', 'outdoors', 'family'],
   },
 ]
+
+export const events: Event[] = baseEvents.map((event) => ({
+  ...event,
+  heroImage: normalizeEventHeroImage(event),
+}))
 
 export const demoCredentials = {
   email: 'demo@debori.com',
