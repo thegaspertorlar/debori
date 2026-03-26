@@ -38,88 +38,40 @@ function eyeIcon(visible: boolean) {
       </svg>`
 }
 
-function createBenefit(title: string, copy: string, icon: string) {
-  const item = document.createElement('div')
-  item.className = 'auth-benefit'
-  item.innerHTML = `
-    <div class="auth-benefit__icon" aria-hidden="true">${icon}</div>
-    <div>
-      <div class="auth-benefit__title">${title}</div>
-      <p class="auth-benefit__copy">${copy}</p>
-    </div>
-  `
-  return item
-}
-
 export function renderLogin() {
   const el = document.createElement('div')
   el.className = 'page page--public page--login'
 
   const wrapper = document.createElement('div')
-  wrapper.className = 'auth-wrapper container'
+  wrapper.className = 'auth-shell container'
 
-  const showcase = document.createElement('section')
-  showcase.className = 'auth-showcase'
-  showcase.setAttribute('aria-label', 'Workspace introduction')
-  showcase.innerHTML = `
-    <div class="auth-showcase__badge">Fresh workspace experience</div>
-    <h1 class="auth-showcase__title">A cleaner login flow for faster event operations.</h1>
-    <p class="auth-showcase__copy">
-      Get into DEBORI with less friction, clearer signposting, and a more premium first impression built for daily admin work.
+  const panel = document.createElement('section')
+  panel.className = 'auth-panel'
+
+  const intro = document.createElement('section')
+  intro.className = 'auth-intro'
+  intro.setAttribute('aria-label', 'Login introduction')
+  intro.innerHTML = `
+    <div class="auth-intro__badge">Fresh login</div>
+    <h1 class="auth-intro__title">Simple access with the credentials below.</h1>
+    <p class="auth-intro__copy">
+      A cleaner layout, softer colors, and a faster path into the dashboard. Use the demo login and continue right away.
     </p>
-    <div class="auth-showcase__chips" aria-label="Login highlights">
-      <span class="auth-chip">Instant demo access</span>
-      <span class="auth-chip">Modern glass UI</span>
-      <span class="auth-chip">Smooth, focused workflow</span>
-    </div>
-    <div class="auth-preview" aria-hidden="true">
-      <div class="auth-preview__orbit auth-preview__orbit--one"></div>
-      <div class="auth-preview__orbit auth-preview__orbit--two"></div>
-      <div class="auth-preview__window auth-preview__window--main">
-        <div class="auth-preview__window-top">
-          <span></span><span></span><span></span>
-        </div>
-        <div class="auth-preview__window-body">
-          <div class="auth-preview__eyebrow">Today</div>
-          <strong>3 events ready to review</strong>
-          <div class="auth-preview__bars">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        </div>
+    <div class="auth-intro__highlights" aria-label="Login benefits">
+      <div class="auth-highlight">
+        <strong>Quick</strong>
+        <span>No extra steps or setup.</span>
       </div>
-      <div class="auth-preview__window auth-preview__window--side">
-        <div class="auth-preview__metric">92%</div>
-        <div class="auth-preview__meta">Faster access to the dashboard</div>
+      <div class="auth-highlight">
+        <strong>Clear</strong>
+        <span>Credentials are visible and ready to use.</span>
       </div>
-      <div class="auth-preview__toast">
-        <div class="auth-preview__toast-dot"></div>
-        <div>
-          <strong>Ready to explore</strong>
-          <span>Demo session is already configured</span>
-        </div>
+      <div class="auth-highlight">
+        <strong>Local</strong>
+        <span>Demo access stays inside this workspace.</span>
       </div>
     </div>
   `
-
-  const benefits = document.createElement('div')
-  benefits.className = 'auth-benefits'
-  benefits.appendChild(
-    createBenefit(
-      'Fast to understand',
-      'The page now guides users from credentials to dashboard with a simpler visual flow.',
-      '<svg viewBox="0 0 24 24" fill="none"><path d="M12 3l7 4v5c0 4.5-2.9 7.87-7 9-4.1-1.13-7-4.5-7-9V7l7-4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9.5 12l1.7 1.7L15 9.9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-    )
-  )
-  benefits.appendChild(
-    createBenefit(
-      'Better visual hierarchy',
-      'Primary action, helper details, and demo access are easier to scan at a glance.',
-      '<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 9h8M8 13h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
-    )
-  )
-  showcase.appendChild(benefits)
 
   const card = document.createElement('section')
   card.className = 'card card--compact auth-card'
@@ -131,7 +83,7 @@ export function renderLogin() {
       <span>Sign in</span>
     </div>
     <h2 id="signin-heading" class="auth-card__title">Welcome back</h2>
-    <p class="auth-card__sub">Use the demo account below for a quick preview, or enter your own testing credentials.</p>
+    <p class="auth-card__sub">Login credentials are enough to enter the workspace.</p>
   `
 
   const creds = document.createElement('div')
@@ -139,19 +91,19 @@ export function renderLogin() {
   creds.innerHTML = `
     <div class="login-credentials__top">
       <div>
-        <div class="form-section__title">Demo profile</div>
-        <p class="login-credentials__copy">One tap fills the form so you can jump straight into the workspace.</p>
+        <div class="form-section__title">Demo credentials</div>
+        <p class="login-credentials__copy">Use these details or tap the button to fill the form instantly.</p>
       </div>
-      <button type="button" class="btn btn--secondary btn--sm auth-fill-btn">Load demo profile</button>
+      <button type="button" class="btn btn--secondary btn--sm auth-fill-btn">Use credentials</button>
     </div>
     <div class="login-credentials__grid" aria-label="Demo credentials">
-      <div class="login-credential-chip">
-        <span class="login-credential-chip__label">Email</span>
-        <span class="login-credential-chip__value">${demoCredentials.email}</span>
+      <div class="login-credential-row">
+        <span class="login-credential-row__label">Email</span>
+        <span class="login-credential-row__value">${demoCredentials.email}</span>
       </div>
-      <div class="login-credential-chip">
-        <span class="login-credential-chip__label">Password</span>
-        <span class="login-credential-chip__value">${demoCredentials.password}</span>
+      <div class="login-credential-row">
+        <span class="login-credential-row__label">Password</span>
+        <span class="login-credential-row__value">${demoCredentials.password}</span>
       </div>
     </div>
   `
@@ -218,7 +170,7 @@ export function renderLogin() {
   const footer = document.createElement('div')
   footer.className = 'auth-form__footer'
   footer.innerHTML = `
-    <p class="auth-form__footer-note">Fresh UI, same working login flow — built to feel calmer, clearer, and quicker.</p>
+    <p class="auth-form__footer-note">Fresh design, same working login flow.</p>
   `
 
   const errorEl = document.createElement('div')
@@ -238,8 +190,9 @@ export function renderLogin() {
   card.appendChild(creds)
   card.appendChild(form)
 
-  wrapper.appendChild(showcase)
-  wrapper.appendChild(card)
+  panel.appendChild(intro)
+  panel.appendChild(card)
+  wrapper.appendChild(panel)
   el.appendChild(wrapper)
 
   const emailInput = emailField.querySelector('#email') as HTMLInputElement

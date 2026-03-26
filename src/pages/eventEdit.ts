@@ -70,26 +70,26 @@ export function renderEventEdit(params: Record<string, string>) {
 
           <section class="form-section">
             <h2 class="form-section__title">Cover image</h2>
-            <p class="form-section__desc muted">Provide an image URL or upload a file to show on the event page.</p>
+            <p class="form-section__desc muted">Provide an SVG image URL or upload an SVG file so event artwork stays consistent everywhere.</p>
             <div class="form-field">
               <label class="form-label">Cover image</label>
               <div class="upload-row">
                 <div class="upload-zone" id="hero-upload-zone" tabindex="0" role="button" aria-label="Upload cover image">
-                  <input id="heroFile" type="file" accept="image/jpeg,image/png" style="display:none" />
+                  <input id="heroFile" type="file" accept="image/svg+xml,.svg" style="display:none" />
                   <div class="upload-zone__inner">
                     <div class="upload-zone__icon" aria-hidden>🖼️</div>
                     <div>
-                      <div class="upload-zone__title">Upload an image</div>
-                      <div class="muted helper-text">Click to choose a file or use the field to the right to paste an image URL</div>
+                      <div class="upload-zone__title">Upload an SVG</div>
+                      <div class="muted helper-text">Click to choose a file or use the field to the right to paste an SVG image URL</div>
                     </div>
                   </div>
                 </div>
 
                 <div class="flex-1">
-                  <input id="heroUrl" class="input" placeholder="Image URL (jpg/png)" />
+                  <input id="heroUrl" class="input" placeholder="Image URL (.svg)" />
                   <div class="row row--sm mt-2">
                     <button type="button" class="btn btn--secondary btn--sm" id="choose-file">Upload</button>
-                    <div class="muted helper-text">JPG or PNG • up to 8 MB</div>
+                    <div class="muted helper-text">SVG • up to 8 MB</div>
                   </div>
                 </div>
               </div>
@@ -136,6 +136,7 @@ export function renderEventEdit(params: Record<string, string>) {
   `
 
   // refs
+  const card = el.querySelector('.card') as HTMLElement
   const form = el.querySelector('#event-form') as HTMLFormElement
   const formError = el.querySelector('#form-error') as HTMLElement
   const titleInput = el.querySelector('#title') as HTMLInputElement
@@ -161,6 +162,24 @@ export function renderEventEdit(params: Record<string, string>) {
   }
 
   function clearErrors() { Object.values(errMap).forEach((n) => (n.textContent = '')) }
+
+  function showCardContent(node: HTMLElement) {
+    card.innerHTML = ''
+    card.appendChild(node)
+  }
+
+  function showForm() {
+    showCardContent(form)
+  }
+
+  function readFileAsDataUrl(file: File) {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onerror = () => reject(new Error('Unable to read selected file'))
+      reader.onload = () => resolve(String(reader.result || ''))
+      reader.readAsDataURL(file)
+    })
+  }
 
   function focusFirstError(errors: Record<string, string[]>) {
     const order = ['title', 'description', 'heroImage', 'startDate', 'endDate', 'location']
@@ -327,8 +346,9 @@ export function renderEventEdit(params: Record<string, string>) {
     errMap.heroImage.textContent = ''
     if (!f) return
     const MAX_BYTES = 8 * 1024 * 1024
-    const allowed = ['image/jpeg', 'image/png']
-    if (!allowed.includes(f.type)) { errMap.heroImage.textContent = 'Invalid file type. Only JPEG and PNG are allowed.'; heroFile.value = ''; return }
+    const allowed = ['image/svg+xml']
+    const isSvgFile = allowed.includes(f.type) || /\.svg$/i.test(f.name)
+    if (!isSvgFile) { errMap.heroImage.textContent = 'Invalid file type. Only SVG files are allowed.'; heroFile.value = ''; return }
     if (f.size > MAX_BYTES) { errMap.heroImage.textContent = 'File too large. Maximum size is 8 MB.'; heroFile.value = ''; return }
     heroUrl.value = ''
 
@@ -388,13 +408,14 @@ export function renderEventEdit(params: Record<string, string>) {
     }
 
     const file = heroFile.files && heroFile.files[0]
-    if (file) payload.heroImage = { name: file.name, size: file.size, type: file.type }
-    else if (heroUrl.value.trim()) payload.heroImage = heroUrl.value.trim()
 
     const allButtons = el.querySelectorAll('button')
     allButtons.forEach((b) => (b as HTMLButtonElement).disabled = true)
 
     try {
+      if (file) payload.heroImage = await readFileAsDataUrl(file)
+      else if (heroUrl.value.trim()) payload.heroImage = heroUrl.value.trim()
+
       // client-side validation similar to create
       const clientErrors: Record<string, string[]> = {}
       const addErr = (k: string, msg: string) => { clientErrors[k] = clientErrors[k] || []; clientErrors[k].push(msg) }
@@ -420,7 +441,7 @@ export function renderEventEdit(params: Record<string, string>) {
 
       if ((payload as any).heroImage && typeof (payload as any).heroImage === 'string') {
         const low = ('' + (payload as any).heroImage).toLowerCase()
-        if (!/\.(jpe?g|png)(\?|$)/.test(low)) addErr('heroImage', 'Hero image URL must point to a JPG or PNG')
+        if (!low.startsWith('data:image/svg+xml') && !/\.svg(?:[?#]|$)/.test(low)) addErr('heroImage', 'Hero image must point to an SVG')
       }
 
       if (Object.keys(clientErrors).length) {
@@ -451,8 +472,10 @@ export function renderEventEdit(params: Record<string, string>) {
       // On success navigate back to the admin events list for immediate visibility
       location.hash = '/admin/events'
     } finally {
-      (el.querySelector('#save-draft') as HTMLButtonElement).textContent = 'Save as draft'
-      (el.querySelector('#publish') as HTMLButtonElement).textContent = 'Publish'
+      const saveDraftButton = el.querySelector('#save-draft') as HTMLButtonElement | null
+      const publishButton = el.querySelector('#publish') as HTMLButtonElement | null
+      if (saveDraftButton) saveDraftButton.textContent = 'Save as draft'
+      if (publishButton) publishButton.textContent = 'Publish'
       const allButtons2 = el.querySelectorAll('button')
       allButtons2.forEach((b) => (b as HTMLButtonElement).disabled = false)
     }
@@ -474,10 +497,8 @@ export function renderEventEdit(params: Record<string, string>) {
     await submit(EventStatus.Published)
   })
 
-  // Load existing event and populate fields
-  ;(async () => {
-    const container = el.querySelector('.card') as HTMLElement
-    if (container) { container.innerHTML = ''; container.appendChild(createLoadingCard('Loading event')) }
+  async function loadEvent() {
+    showCardContent(createLoadingCard('Loading event'))
     try {
       const res = await getEventById(id)
       if (!res.ok) {
@@ -489,9 +510,12 @@ export function renderEventEdit(params: Record<string, string>) {
           attachBackHandler()
           return
         }
-        if (container) { container.innerHTML = ''; container.appendChild(createErrorCard('Unable to load event', res.message)) }
+        const errorCard = createErrorCard('Unable to load event', res.message)
+        errorCard.addEventListener('state:retry', () => { void loadEvent() })
+        showCardContent(errorCard)
         return
       }
+      showForm()
       const ev = res.data
       // populate fields
       titleInput.value = ev.title || ''
@@ -505,9 +529,14 @@ export function renderEventEdit(params: Record<string, string>) {
       endInput.value = formatLocalFromIso(ev.endDate)
       addressInput.value = ev.location?.address || ''
     } catch (err) {
-      if (container) { container.innerHTML = ''; container.appendChild(createErrorCard('Unable to load event')) }
+      const errorCard = createErrorCard('Unable to load event')
+      errorCard.addEventListener('state:retry', () => { void loadEvent() })
+      showCardContent(errorCard)
     }
-  })()
+  }
+
+  // Load existing event and populate fields
+  void loadEvent()
 
   return el
 }

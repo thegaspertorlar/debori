@@ -313,6 +313,28 @@ function renderReadinessItem(label: string, ok: boolean, detail: string) {
   `
 }
 
+function renderAdminFactCard(label: string, value: string, detail: string) {
+  return `
+    <article class="event-admin-fact-card">
+      <span class="event-admin-fact-card__label">${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
+      <p>${escapeHtml(detail)}</p>
+    </article>
+  `
+}
+
+function renderAdminDetailRow(label: string, valueHtml: string, detail?: string) {
+  return `
+    <div class="event-admin-detail-row">
+      <div>
+        <span class="event-admin-detail-row__label">${escapeHtml(label)}</span>
+        ${detail ? `<p>${escapeHtml(detail)}</p>` : ''}
+      </div>
+      <div class="event-admin-detail-row__value">${valueHtml}</div>
+    </div>
+  `
+}
+
 function renderPublicDetail(ev: Event, inAdmin: boolean) {
   const heroUrl = resolveEventHeroImage(ev)
   const phase = eventPhaseSummary(ev)
@@ -512,6 +534,8 @@ function renderAdminDetail(ev: Event, inAdmin: boolean) {
   const priceText = formatCurrency(ev.priceCents, ev.currency || 'USD')
   const capacityText = ev.capacity ? `${ev.capacity} guests max` : 'Capacity open'
   const publishedText = ev.publishedAt ? formatDateTime(ev.publishedAt) : 'Not yet published'
+  const modeText = ev.isOnline ? 'Online event' : 'In-person event'
+  const summaryText = ev.shortDescription?.trim() || 'A clean overview for the team starts with a short event summary.'
   const tags = ev.tags?.length
     ? ev.tags.map((tag) => `<span class="event-admin-tag">${escapeHtml(tag)}</span>`).join('')
     : '<span class="event-admin-tag event-admin-tag--muted">No tags added</span>'
@@ -522,13 +546,27 @@ function renderAdminDetail(ev: Event, inAdmin: boolean) {
     renderReadinessItem('Cover image is ready', Boolean(ev.heroImage), ev.heroImage ? 'Hero media is available for listings and previews.' : 'Add a cover image to improve presentation.'),
     renderReadinessItem('Publishing state is intentional', ev.status !== EventStatus.Cancelled, publishingSummary(ev)),
   ].join('')
+  const overviewCards = [
+    renderAdminFactCard('Schedule', scheduleText, phase.detail),
+    renderAdminFactCard('Location', locationText, ev.isOnline ? 'Attendees join remotely.' : 'Venue details appear on the public page.'),
+    renderAdminFactCard('Tickets', priceText, typeof ev.priceCents === 'number' ? 'Ticket pricing is configured.' : 'No paid ticket is configured yet.'),
+    renderAdminFactCard('Audience', capacityText, audienceSummary(ev)),
+  ].join('')
+  const detailRows = [
+    renderAdminDetailRow('Lifecycle', `<strong>${escapeHtml(phase.label)}</strong>`, phase.detail),
+    renderAdminDetailRow('Visibility', `<span class="${statusBadgeClass(ev.status)}">${escapeHtml(statusText)}</span>`, publishingSummary(ev)),
+    renderAdminDetailRow('Event type', `<strong>${escapeHtml(modeText)}</strong>`, ev.isOnline ? 'Remote access is enabled.' : 'Guests attend at the listed venue.'),
+    renderAdminDetailRow('Published', `<strong>${escapeHtml(publishedText)}</strong>`, 'Useful for launch tracking and QA.'),
+    renderAdminDetailRow('Last updated', `<strong>${escapeHtml(formatDateTime(ev.updatedAt))}</strong>`, 'Latest admin change reflected here.'),
+    renderAdminDetailRow('Slug', `<code class="event-admin-inline-code">${escapeHtml(ev.slug)}</code>`, 'Used for event routing and links.'),
+    renderAdminDetailRow('Discovery tags', `<div class="event-admin-tag-row">${tags}</div>`, 'Helps keep listings easy to filter and find.'),
+  ].join('')
 
   return `
     <div class="event-detail event-detail--admin">
-      <section class="event-admin-hero card">
-        <div class="event-admin-hero__backdrop" aria-hidden="true"></div>
-        <div class="event-admin-hero__top">
-          <div class="event-admin-hero__breadcrumbs">
+      <section class="event-admin-header card">
+        <div class="event-admin-header__top">
+          <div class="event-admin-header__breadcrumbs">
             <a href="${listHref(inAdmin)}" data-link>Events</a>
             <span aria-hidden="true">/</span>
             <span>Event detail</span>
@@ -536,121 +574,51 @@ function renderAdminDetail(ev: Event, inAdmin: boolean) {
           <span class="${statusBadgeClass(ev.status)}">${escapeHtml(statusText)}</span>
         </div>
 
-        <div class="event-admin-hero__body">
-          <div class="event-admin-hero__copy">
-            <p class="event-admin-hero__eyebrow">Admin workspace</p>
+        <div class="event-admin-header__body">
+          <div class="event-admin-header__copy">
+            <p class="event-admin-header__eyebrow">Admin overview</p>
             <h1>${escapeHtml(ev.title)}</h1>
-            ${ev.shortDescription ? `<p class="event-admin-hero__summary">${escapeHtml(ev.shortDescription)}</p>` : '<p class="event-admin-hero__summary muted">No short summary yet.</p>'}
-
-            <div class="event-admin-hero__meta-row">
-              <div class="event-admin-hero__meta-pill">
-                <span>Schedule</span>
-                <strong>${escapeHtml(scheduleText)}</strong>
-              </div>
-              <div class="event-admin-hero__meta-pill">
-                <span>Location</span>
-                <strong>${escapeHtml(locationText)}</strong>
-              </div>
-              <div class="event-admin-hero__meta-pill">
-                <span>Pricing</span>
-                <strong>${escapeHtml(priceText)}</strong>
-              </div>
-            </div>
-
-            <div class="event-admin-hero__stats">
-              <div class="event-admin-hero__stat">
-                <span class="event-admin-hero__stat-label">Lifecycle</span>
-                <strong>${escapeHtml(phase.label)}</strong>
-                <p>${escapeHtml(phase.detail)}</p>
-              </div>
-              <div class="event-admin-hero__stat">
-                <span class="event-admin-hero__stat-label">Audience</span>
-                <strong>${escapeHtml(capacityText)}</strong>
-                <p>${escapeHtml(audienceSummary(ev))}</p>
-              </div>
-              <div class="event-admin-hero__stat">
-                <span class="event-admin-hero__stat-label">Visibility</span>
-                <strong>${escapeHtml(statusText)}</strong>
-                <p>${escapeHtml(publishingSummary(ev))}</p>
-              </div>
+            <p class="event-admin-header__summary">${escapeHtml(summaryText)}</p>
+            <div class="event-admin-header__chips">
+              <span class="event-admin-chip">${escapeHtml(modeText)}</span>
+              <span class="event-admin-chip">${escapeHtml(phase.label)}</span>
+              <span class="event-admin-chip">${escapeHtml(capacityText)}</span>
             </div>
           </div>
 
-          <div class="event-admin-hero__visual">
-            <div class="event-admin-hero__image-card">
-              <div class="event-admin-hero__image" style="background-image: url('${escapeHtml(heroUrl)}');"></div>
-              <div class="event-admin-hero__image-overlay">
-                <span class="event-admin-hero__image-label">Cover preview</span>
-                <strong>${escapeHtml(ev.title)}</strong>
-                <span>${escapeHtml(locationText)}</span>
-              </div>
-            </div>
-            <div class="event-admin-hero__visual-copy">
-              <div class="event-admin-hero__visual-copy-top">
-                <div>
-                  <div class="muted">Public preview</div>
-                  <div class="strong">${escapeHtml(publishedText)}</div>
-                </div>
-                <a class="btn btn--secondary btn--sm" href="${previewHref(ev.id)}" data-link>Preview public page</a>
-              </div>
-              <div class="event-admin-tag-row">${tags}</div>
-            </div>
+          <div class="event-admin-header__actions">
+            <a class="btn btn--primary" href="${editHref(inAdmin, ev.id)}" data-link>Edit event</a>
+            <a class="btn btn--secondary" href="${previewHref(ev.id)}" data-link>Preview event</a>
+            ${canToggleStatus ? `<button type="button" class="${toggleTone}" data-admin-status-toggle data-next-status="${escapeHtml(nextStatus)}">${escapeHtml(toggleLabel)}</button>` : ''}
           </div>
         </div>
 
-        <div class="event-admin-hero__actions">
-          <a class="btn btn--primary" href="${editHref(inAdmin, ev.id)}" data-link>Edit event</a>
-          <a class="btn btn--secondary" href="${previewHref(ev.id)}" data-link>Preview event</a>
-          ${canToggleStatus ? `<button type="button" class="${toggleTone}" data-admin-status-toggle data-next-status="${escapeHtml(nextStatus)}">${escapeHtml(toggleLabel)}</button>` : ''}
+        <div class="event-admin-fact-grid">
+          ${overviewCards}
         </div>
       </section>
 
       <div class="event-admin-layout">
         <section class="event-admin-main">
-          <article class="card event-admin-panel">
-            <div class="event-admin-panel__header">
+          <article class="card event-admin-section">
+            <div class="event-admin-section__header">
               <div>
-                <p class="event-admin-panel__eyebrow">Overview</p>
-                <h2>Publishing snapshot</h2>
-                <p class="event-admin-panel__sub">A quick operational read on what attendees will see and what your team can still refine.</p>
+                <p class="event-admin-section__eyebrow">At a glance</p>
+                <h2>Simple operational details</h2>
+                <p class="event-admin-section__sub">Everything the admin team needs is grouped into one clean summary.</p>
               </div>
             </div>
-            <div class="event-admin-meta-grid">
-              ${renderMetaItem('Status', statusText, publishingSummary(ev))}
-              ${renderMetaItem('Date range', scheduleText, phase.detail)}
-              ${renderMetaItem('Location', locationText, ev.isOnline ? 'Attendees join remotely.' : 'Venue details appear on the public page.')}
-              ${renderMetaItem('Price', priceText, typeof ev.priceCents === 'number' ? 'Ticketing is configured for this listing.' : 'No paid ticket is configured.')}
-              ${renderMetaItem('Capacity', ev.capacity ? String(ev.capacity) : 'Not set', audienceSummary(ev))}
-              ${renderMetaItem('Updated', formatDateTime(ev.updatedAt), 'Latest change reflected in admin.')}
+            <div class="event-admin-detail-list">
+              ${detailRows}
             </div>
           </article>
 
-          <article class="card event-admin-panel">
-            <div class="event-admin-panel__header">
+          <article class="card event-admin-section">
+            <div class="event-admin-section__header">
               <div>
-                <p class="event-admin-panel__eyebrow">Planning</p>
-                <h2>Operations at a glance</h2>
-                <p class="event-admin-panel__sub">Keep the essentials visible for internal reviews, launch prep, and day-of coordination.</p>
-              </div>
-            </div>
-            <div class="event-admin-content-grid">
-              ${renderInfoCard('Schedule window', scheduleText, ev.startDate ? `Starts on ${formatDateOnly(ev.startDate)}` : 'No date selected yet.', 'brand')}
-              ${renderInfoCard('Venue & access', locationText, ev.isOnline ? 'Remote-friendly setup.' : 'On-site attendance and logistics.', 'neutral')}
-              ${renderInfoCard('Audience settings', capacityText, audienceSummary(ev), 'neutral')}
-              ${renderInfoCard('Publishing history', publishedText, ev.createdAt ? `Created ${formatDateOnly(ev.createdAt)}` : 'Creation date unavailable.', 'neutral')}
-            </div>
-            <div class="event-admin-tags-block">
-              <div class="event-admin-info-card__label">Discovery tags</div>
-              <div class="event-admin-tag-row">${tags}</div>
-            </div>
-          </article>
-
-          <article class="card event-admin-panel">
-            <div class="event-admin-panel__header">
-              <div>
-                <p class="event-admin-panel__eyebrow">Description</p>
-                <h2>Event story</h2>
-                <p class="event-admin-panel__sub">Review the narrative attendees will read on the event page and in promotional surfaces.</p>
+                <p class="event-admin-section__eyebrow">Description</p>
+                <h2>Public event story</h2>
+                <p class="event-admin-section__sub">A cleaner reading surface for reviewing the content guests will actually see.</p>
               </div>
             </div>
             <div class="prose event-admin-description">
@@ -659,28 +627,48 @@ function renderAdminDetail(ev: Event, inAdmin: boolean) {
           </article>
         </section>
 
-        <aside class="card event-admin-sidebar card--compact">
-          <section class="event-admin-sidebar__section event-admin-sidebar__section--accent">
-            <p class="event-admin-sidebar__eyebrow">Quick actions</p>
-            <h3 class="event-admin-sidebar__title">Keep this event moving</h3>
-            <p class="event-admin-sidebar__copy">Jump into edits, preview the attendee experience, or change visibility without leaving the detail view.</p>
-            <div class="event-admin-sidebar__actions">
-              <a class="btn btn--primary" href="${editHref(inAdmin, ev.id)}" data-link>Edit details</a>
-              <a class="btn btn--secondary" href="${previewHref(ev.id)}" data-link>Preview public page</a>
-              ${canToggleStatus ? `<button type="button" class="btn btn--secondary" data-admin-status-toggle data-next-status="${escapeHtml(nextStatus)}">${escapeHtml(toggleLabel)}</button>` : ''}
+        <aside class="event-admin-sidebar">
+          <section class="card event-admin-preview">
+            <div class="event-admin-preview__media" style="background-image: url('${escapeHtml(heroUrl)}');">
+              <div class="event-admin-preview__overlay">
+                <span class="event-admin-preview__eyebrow">Cover preview</span>
+                <strong>${escapeHtml(ev.title)}</strong>
+                <span>${escapeHtml(locationText)}</span>
+              </div>
+            </div>
+            <div class="event-admin-preview__content">
+              <div class="event-admin-preview__top">
+                <div>
+                  <span class="event-admin-preview__label">Public preview</span>
+                  <strong>${escapeHtml(publishedText)}</strong>
+                </div>
+                <a class="btn btn--secondary btn--sm" href="${previewHref(ev.id)}" data-link>Open page</a>
+              </div>
+              <dl class="event-admin-preview__facts">
+                <div>
+                  <dt>When</dt>
+                  <dd>${escapeHtml(scheduleText)}</dd>
+                </div>
+                <div>
+                  <dt>Tickets</dt>
+                  <dd>${escapeHtml(priceText)}</dd>
+                </div>
+              </dl>
             </div>
           </section>
 
-          <section class="event-admin-sidebar__section">
-            <p class="event-admin-sidebar__eyebrow">Readiness</p>
+          <section class="card event-admin-side-section">
+            <p class="event-admin-side-section__eyebrow">Readiness</p>
+            <h3>What still needs attention</h3>
             <ul class="event-admin-checklist">
               ${checklist}
             </ul>
           </section>
 
-          <section class="event-admin-sidebar__section">
-            <p class="event-admin-sidebar__eyebrow">Publishing trail</p>
-            <dl class="event-admin-sidebar__facts">
+          <section class="card event-admin-side-section">
+            <p class="event-admin-side-section__eyebrow">Publishing trail</p>
+            <h3>Useful reference details</h3>
+            <dl class="event-admin-side-facts">
               <div>
                 <dt>Slug</dt>
                 <dd>${escapeHtml(ev.slug)}</dd>
