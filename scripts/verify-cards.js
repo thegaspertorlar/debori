@@ -9,12 +9,29 @@
  It exits with code 0 on success, non-zero on failure.
  */
 
-const startServer = require('./serve-static')
+const fs = require('fs')
+const path = require('path')
+const startServer = require('./serve-static');
+
+function resolveStaticRoot() {
+  const distRoot = path.join(process.cwd(), 'dist')
+  return fs.existsSync(path.join(distRoot, 'index.html')) ? distRoot : process.cwd()
+}
+
+function resolveChromiumExecutable() {
+  const candidates = [
+    process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE,
+    '/root/.cache/ms-playwright/chromium-1208/chrome-linux64/chrome',
+    '/root/.cache/ms-playwright/chromium_headless_shell-1208/chrome-headless-shell-linux64/chrome-headless-shell'
+  ].filter(Boolean)
+
+  return candidates.find((candidate) => fs.existsSync(candidate))
+}
 
 (async () => {
   const { chromium } = require('playwright')
   const port = process.env.PORT || 5174
-  const { server, url } = await startServer({ port: Number(port), root: process.cwd() })
+  const { server, url } = await startServer({ port: Number(port), root: resolveStaticRoot() })
 
   const routes = ['/#/events', '/#/admin']
   const viewports = {
@@ -24,7 +41,8 @@ const startServer = require('./serve-static')
 
   let browser
   try {
-    browser = await chromium.launch({ headless: true })
+    const executablePath = resolveChromiumExecutable()
+    browser = await chromium.launch({ headless: true, ...(executablePath ? { executablePath } : {}) })
     const results = []
 
     for (const [bpName, vp] of Object.entries(viewports)) {

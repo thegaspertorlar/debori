@@ -1,4 +1,5 @@
 import { listPublicEvents } from '../api/mockApi'
+import { resolveEventHeroImage } from '../eventHeroImage'
 import { createLoadingCard, createErrorCard, createEmptyCard } from '../uiStates'
 import { isAuthenticated } from '../session'
 
@@ -99,7 +100,7 @@ export function renderEventsList() {
         img.className = 'event-card__media'
         img.alt = ev.title || 'Event image'
         img.loading = 'lazy'
-        img.src = ev.heroImage || `https://picsum.photos/seed/${encodeURIComponent(ev.id)}/1200/675`
+        img.src = resolveEventHeroImage(ev)
         mediaWrap.appendChild(img)
 
         // date badge overlay for stronger visual hierarchy

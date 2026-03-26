@@ -1,4 +1,5 @@
 import { listAdminEvents, deleteEvent, updateEvent } from '../api/mockApi'
+import { resolveEventHeroImage } from '../eventHeroImage'
 import { EventStatus, Event } from '../models'
 import { createLoadingCard, createErrorCard, createEmptyCard } from '../uiStates'
 
@@ -358,7 +359,7 @@ export function renderAdmin() {
     img.alt = ev.title || 'Event image'
     img.loading = 'lazy'
     img.decoding = 'async'
-    img.src = ev.heroImage || `https://picsum.photos/seed/${encodeURIComponent(ev.id)}/600/380`
+    img.src = resolveEventHeroImage(ev)
     mediaWrap.appendChild(img)
 
     if (ev.startDate) {
