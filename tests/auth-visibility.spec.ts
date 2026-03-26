@@ -103,6 +103,40 @@ test.describe('Authentication-sensitive event UI', () => {
     await expect(page.locator('form:has-text("Title"), [data-testid="event-form"]').first()).toHaveCount(0);
   });
 
+  test('Public event search filters by title and address with clear and no-results states', async ({ page }) => {
+    await page.goto('/events');
+
+    const searchInput = page.locator('[data-testid="events-search"]');
+    await expect(searchInput).toBeVisible();
+
+    const cards = page.locator('.event-card');
+    const initialCount = await cards.count();
+    if (initialCount === 0) {
+      await expect(page.locator('text=/no upcoming events/i')).toBeVisible();
+      return;
+    }
+
+    const firstTitle = (await page.locator('.event-card__title').first().textContent())?.trim() || '';
+    await searchInput.fill(firstTitle);
+    await expect(page.locator('.event-card__title').first()).toContainText(firstTitle);
+
+    const firstLocation = ((await page.locator('.event-card__location').first().textContent()) || '').trim();
+    if (firstLocation) {
+      await searchInput.fill(firstLocation);
+      await expect(page.locator('.event-card__location').first()).toContainText(firstLocation);
+    }
+
+    await searchInput.fill('zzzz-no-event-match-zzzz');
+    await expect(page.locator('text=/no matching events/i')).toBeVisible();
+
+    const clearSearch = page.locator('button:has-text("Clear search"), [data-testid="events-search-clear"]');
+    await expect(clearSearch.first()).toBeVisible();
+    await clearSearch.first().click();
+
+    await expect(searchInput).toHaveValue('');
+    await expect(page.locator('.event-card').first()).toBeVisible();
+  });
+
   test('Empty and error states show appropriate messaging and manager create available', async ({ page }) => {
     // Navigate to an endpoint that typically shows empty state; if your app provides a query for empty state use it
     // We'll try a predictable empty path; teams should adapt this to their test fixture routes

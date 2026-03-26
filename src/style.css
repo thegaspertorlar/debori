@@ -634,6 +634,11 @@ h1 {
 .events-page__title h1 { margin: 0 0 6px 0; }
 .events-page__title .muted { margin: 0; color: var(--neutral-700); }
 .events-page__actions { display:flex; align-items:center; gap:12px; }
+.events-page__actions--public { flex-direction: column; align-items: flex-end; }
+.events-page__search { display:flex; align-items:center; gap:10px; width:min(100%, 420px); }
+.events-page__search-input { flex:1 1 auto; min-width: 260px; }
+.events-page__summary { text-align:right; }
+.events-page__state { max-width: 720px; margin: 0 auto; }
 
 .admin-controls__row { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
 .admin-controls__group { display:flex; flex-direction:column; gap:6px; min-width:0; }
@@ -683,6 +688,10 @@ h1 {
   .events-page__header { flex-direction:column; align-items:flex-start; gap:8px; padding-bottom: 12px }
   .container { padding-left: 12px; padding-right: 12px }
   .events-page__title .muted { max-width: 100%; }
+  .events-page__actions--public { width: 100%; align-items: stretch; }
+  .events-page__search { width: 100%; flex-wrap: wrap; }
+  .events-page__search-input { min-width: 0; }
+  .events-page__summary { text-align: left; }
   .admin-controls__row { align-items:stretch; }
   .admin-view-toggle { width: 100%; }
   .admin-view-toggle__btn { flex:1 1 0; min-width:0; }
