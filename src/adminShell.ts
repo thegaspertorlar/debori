@@ -5,10 +5,83 @@ import { renderAdmin } from './pages/admin'
 import { renderEventCreate } from './pages/eventCreate'
 import { renderEventEdit } from './pages/eventEdit'
 import { renderEventDetail } from './pages/eventDetail'
-import { logoutSession } from './session'
+import { getSession, logoutSession } from './session'
 
 type AdminShell = {
   router?: Router
+}
+
+type AdminHeaderMeta = {
+  section: string
+  title: string
+  subtitle: string
+  ctaLabel: string
+  ctaHref: string
+}
+
+function getAdminHeaderMeta(path: string): AdminHeaderMeta {
+  if (path === '/admin/dashboard') {
+    return {
+      section: 'Overview',
+      title: 'Admin dashboard',
+      subtitle: 'Track your workspace, review event health, and jump into operational tasks quickly.',
+      ctaLabel: 'Create event',
+      ctaHref: '#/admin/events/create',
+    }
+  }
+
+  if (path === '/admin/events') {
+    return {
+      section: 'Events',
+      title: 'Events management',
+      subtitle: 'Review drafts, published events, and follow-up work from one streamlined workspace.',
+      ctaLabel: 'Create event',
+      ctaHref: '#/admin/events/create',
+    }
+  }
+
+  if (path === '/admin/events/create') {
+    return {
+      section: 'Editor',
+      title: 'Create a new event',
+      subtitle: 'Set up the event details, media, and scheduling information before publishing.',
+      ctaLabel: 'View events',
+      ctaHref: '#/admin/events',
+    }
+  }
+
+  if (/^\/admin\/events\/[^/]+\/edit$/.test(path)) {
+    return {
+      section: 'Editor',
+      title: 'Edit event',
+      subtitle: 'Update event content, timing, and settings without leaving the admin workspace.',
+      ctaLabel: 'View event',
+      ctaHref: `#${path.replace(/\/edit$/, '')}`,
+    }
+  }
+
+  if (/^\/admin\/events\/[^/]+$/.test(path)) {
+    return {
+      section: 'Events',
+      title: 'Event details',
+      subtitle: 'Check status, capacity, and quick actions for this event from a single header surface.',
+      ctaLabel: 'Edit event',
+      ctaHref: `#${path}/edit`,
+    }
+  }
+
+  return {
+    section: 'Workspace',
+    title: 'Admin workspace',
+    subtitle: 'Manage content and keep operational tasks moving without leaving the control center.',
+    ctaLabel: 'Go to dashboard',
+    ctaHref: '#/admin/dashboard',
+  }
+}
+
+function getInitials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  return parts.slice(0, 2).map((part) => part[0]?.toUpperCase() || '').join('') || 'DM'
 }
 
 // Admin shell: top header + left sidebar + content outlet.
@@ -24,13 +97,43 @@ export function createAdminShell(container: HTMLElement) {
   const header = document.createElement('header')
   header.className = 'app-header app-header--admin admin-shell__header'
 
+  const session = getSession()
+  const managerName = session?.user?.name || 'Demo Manager'
+  const managerEmail = session?.user?.email || 'demo@debori.com'
+  const initials = getInitials(managerName)
+
   header.innerHTML = `
     <div class="container app-header-inner">
       <div class="header-left">
-        <button class="admin-nav-toggle" aria-label="Toggle admin navigation" aria-expanded="false">☰</button>
-        <a class="brand" href="#/admin/dashboard">Debori</a>
+        <button class="admin-nav-toggle" type="button" aria-label="Toggle admin navigation" aria-expanded="false">
+          <span aria-hidden="true">☰</span>
+        </button>
+        <a class="brand admin-brand" href="#/admin/dashboard" aria-label="Go to admin dashboard">
+          <span class="admin-brand__mark" aria-hidden="true">${initials}</span>
+          <span class="admin-brand__text">
+            <span class="admin-brand__name">Debori Admin</span>
+            <span class="admin-brand__meta">Operations workspace</span>
+          </span>
+        </a>
+        <div class="admin-header-context" aria-live="polite">
+          <span class="admin-header-context__eyebrow">Workspace</span>
+          <div class="admin-header-context__row">
+            <p class="admin-header-context__title">Admin workspace</p>
+            <span class="admin-header-context__status">Live</span>
+          </div>
+          <p class="admin-header-context__subtitle">Manage content and keep operational tasks moving without leaving the control center.</p>
+        </div>
       </div>
-      <div class="header-actions" style="margin-left:auto">
+      <div class="header-actions">
+        <a class="btn btn--primary btn--sm admin-header-cta" href="#/admin/events/create" data-link>Create event</a>
+        <div class="admin-user-card" aria-label="Signed in manager">
+          <div class="admin-user-card__avatar" aria-hidden="true">${initials}</div>
+          <div class="admin-user-card__body">
+            <span class="admin-user-card__label">Signed in as</span>
+            <strong class="admin-user-card__name">${managerName}</strong>
+            <span class="admin-user-card__meta">${managerEmail}</span>
+          </div>
+        </div>
         <button class="btn btn--outline btn--sm admin-signout" type="button">Logout</button>
       </div>
     </div>
@@ -62,6 +165,10 @@ export function createAdminShell(container: HTMLElement) {
   container.appendChild(shell)
 
   const signoutBtn = header.querySelector('.admin-signout') as HTMLButtonElement | null
+  const contextEyebrow = header.querySelector('.admin-header-context__eyebrow') as HTMLElement | null
+  const contextTitle = header.querySelector('.admin-header-context__title') as HTMLElement | null
+  const contextSubtitle = header.querySelector('.admin-header-context__subtitle') as HTMLElement | null
+  const contextCta = header.querySelector('.admin-header-cta') as HTMLAnchorElement | null
   if (signoutBtn) {
     signoutBtn.addEventListener('click', (e) => {
       e.preventDefault()
@@ -127,9 +234,26 @@ export function createAdminShell(container: HTMLElement) {
     })
   }
 
+  function updateHeaderContext() {
+    const path = location.hash.replace(/^#/, '') || '/admin/dashboard'
+    const meta = getAdminHeaderMeta(path)
+    if (contextEyebrow) contextEyebrow.textContent = meta.section
+    if (contextTitle) contextTitle.textContent = meta.title
+    if (contextSubtitle) contextSubtitle.textContent = meta.subtitle
+    if (contextCta) {
+      contextCta.textContent = meta.ctaLabel
+      contextCta.setAttribute('href', meta.ctaHref)
+      contextCta.setAttribute('aria-label', meta.ctaLabel)
+    }
+    syncHeaderHeight()
+  }
+
   window.addEventListener('hashchange', updateActive)
   window.addEventListener('popstate', updateActive)
+  window.addEventListener('hashchange', updateHeaderContext)
+  window.addEventListener('popstate', updateHeaderContext)
   updateActive()
+  updateHeaderContext()
 
   // Keyboard accessibility for sidebar navigation
   // - ArrowUp / ArrowDown to move focus between links
