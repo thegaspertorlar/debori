@@ -53,6 +53,12 @@ function createActionButton(label: string, href: string, className: string) {
   return a
 }
 
+function shouldIgnoreCardNavigation(target: EventTarget | null, card: HTMLElement) {
+  if (!(target instanceof HTMLElement)) return false
+  const interactiveAncestor = target.closest('a, button, input, select, textarea, summary, [role="button"], [role="link"]')
+  return !!interactiveAncestor && interactiveAncestor !== card
+}
+
 export function renderAdmin() {
   const el = document.createElement('div')
   el.className = 'page'
@@ -348,8 +354,26 @@ export function renderAdmin() {
     const card = document.createElement('article')
     card.className = `event-card event-card--admin event-card--admin-layout event-card--admin-${viewMode}`
     const titleId = `admin-event-title-${ev.id}`
-    card.setAttribute('role', 'article')
+    const detailHref = `#/admin/events/${ev.id}`
+    card.setAttribute('role', 'link')
     card.setAttribute('aria-labelledby', titleId)
+    card.tabIndex = 0
+
+    const openEventDetail = () => {
+      window.location.hash = detailHref
+    }
+
+    card.addEventListener('click', (event) => {
+      if (shouldIgnoreCardNavigation(event.target, card)) return
+      openEventDetail()
+    })
+
+    card.addEventListener('keydown', (event) => {
+      if (shouldIgnoreCardNavigation(event.target, card)) return
+      if (event.key !== 'Enter' && event.key !== ' ') return
+      event.preventDefault()
+      openEventDetail()
+    })
 
     const mediaWrap = document.createElement('div')
     mediaWrap.className = 'event-card__media-wrap'
@@ -412,7 +436,7 @@ export function renderAdmin() {
     const actions = document.createElement('div')
     actions.className = 'actions event-card__actions'
 
-    actions.appendChild(createActionButton('View', `#/admin/events/${ev.id}`, 'btn btn--ghost btn--sm'))
+    actions.appendChild(createActionButton('View', detailHref, 'btn btn--ghost btn--sm'))
 
     if (ev.status === EventStatus.Draft || ev.status === EventStatus.Published) {
       actions.appendChild(createActionButton('Edit', `#/admin/events/${ev.id}/edit`, 'btn btn--secondary btn--sm'))
