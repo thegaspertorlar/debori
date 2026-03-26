@@ -5,10 +5,71 @@ import { renderAdmin } from './pages/admin'
 import { renderEventCreate } from './pages/eventCreate'
 import { renderEventEdit } from './pages/eventEdit'
 import { renderEventDetail } from './pages/eventDetail'
-import { logoutSession } from './session'
+import { getSession, logoutSession } from './session'
 
 type AdminShell = {
   router?: Router
+}
+
+type AdminHeaderMeta = {
+  section: string
+  title: string
+  ctaLabel: string
+  ctaHref: string
+}
+
+function getAdminHeaderMeta(path: string): AdminHeaderMeta {
+  if (path === '/admin/dashboard') {
+    return {
+      section: 'Overview',
+      title: 'Admin dashboard',
+      ctaLabel: 'Create event',
+      ctaHref: '#/admin/events/create',
+    }
+  }
+
+  if (path === '/admin/events') {
+    return {
+      section: 'Events',
+      title: 'Events management',
+      ctaLabel: 'Create event',
+      ctaHref: '#/admin/events/create',
+    }
+  }
+
+  if (path === '/admin/events/create') {
+    return {
+      section: 'Editor',
+      title: 'Create a new event',
+      ctaLabel: 'View events',
+      ctaHref: '#/admin/events',
+    }
+  }
+
+  if (/^\/admin\/events\/[^/]+\/edit$/.test(path)) {
+    return {
+      section: 'Editor',
+      title: 'Edit event',
+      ctaLabel: 'View event',
+      ctaHref: `#${path.replace(/\/edit$/, '')}`,
+    }
+  }
+
+  if (/^\/admin\/events\/[^/]+$/.test(path)) {
+    return {
+      section: 'Events',
+      title: 'Event details',
+      ctaLabel: 'Edit event',
+      ctaHref: `#${path}/edit`,
+    }
+  }
+
+  return {
+    section: 'Workspace',
+    title: 'Admin workspace',
+    ctaLabel: 'Go to dashboard',
+    ctaHref: '#/admin/dashboard',
+  }
 }
 
 // Admin shell: top header + left sidebar + content outlet.
@@ -24,13 +85,31 @@ export function createAdminShell(container: HTMLElement) {
   const header = document.createElement('header')
   header.className = 'app-header app-header--admin admin-shell__header'
 
+  const session = getSession()
+  const managerName = session?.user?.name || 'Demo Manager'
+  const managerFirstName = managerName.trim().split(/\s+/)[0] || 'Manager'
+
   header.innerHTML = `
     <div class="container app-header-inner">
       <div class="header-left">
-        <button class="admin-nav-toggle" aria-label="Toggle admin navigation" aria-expanded="false">☰</button>
-        <a class="brand" href="#/admin/dashboard">Debori</a>
+        <button class="admin-nav-toggle" type="button" aria-label="Toggle admin navigation" aria-expanded="false">
+          <span aria-hidden="true">☰</span>
+        </button>
+        <a class="brand admin-brand" href="#/admin/dashboard" aria-label="Go to admin dashboard">
+          <span class="admin-brand__mark" aria-hidden="true"></span>
+          <span class="admin-brand__text">
+            <span class="admin-brand__name">Debori Admin</span>
+            <span class="admin-brand__meta">Simple event workspace</span>
+          </span>
+        </a>
       </div>
-      <div class="header-actions" style="margin-left:auto">
+      <div class="admin-header-summary" aria-live="polite">
+        <span class="admin-header-summary__label">Workspace</span>
+        <p class="admin-header-summary__title">Admin workspace</p>
+      </div>
+      <div class="header-actions">
+        <span class="admin-header-user">Hi, ${managerFirstName}</span>
+        <a class="btn btn--primary btn--sm admin-header-cta" href="#/admin/events/create" data-link>Create event</a>
         <button class="btn btn--outline btn--sm admin-signout" type="button">Logout</button>
       </div>
     </div>
@@ -62,6 +141,9 @@ export function createAdminShell(container: HTMLElement) {
   container.appendChild(shell)
 
   const signoutBtn = header.querySelector('.admin-signout') as HTMLButtonElement | null
+  const contextLabel = header.querySelector('.admin-header-summary__label') as HTMLElement | null
+  const contextTitle = header.querySelector('.admin-header-summary__title') as HTMLElement | null
+  const contextCta = header.querySelector('.admin-header-cta') as HTMLAnchorElement | null
   if (signoutBtn) {
     signoutBtn.addEventListener('click', (e) => {
       e.preventDefault()
@@ -127,9 +209,25 @@ export function createAdminShell(container: HTMLElement) {
     })
   }
 
+  function updateHeaderContext() {
+    const path = location.hash.replace(/^#/, '') || '/admin/dashboard'
+    const meta = getAdminHeaderMeta(path)
+    if (contextLabel) contextLabel.textContent = meta.section
+    if (contextTitle) contextTitle.textContent = meta.title
+    if (contextCta) {
+      contextCta.textContent = meta.ctaLabel
+      contextCta.setAttribute('href', meta.ctaHref)
+      contextCta.setAttribute('aria-label', meta.ctaLabel)
+    }
+    syncHeaderHeight()
+  }
+
   window.addEventListener('hashchange', updateActive)
   window.addEventListener('popstate', updateActive)
+  window.addEventListener('hashchange', updateHeaderContext)
+  window.addEventListener('popstate', updateHeaderContext)
   updateActive()
+  updateHeaderContext()
 
   // Keyboard accessibility for sidebar navigation
   // - ArrowUp / ArrowDown to move focus between links
