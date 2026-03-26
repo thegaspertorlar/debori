@@ -337,16 +337,16 @@ h1 {
 
 .hero::before {
   background:
-    linear-gradient(120deg, rgba(5, 24, 38, 0.8) 0%, rgba(6, 43, 62, 0.5) 42%, rgba(8, 65, 77, 0.32) 100%),
-    url('/event-heroes/community-history-walking-tour.svg') center center / cover no-repeat;
+    linear-gradient(120deg, rgba(5, 18, 30, 0.84) 0%, rgba(8, 40, 54, 0.5) 42%, rgba(15, 75, 74, 0.24) 100%),
+    url('/home/community-reconnected-hero.svg') center center / cover no-repeat;
   transform: scale(1.03);
 }
 
 .hero::after {
   background:
-    radial-gradient(circle at 18% 22%, rgba(255, 218, 148, 0.4), transparent 30%),
-    radial-gradient(circle at 82% 24%, rgba(77, 208, 225, 0.28), transparent 24%),
-    linear-gradient(180deg, rgba(3, 12, 20, 0.08) 0%, rgba(3, 12, 20, 0.56) 100%);
+    radial-gradient(circle at 18% 22%, rgba(255, 218, 148, 0.3), transparent 28%),
+    radial-gradient(circle at 82% 24%, rgba(77, 208, 225, 0.2), transparent 24%),
+    linear-gradient(180deg, rgba(3, 12, 20, 0.04) 0%, rgba(3, 12, 20, 0.6) 100%);
 }
 
 .hero-inner {
@@ -361,10 +361,10 @@ h1 {
   max-width: 760px;
   padding: clamp(28px, 4vw, 42px);
   border-radius: 32px;
-  background: linear-gradient(180deg, rgba(7, 20, 30, 0.48), rgba(7, 20, 30, 0.22));
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 28px 60px rgba(2, 12, 18, 0.28);
+  background: linear-gradient(180deg, rgba(7, 20, 30, 0.42), rgba(7, 20, 30, 0.18));
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 28px 60px rgba(2, 12, 18, 0.24);
 }
 
 .hero-eyebrow {

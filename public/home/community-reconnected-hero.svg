@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="960" viewBox="0 0 1600 960" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">Community Reconnected Hero Background</title>
+  <desc id="desc">Editorial-style illustrated background showing a vibrant town gathering at sunset.</desc>
+  <defs>
+    <linearGradient id="sky" x1="226.5" y1="72" x2="1318" y2="880" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F2C4C"/>
+      <stop offset="0.46" stop-color="#1E5B67"/>
+      <stop offset="1" stop-color="#E19153"/>
+    </linearGradient>
+    <linearGradient id="horizon" x1="800" y1="450" x2="800" y2="836" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F6C98B" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#204D4B" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="ground" x1="800" y1="584" x2="800" y2="960" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#214A45"/>
+      <stop offset="1" stop-color="#0B1922"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1134 208) rotate(90) scale(222 222)">
+      <stop stop-color="#FFE1A8"/>
+      <stop offset="0.62" stop-color="#FFD38A" stop-opacity="0.86"/>
+      <stop offset="1" stop-color="#FFD38A" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowLeft" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(264 248) rotate(90) scale(242 272)">
+      <stop stop-color="#6EE7D8" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#6EE7D8" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur" x="-120" y="-120" width="1840" height="1200" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="28"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="960" fill="url(#sky)"/>
+  <rect y="318" width="1600" height="360" fill="url(#horizon)"/>
+  <circle cx="1134" cy="208" r="222" fill="url(#sun)"/>
+  <circle cx="264" cy="248" r="242" fill="url(#glowLeft)"/>
+  <g opacity="0.28" filter="url(#blur)">
+    <circle cx="1134" cy="210" r="84" fill="#FFF3D2"/>
+    <ellipse cx="514" cy="688" rx="420" ry="130" fill="#3AA897"/>
+    <ellipse cx="1304" cy="720" rx="340" ry="110" fill="#F0A55D"/>
+  </g>
+  <path d="M0 496C122 456 252 442 384 454C526 466 612 522 746 520C932 516 1018 402 1192 398C1342 396 1452 454 1600 484V960H0V496Z" fill="#204943" fill-opacity="0.72"/>
+  <path d="M0 600C114 560 258 560 388 596C548 640 648 730 792 730C934 730 1022 652 1158 620C1294 588 1452 604 1600 666V960H0V600Z" fill="url(#ground)"/>
+  <g opacity="0.9">
+    <path d="M184 542C246 462 316 416 394 402C474 388 552 402 622 448C686 490 756 574 854 578C956 582 1028 514 1100 470C1172 426 1248 408 1320 420C1398 434 1472 486 1536 562L1600 664V960H0V704L68 612C104 586 142 568 184 542Z" fill="#163232" fill-opacity="0.9"/>
+  </g>
+  <g opacity="0.42" stroke="#F4D39A" stroke-linecap="round">
+    <path d="M238 650C332 596 420 578 500 594" stroke-width="6"/>
+    <path d="M1110 654C1216 606 1312 604 1408 640" stroke-width="6"/>
+    <path d="M672 698C734 682 792 682 852 704" stroke-width="5"/>
+  </g>
+  <g opacity="0.96">
+    <ellipse cx="250" cy="660" rx="72" ry="24" fill="#F0B56E"/>
+    <ellipse cx="254" cy="646" rx="40" ry="16" fill="#F8E3B9"/>
+    <ellipse cx="250" cy="638" rx="22" ry="10" fill="#FFF4D9"/>
+    <rect x="226" y="618" width="12" height="26" rx="6" fill="#17303A"/>
+    <rect x="262" y="616" width="12" height="28" rx="6" fill="#17303A"/>
+    <circle cx="250" cy="602" r="20" fill="#17303A"/>
+    <path d="M224 648C234 624 246 612 264 612C284 612 296 626 306 648" fill="#17303A"/>
+  </g>
+  <g opacity="0.96">
+    <ellipse cx="1316" cy="680" rx="94" ry="28" fill="#E69961"/>
+    <ellipse cx="1316" cy="660" rx="54" ry="18" fill="#FFE5BA"/>
+    <circle cx="1278" cy="632" r="16" fill="#17303A"/>
+    <circle cx="1318" cy="622" r="22" fill="#17303A"/>
+    <circle cx="1362" cy="634" r="17" fill="#17303A"/>
+    <rect x="1268" y="648" width="12" height="30" rx="6" fill="#17303A"/>
+    <rect x="1312" y="646" width="12" height="34" rx="6" fill="#17303A"/>
+    <rect x="1356" y="650" width="12" height="30" rx="6" fill="#17303A"/>
+    <path d="M1248 682C1266 648 1290 634 1318 634C1348 634 1372 650 1388 682" fill="#17303A"/>
+  </g>
+  <g opacity="0.95">
+    <path d="M540 570H604C670 570 724 624 724 690V724H420V690C420 624 474 570 540 570Z" fill="#214A61"/>
+    <rect x="504" y="600" width="34" height="124" rx="16" fill="#F4C98B"/>
+    <rect x="560" y="600" width="34" height="124" rx="16" fill="#F4C98B"/>
+    <rect x="626" y="600" width="34" height="124" rx="16" fill="#F4C98B"/>
+    <path d="M420 724H724V760H420V724Z" fill="#16303C"/>
+    <path d="M446 570C470 526 516 498 572 498C628 498 676 526 700 570" stroke="#F1B56B" stroke-width="16" stroke-linecap="round"/>
+    <circle cx="572" cy="500" r="24" fill="#FFF2D0"/>
+  </g>
+  <g opacity="0.22" fill="#FFFFFF">
+    <circle cx="150" cy="132" r="2"/>
+    <circle cx="210" cy="84" r="2.5"/>
+    <circle cx="312" cy="142" r="1.5"/>
+    <circle cx="1264" cy="98" r="2"/>
+    <circle cx="1346" cy="142" r="1.5"/>
+    <circle cx="1450" cy="112" r="2.5"/>
+  </g>
+</svg>
