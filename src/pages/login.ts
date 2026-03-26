@@ -5,48 +5,47 @@ import { loginSession } from '../session'
 function statusIcon(state: 'neutral' | 'success' | 'error') {
   if (state === 'success') {
     return `
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--success" aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>`
   }
 
   if (state === 'error') {
     return `
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--error" aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
         <path d="M9.5 9.5l5 5M14.5 9.5l-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
       </svg>`
   }
 
   return `
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--neutral" aria-hidden="true">
-      <path d="M4 12h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-      <path d="M12 4v16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
     </svg>`
 }
 
 function eyeIcon(visible: boolean) {
   return visible
     ? `
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--eye-open" aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M17 7l-10 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>`
     : `
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon icon--eye-closed" aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
         <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/>
       </svg>`
 }
 
-function createShowcaseItem(title: string, description: string, icon: string) {
+function createBenefit(title: string, copy: string, icon: string) {
   const item = document.createElement('div')
-  item.className = 'auth-showcase__item'
+  item.className = 'auth-benefit'
   item.innerHTML = `
-    <div class="auth-showcase__item-icon" aria-hidden="true">${icon}</div>
+    <div class="auth-benefit__icon" aria-hidden="true">${icon}</div>
     <div>
-      <div class="auth-showcase__item-title">${title}</div>
-      <p class="auth-showcase__item-copy">${description}</p>
+      <div class="auth-benefit__title">${title}</div>
+      <p class="auth-benefit__copy">${copy}</p>
     </div>
   `
   return item
@@ -61,58 +60,78 @@ export function renderLogin() {
 
   const showcase = document.createElement('section')
   showcase.className = 'auth-showcase'
-  showcase.setAttribute('aria-label', 'Why sign in to Debori')
+  showcase.setAttribute('aria-label', 'Workspace introduction')
   showcase.innerHTML = `
-    <div class="auth-showcase__glow" aria-hidden="true"></div>
-    <div class="auth-showcase__eyebrow">Modern event operations workspace</div>
-    <h1 class="auth-showcase__title">Welcome back to DEBORI</h1>
+    <div class="auth-showcase__badge">Fresh workspace experience</div>
+    <h1 class="auth-showcase__title">A cleaner login flow for faster event operations.</h1>
     <p class="auth-showcase__copy">
-      Plan, publish, and manage events from a cleaner admin experience designed for quick decisions and smooth daily workflows.
+      Get into DEBORI with less friction, clearer signposting, and a more premium first impression built for daily admin work.
     </p>
-    <div class="auth-showcase__stats" aria-label="Workspace highlights">
-      <div class="auth-showcase__stat">
-        <strong>Fast access</strong>
-        <span>Demo credentials are ready to go</span>
+    <div class="auth-showcase__chips" aria-label="Login highlights">
+      <span class="auth-chip">Instant demo access</span>
+      <span class="auth-chip">Modern glass UI</span>
+      <span class="auth-chip">Smooth, focused workflow</span>
+    </div>
+    <div class="auth-preview" aria-hidden="true">
+      <div class="auth-preview__orbit auth-preview__orbit--one"></div>
+      <div class="auth-preview__orbit auth-preview__orbit--two"></div>
+      <div class="auth-preview__window auth-preview__window--main">
+        <div class="auth-preview__window-top">
+          <span></span><span></span><span></span>
+        </div>
+        <div class="auth-preview__window-body">
+          <div class="auth-preview__eyebrow">Today</div>
+          <strong>3 events ready to review</strong>
+          <div class="auth-preview__bars">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
       </div>
-      <div class="auth-showcase__stat">
-        <strong>Clear overview</strong>
-        <span>Move from login to dashboard in one step</span>
+      <div class="auth-preview__window auth-preview__window--side">
+        <div class="auth-preview__metric">92%</div>
+        <div class="auth-preview__meta">Faster access to the dashboard</div>
       </div>
-      <div class="auth-showcase__stat">
-        <strong>Secure demo</strong>
-        <span>Session stays scoped to this local workspace</span>
+      <div class="auth-preview__toast">
+        <div class="auth-preview__toast-dot"></div>
+        <div>
+          <strong>Ready to explore</strong>
+          <span>Demo session is already configured</span>
+        </div>
       </div>
     </div>
   `
 
-  const showcaseList = document.createElement('div')
-  showcaseList.className = 'auth-showcase__list'
-  showcaseList.appendChild(
-    createShowcaseItem(
-      'Manage everything in one place',
-      'Review events, update details, and keep your admin flow focused without extra friction.',
-      '<svg viewBox="0 0 24 24" fill="none"><path d="M4 6.5C4 5.67 4.67 5 5.5 5h13c.83 0 1.5.67 1.5 1.5v11c0 .83-.67 1.5-1.5 1.5h-13c-.83 0-1.5-.67-1.5-1.5v-11z" stroke="currentColor" stroke-width="1.8"/><path d="M8 9h8M8 12h8M8 15h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
-    )
-  )
-  showcaseList.appendChild(
-    createShowcaseItem(
-      'Built for quick demos',
-      'Use the prefilled account, explore the UI, and validate flows without setup overhead.',
+  const benefits = document.createElement('div')
+  benefits.className = 'auth-benefits'
+  benefits.appendChild(
+    createBenefit(
+      'Fast to understand',
+      'The page now guides users from credentials to dashboard with a simpler visual flow.',
       '<svg viewBox="0 0 24 24" fill="none"><path d="M12 3l7 4v5c0 4.5-2.9 7.87-7 9-4.1-1.13-7-4.5-7-9V7l7-4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9.5 12l1.7 1.7L15 9.9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
     )
   )
-  showcase.appendChild(showcaseList)
+  benefits.appendChild(
+    createBenefit(
+      'Better visual hierarchy',
+      'Primary action, helper details, and demo access are easier to scan at a glance.',
+      '<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 9h8M8 13h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
+    )
+  )
+  showcase.appendChild(benefits)
 
   const card = document.createElement('section')
   card.className = 'card card--compact auth-card'
   card.setAttribute('role', 'region')
   card.setAttribute('aria-labelledby', 'signin-heading')
   card.innerHTML = `
-    <div class="auth-card__header">
-      <div class="auth-card__badge">Demo access</div>
-      <h2 id="signin-heading" class="auth-card__title">Sign in to your workspace</h2>
-      <p class="auth-card__sub">Everything is ready for you. Use the sample account below or edit the fields before continuing.</p>
+    <div class="auth-card__topline">
+      <span class="auth-card__live-dot" aria-hidden="true"></span>
+      <span>Sign in</span>
     </div>
+    <h2 id="signin-heading" class="auth-card__title">Welcome back</h2>
+    <p class="auth-card__sub">Use the demo account below for a quick preview, or enter your own testing credentials.</p>
   `
 
   const creds = document.createElement('div')
@@ -120,10 +139,10 @@ export function renderLogin() {
   creds.innerHTML = `
     <div class="login-credentials__top">
       <div>
-        <div class="form-section__title">Try the demo account</div>
-        <p class="login-credentials__copy">Instantly load the recommended credentials and preview the admin dashboard.</p>
+        <div class="form-section__title">Demo profile</div>
+        <p class="login-credentials__copy">One tap fills the form so you can jump straight into the workspace.</p>
       </div>
-      <button type="button" class="btn btn--secondary btn--sm auth-fill-btn">Use demo account</button>
+      <button type="button" class="btn btn--secondary btn--sm auth-fill-btn">Load demo profile</button>
     </div>
     <div class="login-credentials__grid" aria-label="Demo credentials">
       <div class="login-credential-chip">
@@ -151,20 +170,20 @@ export function renderLogin() {
   emailField.className = 'form-field'
   emailField.innerHTML = `
     <label class="form-label" for="email">Email address</label>
-    <div class="input-with-actions">
+    <div class="input-with-actions auth-input-wrap">
       <input id="email" class="input" name="email" type="email" placeholder="name@company.com" value="${demoCredentials.email}" autocomplete="username" required aria-label="Email address" />
       <div class="input-actions">
         <span class="input-action input-action--status" aria-hidden="true">${statusIcon('success')}</span>
       </div>
     </div>
-    <p class="helper-text auth-field-hint">Use the provided demo email or your own test account.</p>
+    <p class="helper-text auth-field-hint">Recommended: use the prefilled demo account for the smoothest preview.</p>
   `
 
   const passField = document.createElement('div')
   passField.className = 'form-field'
   passField.innerHTML = `
     <label class="form-label" for="password">Password</label>
-    <div class="input-with-actions">
+    <div class="input-with-actions auth-input-wrap">
       <input id="password" class="input" name="password" type="password" value="${demoCredentials.password}" autocomplete="current-password" required aria-label="Password" />
       <div class="input-actions">
         <span class="input-action input-action--status" aria-hidden="true">${statusIcon('success')}</span>
@@ -174,9 +193,9 @@ export function renderLogin() {
     <div class="auth-form__meta">
       <label class="auth-check">
         <input type="checkbox" id="remember-demo" checked />
-        <span>Keep me signed in for this demo session</span>
+        <span>Keep this local demo session active</span>
       </label>
-      <span class="auth-form__meta-note">Local session only</span>
+      <span class="auth-form__meta-note">No external sync</span>
     </div>
   `
 
@@ -188,10 +207,18 @@ export function renderLogin() {
     </button>
   `
 
+  const trust = document.createElement('div')
+  trust.className = 'auth-trust'
+  trust.innerHTML = `
+    <span class="auth-trust__item">Local demo only</span>
+    <span class="auth-trust__item">No setup needed</span>
+    <span class="auth-trust__item">Instant dashboard access</span>
+  `
+
   const footer = document.createElement('div')
   footer.className = 'auth-form__footer'
   footer.innerHTML = `
-    <p class="auth-form__footer-note">Need a quick preview? The demo account is already prefilled and ready.</p>
+    <p class="auth-form__footer-note">Fresh UI, same working login flow — built to feel calmer, clearer, and quicker.</p>
   `
 
   const errorEl = document.createElement('div')
@@ -204,6 +231,7 @@ export function renderLogin() {
   fieldsSection.appendChild(passField)
   form.appendChild(fieldsSection)
   form.appendChild(actions)
+  form.appendChild(trust)
   form.appendChild(errorEl)
   form.appendChild(footer)
 
@@ -271,17 +299,13 @@ export function renderLogin() {
 
   emailInput.addEventListener('input', () => {
     emailField.classList.remove('has-error')
-    if (errorEl.style.display === 'block') {
-      errorEl.style.display = 'none'
-    }
+    if (errorEl.style.display === 'block') errorEl.style.display = 'none'
     updateFieldStatuses()
   })
 
   passInput.addEventListener('input', () => {
     passField.classList.remove('has-error')
-    if (errorEl.style.display === 'block') {
-      errorEl.style.display = 'none'
-    }
+    if (errorEl.style.display === 'block') errorEl.style.display = 'none'
     updateFieldStatuses()
   })
 
@@ -305,6 +329,7 @@ export function renderLogin() {
 
       submit.disabled = true
       submit.classList.add('is-submitting')
+
       const label = submit.querySelector('.btn__label') as HTMLElement
       const previous = label.textContent || 'Enter workspace'
       const spinner = document.createElement('span')
