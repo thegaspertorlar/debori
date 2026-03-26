@@ -124,7 +124,7 @@ export function createAppShell(container: HTMLElement) {
 
       if (isAuthenticated()) {
         loginAnchor.textContent = 'Manager'
-        loginAnchor.setAttribute('href', '#/admin/dashboard')
+        loginAnchor.setAttribute('href', '#/admin/events')
         loginAnchor.classList.remove('btn--outline')
         loginAnchor.classList.add('btn--primary')
 

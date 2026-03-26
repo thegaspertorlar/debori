@@ -46,32 +46,7 @@ export function renderLogin() {
   wrapper.className = 'auth-shell container'
 
   const panel = document.createElement('section')
-  panel.className = 'auth-panel'
-
-  const intro = document.createElement('section')
-  intro.className = 'auth-intro'
-  intro.setAttribute('aria-label', 'Login introduction')
-  intro.innerHTML = `
-    <div class="auth-intro__badge">Fresh login</div>
-    <h1 class="auth-intro__title">Simple access with the credentials below.</h1>
-    <p class="auth-intro__copy">
-      A cleaner layout, softer colors, and a faster path into the dashboard. Use the demo login and continue right away.
-    </p>
-    <div class="auth-intro__highlights" aria-label="Login benefits">
-      <div class="auth-highlight">
-        <strong>Quick</strong>
-        <span>No extra steps or setup.</span>
-      </div>
-      <div class="auth-highlight">
-        <strong>Clear</strong>
-        <span>Credentials are visible and ready to use.</span>
-      </div>
-      <div class="auth-highlight">
-        <strong>Local</strong>
-        <span>Demo access stays inside this workspace.</span>
-      </div>
-    </div>
-  `
+  panel.className = 'auth-panel auth-panel--single'
 
   const card = document.createElement('section')
   card.className = 'card card--compact auth-card'
@@ -164,7 +139,7 @@ export function renderLogin() {
   trust.innerHTML = `
     <span class="auth-trust__item">Local demo only</span>
     <span class="auth-trust__item">No setup needed</span>
-    <span class="auth-trust__item">Instant dashboard access</span>
+    <span class="auth-trust__item">Instant manager access</span>
   `
 
   const footer = document.createElement('div')
@@ -190,7 +165,6 @@ export function renderLogin() {
   card.appendChild(creds)
   card.appendChild(form)
 
-  panel.appendChild(intro)
   panel.appendChild(card)
   wrapper.appendChild(panel)
   el.appendChild(wrapper)
@@ -316,7 +290,7 @@ export function renderLogin() {
 
       const ok = loginSession(res.data.user, res.data.token)
       if (ok) {
-        location.hash = '/admin/dashboard'
+        location.hash = '/admin/events'
         return
       }
 

@@ -1,6 +1,5 @@
 import './style.css'
 import { Router } from './router'
-import { renderAdminDashboard } from './pages/adminDashboard'
 import { renderAdmin } from './pages/admin'
 import { renderEventCreate } from './pages/eventCreate'
 import { renderEventEdit } from './pages/eventEdit'
@@ -18,14 +17,6 @@ type AdminHeaderMeta = {
 }
 
 function getAdminHeaderMeta(path: string): AdminHeaderMeta {
-  if (path === '/admin/dashboard') {
-    return {
-      title: 'Admin dashboard',
-      ctaLabel: 'Create event',
-      ctaHref: '#/admin/events/create',
-    }
-  }
-
   if (path === '/admin/events') {
     return {
       title: 'Events management',
@@ -59,9 +50,9 @@ function getAdminHeaderMeta(path: string): AdminHeaderMeta {
   }
 
   return {
-    title: 'Admin workspace',
-    ctaLabel: 'Go to dashboard',
-    ctaHref: '#/admin/dashboard',
+    title: 'Events management',
+    ctaLabel: 'Create event',
+    ctaHref: '#/admin/events/create',
   }
 }
 
@@ -87,11 +78,11 @@ export function createAdminShell(container: HTMLElement) {
         <button class="admin-nav-toggle" type="button" aria-label="Toggle admin navigation" aria-expanded="false">
           <span aria-hidden="true">☰</span>
         </button>
-        <a class="brand admin-brand" href="#/admin/dashboard" aria-label="Go to admin dashboard">
+        <a class="brand admin-brand" href="#/admin/events" aria-label="Go to events management">
           <span class="admin-brand__mark" aria-hidden="true"></span>
           <span class="admin-brand__name">Debori Admin</span>
         </a>
-        <p class="admin-header-title" aria-live="polite">Admin workspace</p>
+        <p class="admin-header-title" aria-live="polite">Events management</p>
       </div>
       <div class="header-actions">
         <a class="btn btn--primary btn--sm admin-header-cta" href="#/admin/events/create" data-link>Create event</a>
@@ -109,7 +100,6 @@ export function createAdminShell(container: HTMLElement) {
   sidebar.setAttribute('aria-label', 'Admin sidebar')
   sidebar.innerHTML = `
     <nav class="admin-sidebar-nav" aria-label="Admin navigation">
-      <a href="#/admin/dashboard" data-link role="link">Dashboard</a>
       <a href="#/admin/events" data-link role="link">Events</a>
     </nav>
   `
@@ -152,7 +142,7 @@ export function createAdminShell(container: HTMLElement) {
     const link = target.closest('[data-link]') as HTMLAnchorElement | null
     if (link) {
       e.preventDefault()
-      const href = link.getAttribute('href') || '#/admin/dashboard'
+      const href = link.getAttribute('href') || '#/admin/events'
       location.hash = href.replace(/^#/, '')
       // close mobile sidebar when navigating
       shell.classList.remove('admin-shell--sidebar-open')
@@ -165,8 +155,7 @@ export function createAdminShell(container: HTMLElement) {
   // Admin routes are always protected. The router will redirect to
   // /login for unauthenticated users.
   const routes = [
-    { path: '/admin', render: () => { location.hash = '/admin/dashboard'; const d = document.createElement('div'); return d }, protected: true },
-    { path: '/admin/dashboard', render: renderAdminDashboard, protected: true },
+    { path: '/admin', render: () => { location.hash = '/admin/events'; const d = document.createElement('div'); return d }, protected: true },
     // Admin-scoped event management routes
     { path: '/admin/events', render: renderAdmin, protected: true },
     { path: '/admin/events/create', render: renderEventCreate, protected: true },
@@ -178,12 +167,12 @@ export function createAdminShell(container: HTMLElement) {
 
   // Highlight active link in the sidebar
   function updateActive() {
-    const path = location.hash.replace(/^#/, '') || '/admin/dashboard'
+    const path = location.hash.replace(/^#/, '') || '/admin/events'
     const anchors = sidebar.querySelectorAll('a')
     anchors.forEach((a) => {
-      const href = (a as HTMLAnchorElement).getAttribute('href') || '#/admin/dashboard'
+      const href = (a as HTMLAnchorElement).getAttribute('href') || '#/admin/events'
       const clean = href.replace(/^#/, '')
-      if (path === clean || (clean !== '/admin/dashboard' && path.startsWith(clean))) {
+      if (path === clean || path.startsWith(clean)) {
         a.classList.add('active')
         a.setAttribute('aria-current', 'page')
       } else {
@@ -194,7 +183,7 @@ export function createAdminShell(container: HTMLElement) {
   }
 
   function updateHeaderContext() {
-    const path = location.hash.replace(/^#/, '') || '/admin/dashboard'
+    const path = location.hash.replace(/^#/, '') || '/admin/events'
     const meta = getAdminHeaderMeta(path)
     if (contextTitle) contextTitle.textContent = meta.title
     if (contextCta) {
@@ -251,7 +240,7 @@ export function createAdminShell(container: HTMLElement) {
         // Space/Enter should activate the link without causing a full reload
         if (idx >= 0) {
           e.preventDefault()
-          const href = anchors[idx].getAttribute('href') || '#/admin/dashboard'
+          const href = anchors[idx].getAttribute('href') || '#/admin/events'
           location.hash = href.replace(/^#/, '')
           shell.classList.remove('admin-shell--sidebar-open')
           const t = header.querySelector('.admin-nav-toggle') as HTMLButtonElement | null
@@ -279,7 +268,7 @@ export function createAdminShell(container: HTMLElement) {
 
   // Initialize route inside admin shell
   if (!location.hash || location.hash === '#/' || location.hash === '#') {
-    location.hash = '/admin/dashboard'
+    location.hash = '/admin/events'
   } else {
     // If already inside admin namespace, let router handle it
     if (location.hash.replace(/^#/, '').startsWith('/admin')) {
