@@ -255,6 +255,16 @@ function renderPublicHeroStat(label: string, value: string, detail: string) {
   `
 }
 
+function renderCopyLinkIcon() {
+  return `
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M9 15L15 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M8.5 7.5L6.9 9.1C5.3 10.7 5.3 13.3 6.9 14.9C8.5 16.5 11.1 16.5 12.7 14.9L14.3 13.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M15.5 16.5L17.1 14.9C18.7 13.3 18.7 10.7 17.1 9.1C15.5 7.5 12.9 7.5 11.3 9.1L9.7 10.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `
+}
+
 function renderPublicInfoTile(label: string, value: string, detail: string) {
   return `
     <div class="event-public-info-tile">
@@ -439,6 +449,10 @@ function renderPublicDetail(ev: Event, inAdmin: boolean) {
               </div>
               <p class="event-hero__card-note">${escapeHtml(tips[0])}</p>
               <div class="event-hero__card-actions">
+                <button type="button" class="btn btn--secondary event-hero__copy-button" data-copy-event-link aria-label="Copy this event link">
+                  <span class="event-hero__copy-button-icon" aria-hidden="true">${renderCopyLinkIcon()}</span>
+                  <span data-copy-event-link-label>Copy link</span>
+                </button>
                 <a class="btn btn--primary" href="${listHref(inAdmin)}" data-link aria-label="Browse all events">Browse all events</a>
               </div>
             </div>
@@ -765,6 +779,8 @@ export function renderEventDetail(params: Record<string, string>) {
 
   let currentEvent: Event | null = null
   let detailFeedbackHtml = ''
+  let copyFeedbackTimer: number | null = null
+  let copyButtonResetTimer: number | null = null
 
   function attachBackHandler() {
     const buttons = Array.from(el.querySelectorAll<HTMLButtonElement>('[data-back-button]'))
@@ -815,6 +831,67 @@ export function renderEventDetail(params: Record<string, string>) {
     })
   }
 
+  async function copyTextToClipboard(value: string) {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value)
+      return
+    }
+
+    const input = document.createElement('textarea')
+    input.value = value
+    input.setAttribute('readonly', 'true')
+    input.style.position = 'fixed'
+    input.style.opacity = '0'
+    input.style.pointerEvents = 'none'
+    document.body.appendChild(input)
+    input.select()
+    input.setSelectionRange(0, input.value.length)
+
+    const copied = document.execCommand('copy')
+    document.body.removeChild(input)
+    if (!copied) throw new Error('Copy command was rejected')
+  }
+
+  function showFeedback(kind: 'success' | 'error', title: string, message: string) {
+    if (copyFeedbackTimer) window.clearTimeout(copyFeedbackTimer)
+    feedback.innerHTML = `<div class="notice notice--${kind} card--compact"><strong>${escapeHtml(title)}</strong> <span>${escapeHtml(message)}</span></div>`
+    copyFeedbackTimer = window.setTimeout(() => {
+      feedback.innerHTML = ''
+      copyFeedbackTimer = null
+    }, 2800)
+  }
+
+  function bindPublicActions() {
+    const copyButton = el.querySelector<HTMLButtonElement>('[data-copy-event-link]')
+    const copyLabel = el.querySelector<HTMLElement>('[data-copy-event-link-label]')
+    if (!copyButton || !copyLabel) return
+    if (copyButton.dataset.copyBound === 'true') return
+    copyButton.dataset.copyBound = 'true'
+
+    copyButton.addEventListener('click', async () => {
+      const defaultLabel = 'Copy link'
+      copyButton.disabled = true
+      try {
+        await copyTextToClipboard(window.location.href)
+        copyButton.classList.add('is-copied')
+        copyLabel.textContent = 'Copied!'
+        showFeedback('success', 'Link copied.', 'The event URL is now on your clipboard.')
+        if (copyButtonResetTimer) window.clearTimeout(copyButtonResetTimer)
+        copyButtonResetTimer = window.setTimeout(() => {
+          copyButton.classList.remove('is-copied')
+          copyLabel.textContent = defaultLabel
+          copyButtonResetTimer = null
+        }, 2200)
+      } catch {
+        copyButton.classList.remove('is-copied')
+        copyLabel.textContent = defaultLabel
+        showFeedback('error', 'Copy failed.', 'We could not copy the event URL automatically.')
+      } finally {
+        copyButton.disabled = false
+      }
+    })
+  }
+
   async function loadEvent() {
     renderLoadingState()
     feedback.innerHTML = ''
@@ -841,6 +918,7 @@ export function renderEventDetail(params: Record<string, string>) {
     } else {
       detailStateHeader.innerHTML = ''
       container.innerHTML = renderPublicDetail(res.data, inAdmin)
+      bindPublicActions()
     }
 
     attachBackHandler()

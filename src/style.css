@@ -2165,12 +2165,36 @@ h1 {
 
 .event-hero__card-actions {
   display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 
 .event-hero__card-actions .btn {
   width: 100%;
   justify-content: center;
+}
+
+.event-hero__copy-button {
+  position: relative;
+}
+
+.event-hero__copy-button-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.event-hero__copy-button-icon svg {
+  display: block;
+}
+
+.event-hero__copy-button.is-copied {
+  color: var(--brand-700);
+  background: rgba(236, 253, 245, 0.98);
+  border-color: rgba(16,163,107,0.22);
 }
 
 .event-detail--public {
