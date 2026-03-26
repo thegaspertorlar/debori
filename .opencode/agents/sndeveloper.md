@@ -1,6 +1,6 @@
 ---
-name: "dumbdeveloper"
-description: "Dumb Developer 👲"
+name: "sndeveloper"
+description: "Sn. Developer 👲"
 mode: all
 permission:
   skill:
