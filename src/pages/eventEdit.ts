@@ -136,6 +136,7 @@ export function renderEventEdit(params: Record<string, string>) {
   `
 
   // refs
+  const card = el.querySelector('.card') as HTMLElement
   const form = el.querySelector('#event-form') as HTMLFormElement
   const formError = el.querySelector('#form-error') as HTMLElement
   const titleInput = el.querySelector('#title') as HTMLInputElement
@@ -161,6 +162,15 @@ export function renderEventEdit(params: Record<string, string>) {
   }
 
   function clearErrors() { Object.values(errMap).forEach((n) => (n.textContent = '')) }
+
+  function showCardContent(node: HTMLElement) {
+    card.innerHTML = ''
+    card.appendChild(node)
+  }
+
+  function showForm() {
+    showCardContent(form)
+  }
 
   function readFileAsDataUrl(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -487,10 +497,8 @@ export function renderEventEdit(params: Record<string, string>) {
     await submit(EventStatus.Published)
   })
 
-  // Load existing event and populate fields
-  ;(async () => {
-    const container = el.querySelector('.card') as HTMLElement
-    if (container) { container.innerHTML = ''; container.appendChild(createLoadingCard('Loading event')) }
+  async function loadEvent() {
+    showCardContent(createLoadingCard('Loading event'))
     try {
       const res = await getEventById(id)
       if (!res.ok) {
@@ -502,9 +510,12 @@ export function renderEventEdit(params: Record<string, string>) {
           attachBackHandler()
           return
         }
-        if (container) { container.innerHTML = ''; container.appendChild(createErrorCard('Unable to load event', res.message)) }
+        const errorCard = createErrorCard('Unable to load event', res.message)
+        errorCard.addEventListener('state:retry', () => { void loadEvent() })
+        showCardContent(errorCard)
         return
       }
+      showForm()
       const ev = res.data
       // populate fields
       titleInput.value = ev.title || ''
@@ -518,9 +529,14 @@ export function renderEventEdit(params: Record<string, string>) {
       endInput.value = formatLocalFromIso(ev.endDate)
       addressInput.value = ev.location?.address || ''
     } catch (err) {
-      if (container) { container.innerHTML = ''; container.appendChild(createErrorCard('Unable to load event')) }
+      const errorCard = createErrorCard('Unable to load event')
+      errorCard.addEventListener('state:retry', () => { void loadEvent() })
+      showCardContent(errorCard)
     }
-  })()
+  }
+
+  // Load existing event and populate fields
+  void loadEvent()
 
   return el
 }
