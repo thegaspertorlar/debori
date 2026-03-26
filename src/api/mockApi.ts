@@ -29,20 +29,22 @@ function deriveStatus(ev: Event): EventStatus {
 }
 
 function validateImageReference(img: any) {
-  // Accept either a URL string or a file-like object { name, size, type }
   if (!img) return []
   const errors: string[] = []
   if (typeof img === 'string') {
-    const lower = img.toLowerCase()
-    if (!/^data:image\/svg\+xml/.test(lower) && !/\.svg(?:[?#]|$)/.test(lower)) errors.push('Hero image must be an SVG URL')
+    const lower = img.trim().toLowerCase()
+    const hasSupportedExtension = /\.(png|jpe?g|webp|gif|svg|avif)(?:[?#]|$)/.test(lower)
+    const isDataImage = /^data:image\//.test(lower)
+    const isRenderablePath = /^(https?:\/\/|\/|\.\/|\.\.\/)/.test(lower)
+    if (!isDataImage && !(isRenderablePath && hasSupportedExtension)) errors.push('Hero image must be a valid image URL or uploaded image.')
     return errors
   }
-  // file-like object
   const { size, type, name } = img
+  const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif', 'image/svg+xml'])
   if (typeof size !== 'number') errors.push('Image size unknown')
-  if (typeof type === 'string' && type !== 'image/svg+xml') errors.push('Image must be SVG')
-  if (typeof size === 'number' && size > 8 * 1024 * 1024) errors.push('Image must be 8 MB or smaller')
-  if (name && !/\.svg$/i.test(name)) errors.push('Image filename must end with .svg')
+  if (typeof type === 'string' && !allowedTypes.has(type)) errors.push('Image must be PNG, JPG, WEBP, GIF, AVIF, or SVG')
+  if (typeof size === 'number' && size > 10 * 1024 * 1024) errors.push('Image must be 10 MB or smaller')
+  if (name && !/\.(png|jpe?g|webp|gif|svg|avif)$/i.test(name)) errors.push('Image filename must end with a supported image extension')
   return errors
 }
 
@@ -139,6 +141,11 @@ function validateEventInput(payload: Partial<Event>, isUpdate = false) {
     else if (String(payload.title).length > 150) add('title', 'Title must be 150 characters or fewer')
   }
 
+  if (!isUpdate || payload.location !== undefined) {
+    const address = payload.location?.address
+    if (!address || String(address).trim() === '') add('location', 'Address is required')
+  }
+
   // Description is required when publishing but optional for drafts
   if (effectiveStatus !== EventStatus.Draft) {
     if (!isUpdate || payload.description !== undefined) {
@@ -169,6 +176,11 @@ function validateEventInput(payload: Partial<Event>, isUpdate = false) {
     const s = Date.parse(payload.startDate as string)
     const e = Date.parse(payload.endDate as string)
     if (!Number.isNaN(s) && !Number.isNaN(e) && e <= s) add('endDate', 'End date must be after start date')
+  }
+
+  if (payload.priceCents !== undefined && payload.priceCents !== null) {
+    if (typeof payload.priceCents !== 'number' || Number.isNaN(payload.priceCents)) add('priceCents', 'Price must be a valid number')
+    else if (payload.priceCents < 0) add('priceCents', 'Price cannot be negative')
   }
 
   // heroImage validation (optional)

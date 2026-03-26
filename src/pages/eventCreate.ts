@@ -1,138 +1,374 @@
 import { createEvent } from '../api/mockApi'
 import { EventStatus } from '../models'
 
-function formatIsoFromLocal(value: string | null) {
-  if (!value) return undefined
-  const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return undefined
-  return d.toISOString()
+const MAX_HERO_IMAGE_BYTES = 10 * 1024 * 1024
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif', 'image/svg+xml']
+
+function combineDateAndTime(dateValue: string, timeValue: string) {
+  if (!dateValue && !timeValue) return undefined
+  if (!dateValue || !timeValue) return null
+  const isoCandidate = `${dateValue}T${timeValue}`
+  const date = new Date(isoCandidate)
+  if (Number.isNaN(date.getTime())) return null
+  return date.toISOString()
+}
+
+function sanitizeHtml(html: string) {
+  const allowed = new Set(['B', 'STRONG', 'I', 'EM', 'U', 'UL', 'OL', 'LI', 'A', 'P', 'BR', 'H3', 'BLOCKQUOTE'])
+  const doc = document.createElement('div')
+  doc.innerHTML = html || ''
+
+  function walk(node: Node) {
+    const toRemove: Node[] = []
+
+    node.childNodes.forEach((child) => {
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        const element = child as HTMLElement
+        const tag = element.tagName.toUpperCase()
+
+        if (!allowed.has(tag)) {
+          while (element.firstChild) node.insertBefore(element.firstChild, element)
+          toRemove.push(element)
+          return
+        }
+
+        if (tag === 'A') {
+          const href = element.getAttribute('href') || ''
+          if (!/^https?:\/\//i.test(href) && !/^mailto:/i.test(href)) {
+            element.removeAttribute('href')
+          } else {
+            element.setAttribute('rel', 'noopener noreferrer')
+            element.setAttribute('target', '_blank')
+          }
+          Array.from(element.attributes).forEach((attribute) => {
+            if (attribute.name !== 'href' && attribute.name !== 'rel' && attribute.name !== 'target') {
+              element.removeAttribute(attribute.name)
+            }
+          })
+        } else {
+          Array.from(element.attributes).forEach((attribute) => element.removeAttribute(attribute.name))
+        }
+
+        walk(element)
+        return
+      }
+
+      if (child.nodeType !== Node.TEXT_NODE) toRemove.push(child)
+    })
+
+    toRemove.forEach((entry) => entry.parentNode?.removeChild(entry))
+  }
+
+  walk(doc)
+  return doc.innerHTML.trim()
+}
+
+function stripHtml(html: string) {
+  const doc = document.createElement('div')
+  doc.innerHTML = html || ''
+  return (doc.textContent || doc.innerText || '').replace(/\s+/g, ' ').trim()
+}
+
+function truncate(value: string, max: number) {
+  if (value.length <= max) return value
+  return `${value.slice(0, max - 1).trimEnd()}…`
+}
+
+function formatPreviewSchedule(startDate: string, startTime: string, endDate: string, endTime: string) {
+  if (!startDate && !startTime && !endDate && !endTime) return 'Schedule will appear here'
+  if (!startDate || !startTime) return 'Add a start date and time'
+
+  const start = new Date(`${startDate}T${startTime}`)
+  if (Number.isNaN(start.getTime())) return 'Add a valid schedule'
+
+  const startLabel = start.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+  })
+
+  if (!endDate || !endTime) return startLabel
+
+  const end = new Date(`${endDate}T${endTime}`)
+  if (Number.isNaN(end.getTime())) return startLabel
+
+  if (start.toDateString() === end.toDateString()) {
+    return `${start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} • ${start.toLocaleTimeString(undefined, { hour: 'numeric', minute: 'numeric' })} – ${end.toLocaleTimeString(undefined, { hour: 'numeric', minute: 'numeric' })}`
+  }
+
+  return `${startLabel} – ${end.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+  })}`
+}
+
+function formatPriceLabel(ticketType: 'free' | 'paid', amount: string) {
+  if (ticketType === 'free') return 'Free event'
+  const numeric = Number.parseFloat(amount)
+  if (!Number.isFinite(numeric) || numeric <= 0) return 'Paid event'
+  return `From ${numeric.toLocaleString(undefined, { style: 'currency', currency: 'USD' })}`
+}
+
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error('Unable to read selected file'))
+    reader.onload = () => resolve(String(reader.result || ''))
+    reader.readAsDataURL(file)
+  })
 }
 
 export function renderEventCreate() {
   const el = document.createElement('div')
-  el.className = 'page'
+  el.className = 'page page--event-create'
 
   el.innerHTML = `
-    <div class="page-title">
-      <h1>New event</h1>
-      <p class="muted">Create an event quickly. You can save as draft and publish when ready.</p>
-    </div>
+    <div class="create-event-shell">
+      <section class="create-event-hero">
+        <div class="create-event-hero__content">
+          <span class="create-event-eyebrow">Create new event</span>
+          <h1>Design a polished event page in one flow</h1>
+          <p class="create-event-hero__lead muted">Add your cover image, timing, venue details, rich event story, and ticket type before you publish.</p>
+          <div class="create-event-checklist">
+            <span class="create-event-checklist__item">Cover upload</span>
+            <span class="create-event-checklist__item">Rich description</span>
+            <span class="create-event-checklist__item">Schedule</span>
+            <span class="create-event-checklist__item">Free or paid</span>
+          </div>
+        </div>
+        <div class="create-event-hero__aside">
+          <div class="create-event-stat">
+            <span class="create-event-stat__label">Publishing flow</span>
+            <strong>Draft first or publish immediately</strong>
+          </div>
+          <div class="create-event-stat">
+            <span class="create-event-stat__label">Best practice</span>
+            <strong>Use a bold image and a clear event story</strong>
+          </div>
+        </div>
+      </section>
 
-    <div class="card">
       <form id="event-form" novalidate>
-        <div id="form-error" class="error-text mb-2" role="alert" style="display:none"></div>
-        <div class="stack">
-          <section class="form-section">
-            <h2 class="form-section__title">Basic info</h2>
-            <p class="form-section__desc muted">Give your event a clear, concise title so attendees know what to expect.</p>
-            <div class="form-field">
-              <label class="form-label" for="title">Title</label>
-              <input id="title" name="title" class="input" placeholder="Event title" />
-              <div id="err-title" class="error-text" aria-live="polite"></div>
-            </div>
-          </section>
+        <div id="form-error" class="error-text create-event-form-error" role="alert" style="display:none"></div>
 
-          <section class="form-section">
-            <h2 class="form-section__title">Description</h2>
-            <p class="form-section__desc muted">Write a short summary and any important details. This will be shown to attendees.</p>
-            <div class="form-field">
-              <label class="form-label" for="descriptionEditor">Description</label>
+        <div class="create-event-layout">
+          <div class="create-event-main stack stack--lg">
+            <section class="card create-event-card">
+              <div class="create-event-card__header">
+                <div>
+                  <span class="meta--caps">Media</span>
+                  <h2>Event cover image</h2>
+                </div>
+                <p class="muted">Upload a cover that makes your listing instantly recognizable.</p>
+              </div>
+
+              <div class="create-event-upload" id="hero-upload-zone" tabindex="0" role="button" aria-label="Upload event cover image">
+                <input id="heroFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif,image/svg+xml" style="display:none" />
+                <div class="create-event-upload__icon" aria-hidden="true">🖼️</div>
+                <div class="create-event-upload__content">
+                  <div class="create-event-upload__title">Drop an image here or click to upload</div>
+                  <p class="muted">PNG, JPG, WEBP, GIF, AVIF, or SVG • up to 10 MB</p>
+                </div>
+                <button type="button" class="btn btn--secondary btn--sm" id="choose-file">Choose file</button>
+              </div>
+
+              <div id="hero-preview" class="create-event-upload-preview" aria-live="polite"></div>
+              <div id="err-heroImage" class="error-text" aria-live="polite"></div>
+            </section>
+
+            <section class="card create-event-card">
+              <div class="create-event-card__header">
+                <div>
+                  <span class="meta--caps">Essentials</span>
+                  <h2>Core details</h2>
+                </div>
+                <p class="muted">Give attendees the name, place, and timing they need at a glance.</p>
+              </div>
+
+              <div class="create-event-grid create-event-grid--two">
+                <div class="form-field create-event-field create-event-field--full">
+                  <label class="form-label" for="title">Event name</label>
+                  <input id="title" name="title" class="input create-event-input" placeholder="ex. Product Leadership Summit 2026" maxlength="150" />
+                  <div id="err-title" class="error-text" aria-live="polite"></div>
+                </div>
+
+                <div class="form-field create-event-field create-event-field--full">
+                  <label class="form-label" for="address">Address</label>
+                  <input id="address" name="address" class="input create-event-input" placeholder="Street address, venue, city" />
+                  <div id="err-location" class="error-text" aria-live="polite"></div>
+                </div>
+
+                <div class="form-field create-event-field">
+                  <label class="form-label" for="start-date">Start date</label>
+                  <input id="start-date" type="date" class="input create-event-input" />
+                </div>
+
+                <div class="form-field create-event-field">
+                  <label class="form-label" for="start-time">Start time</label>
+                  <input id="start-time" type="time" class="input create-event-input" />
+                  <div id="err-startDate" class="error-text" aria-live="polite"></div>
+                </div>
+
+                <div class="form-field create-event-field">
+                  <label class="form-label" for="end-date">End date</label>
+                  <input id="end-date" type="date" class="input create-event-input" />
+                </div>
+
+                <div class="form-field create-event-field">
+                  <label class="form-label" for="end-time">End time</label>
+                  <input id="end-time" type="time" class="input create-event-input" />
+                  <div id="err-endDate" class="error-text" aria-live="polite"></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="card create-event-card">
+              <div class="create-event-card__header">
+                <div>
+                  <span class="meta--caps">Story</span>
+                  <h2>Event description</h2>
+                </div>
+                <p class="muted">Use rich text to explain what attendees can expect.</p>
+              </div>
+
               <div class="stack stack--sm">
-                <div id="desc-toolbar" class="row row--sm" role="toolbar" aria-label="Description formatting">
-                  <button type="button" class="btn btn--ghost btn--sm" data-cmd="bold" title="Bold">B</button>
-                  <button type="button" class="btn btn--ghost btn--sm" data-cmd="italic" title="Italic">i</button>
+                <div id="desc-toolbar" class="create-event-toolbar" role="toolbar" aria-label="Description formatting">
+                  <button type="button" class="btn btn--ghost btn--sm" data-cmd="bold" title="Bold"><strong>B</strong></button>
+                  <button type="button" class="btn btn--ghost btn--sm" data-cmd="italic" title="Italic"><em>I</em></button>
+                  <button type="button" class="btn btn--ghost btn--sm" data-cmd="underline" title="Underline"><span style="text-decoration:underline">U</span></button>
                   <button type="button" class="btn btn--ghost btn--sm" data-cmd="insertUnorderedList" title="Bulleted list">• List</button>
+                  <button type="button" class="btn btn--ghost btn--sm" data-cmd="insertOrderedList" title="Numbered list">1. List</button>
                   <button type="button" class="btn btn--ghost btn--sm" id="add-link" title="Add link">Link</button>
                 </div>
-                <div id="descriptionEditor" class="textarea" contenteditable="true" role="textbox" aria-multiline="true" placeholder="Short description and details" style="min-height:120px;"></div>
+                <div id="descriptionEditor" class="textarea create-event-editor" contenteditable="true" role="textbox" aria-multiline="true" placeholder="Tell people why this event matters, what the agenda looks like, and what they should know before arriving."></div>
                 <textarea id="description" name="description" style="display:none"></textarea>
                 <div id="err-description" class="error-text" aria-live="polite"></div>
               </div>
-            </div>
-          </section>
+            </section>
 
-          <section class="form-section">
-            <h2 class="form-section__title">Cover image</h2>
-            <p class="form-section__desc muted">Add an SVG cover image so event artwork stays crisp across public and admin views.</p>
-            <div class="form-field">
-              <label class="form-label">Cover image</label>
-              <div class="upload-row">
-                <div class="upload-zone" id="hero-upload-zone" tabindex="0" role="button" aria-label="Upload cover image">
-                  <input id="heroFile" type="file" accept="image/svg+xml,.svg" style="display:none" />
-                  <div class="upload-zone__inner">
-                    <div class="upload-zone__icon" aria-hidden>🖼️</div>
-                    <div>
-                      <div class="upload-zone__title">Upload an SVG</div>
-                      <div class="muted helper-text">Click to choose a file or use the field to the right to paste an SVG image URL</div>
-                    </div>
-                  </div>
+            <section class="card create-event-card">
+              <div class="create-event-card__header">
+                <div>
+                  <span class="meta--caps">Ticketing</span>
+                  <h2>Paid or free</h2>
                 </div>
+                <p class="muted">Choose how attendees should think about registration.</p>
+              </div>
 
-                <div class="flex-1">
-                  <input id="heroUrl" class="input" placeholder="Image URL (.svg)" />
-                  <div class="row row--sm mt-2">
-                    <button type="button" class="btn btn--secondary btn--sm" id="choose-file">Upload</button>
-                    <div class="muted helper-text">SVG • up to 8 MB</div>
+              <div class="create-event-pricing" role="radiogroup" aria-label="Event pricing">
+                <label class="create-event-choice">
+                  <input type="radio" name="ticketType" value="free" checked />
+                  <span class="create-event-choice__body">
+                    <strong>Free event</strong>
+                    <span class="muted">No ticket cost will be shown on the listing.</span>
+                  </span>
+                </label>
+
+                <label class="create-event-choice">
+                  <input type="radio" name="ticketType" value="paid" />
+                  <span class="create-event-choice__body">
+                    <strong>Paid event</strong>
+                    <span class="muted">Show a starting ticket price on the event page.</span>
+                  </span>
+                </label>
+              </div>
+
+              <div id="ticket-price-wrap" class="create-event-price-wrap" hidden>
+                <div class="form-field create-event-field">
+                  <label class="form-label" for="ticket-price">Ticket price (USD)</label>
+                  <div class="create-event-price-input">
+                    <span>$</span>
+                    <input id="ticket-price" inputmode="decimal" class="input create-event-input" placeholder="25.00" />
                   </div>
+                  <div id="err-priceCents" class="error-text" aria-live="polite"></div>
                 </div>
               </div>
+            </section>
 
-              <div id="hero-preview" class="upload-preview mt-2" aria-live="polite"></div>
-              <div id="err-heroImage" class="error-text mt-2" aria-live="polite"></div>
+            <div class="create-event-actions actions actions--right">
+              <button type="button" id="save-draft" class="btn btn--secondary btn--sm">Save as draft</button>
+              <button type="button" id="publish" class="btn btn--primary btn--lg">Publish event</button>
             </div>
-          </section>
-
-          <section class="form-section">
-            <h2 class="form-section__title">Date & time</h2>
-            <p class="form-section__desc muted">Specify when the event starts and ends. Drafts may omit dates.</p>
-            <div class="stack stack--md">
-              <div class="form-field">
-                <label class="form-label">Start date & time</label>
-                <input id="start" type="datetime-local" class="input" />
-                <div id="err-startDate" class="error-text" aria-live="polite"></div>
-              </div>
-              <div class="form-field">
-                <label class="form-label">End date & time</label>
-                <input id="end" type="datetime-local" class="input" />
-                <div id="err-endDate" class="error-text" aria-live="polite"></div>
-              </div>
-            </div>
-          </section>
-
-          <section class="form-section">
-            <h2 class="form-section__title">Location</h2>
-            <p class="form-section__desc muted">Where is this event taking place? Provide an address or venue name.</p>
-            <div class="form-field">
-              <label class="form-label" for="address">Address</label>
-              <input id="address" class="input" placeholder="Street address, city" />
-              <div id="err-location" class="error-text" aria-live="polite"></div>
-            </div>
-          </section>
-
-          <div class="actions actions--right mt-3">
-            <button type="button" id="save-draft" class="btn btn--secondary btn--sm">Save as draft</button>
-            <button type="button" id="publish" class="btn btn--primary btn--lg">Publish</button>
           </div>
+
+          <aside class="create-event-sidebar">
+            <section class="card create-event-preview-card">
+              <div class="create-event-preview-card__header">
+                <div>
+                  <span class="meta--caps">Live preview</span>
+                  <h2>How your event will feel</h2>
+                </div>
+              </div>
+
+              <div class="create-event-preview-media" id="preview-media">
+                <div class="create-event-preview-media__placeholder">Your cover image preview appears here</div>
+                <img id="preview-image" alt="Event cover preview" style="display:none" />
+              </div>
+
+              <div class="stack stack--md">
+                <div>
+                  <div class="create-event-preview-pill" id="preview-price">Free event</div>
+                  <h3 id="preview-title">Untitled event</h3>
+                  <p id="preview-description" class="muted create-event-preview-copy">Start with a strong name and a clear description to make your event stand out.</p>
+                </div>
+
+                <div class="create-event-preview-meta">
+                  <div class="create-event-preview-meta__item">
+                    <span>When</span>
+                    <strong id="preview-schedule">Schedule will appear here</strong>
+                  </div>
+                  <div class="create-event-preview-meta__item">
+                    <span>Where</span>
+                    <strong id="preview-location">Add your venue address</strong>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="card create-event-tip-card">
+              <span class="meta--caps">Tips</span>
+              <ul class="create-event-tip-list">
+                <li>Use a clear venue name or full address so guests can trust the details.</li>
+                <li>Keep the first 1–2 lines of your description punchy — that copy is often what people remember.</li>
+                <li>For paid events, list the lowest visible ticket price to set expectations.</li>
+              </ul>
+            </section>
+          </aside>
         </div>
       </form>
     </div>
   `
 
-    // element refs
-    const form = el.querySelector('#event-form') as HTMLFormElement
-    const formError = el.querySelector('#form-error') as HTMLElement
+  const formError = el.querySelector('#form-error') as HTMLElement
   const titleInput = el.querySelector('#title') as HTMLInputElement
-  const descInput = el.querySelector('#description') as HTMLTextAreaElement
-  const heroUrl = el.querySelector('#heroUrl') as HTMLInputElement
-  const heroFile = el.querySelector('#heroFile') as HTMLInputElement
-  const chooseFile = el.querySelector('#choose-file') as HTMLButtonElement
-  const heroPreview = el.querySelector('#hero-preview') as HTMLElement
-  const descEditor = el.querySelector('#descriptionEditor') as HTMLElement
-  const startInput = el.querySelector('#start') as HTMLInputElement
-  const endInput = el.querySelector('#end') as HTMLInputElement
   const addressInput = el.querySelector('#address') as HTMLInputElement
+  const startDateInput = el.querySelector('#start-date') as HTMLInputElement
+  const startTimeInput = el.querySelector('#start-time') as HTMLInputElement
+  const endDateInput = el.querySelector('#end-date') as HTMLInputElement
+  const endTimeInput = el.querySelector('#end-time') as HTMLInputElement
+  const descriptionEditor = el.querySelector('#descriptionEditor') as HTMLElement
+  const descriptionInput = el.querySelector('#description') as HTMLTextAreaElement
   const descToolbar = el.querySelector('#desc-toolbar') as HTMLElement
-  const addLinkBtn = el.querySelector('#add-link') as HTMLButtonElement
+  const addLinkButton = el.querySelector('#add-link') as HTMLButtonElement
+  const heroFileInput = el.querySelector('#heroFile') as HTMLInputElement
+  const chooseFileButton = el.querySelector('#choose-file') as HTMLButtonElement
+  const uploadZone = el.querySelector('#hero-upload-zone') as HTMLElement
+  const heroPreview = el.querySelector('#hero-preview') as HTMLElement
+  const ticketTypeInputs = Array.from(el.querySelectorAll('input[name="ticketType"]')) as HTMLInputElement[]
+  const ticketPriceWrap = el.querySelector('#ticket-price-wrap') as HTMLElement
+  const ticketPriceInput = el.querySelector('#ticket-price') as HTMLInputElement
+  const previewImage = el.querySelector('#preview-image') as HTMLImageElement
+  const previewMedia = el.querySelector('#preview-media') as HTMLElement
+  const previewTitle = el.querySelector('#preview-title') as HTMLElement
+  const previewDescription = el.querySelector('#preview-description') as HTMLElement
+  const previewSchedule = el.querySelector('#preview-schedule') as HTMLElement
+  const previewLocation = el.querySelector('#preview-location') as HTMLElement
+  const previewPrice = el.querySelector('#preview-price') as HTMLElement
+  const saveDraftButton = el.querySelector('#save-draft') as HTMLButtonElement
+  const publishButton = el.querySelector('#publish') as HTMLButtonElement
 
   const errMap: Record<string, HTMLElement> = {
     title: el.querySelector('#err-title') as HTMLElement,
@@ -141,367 +377,384 @@ export function renderEventCreate() {
     startDate: el.querySelector('#err-startDate') as HTMLElement,
     endDate: el.querySelector('#err-endDate') as HTMLElement,
     location: el.querySelector('#err-location') as HTMLElement,
+    priceCents: el.querySelector('#err-priceCents') as HTMLElement,
+  }
+
+  function selectedTicketType(): 'free' | 'paid' {
+    return (ticketTypeInputs.find((input) => input.checked)?.value as 'free' | 'paid') || 'free'
   }
 
   function clearErrors() {
-    Object.values(errMap).forEach((n) => (n.textContent = ''))
-  }
-
-  function readFileAsDataUrl(file: File) {
-    return new Promise<string>((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onerror = () => reject(new Error('Unable to read selected file'))
-      reader.onload = () => resolve(String(reader.result || ''))
-      reader.readAsDataURL(file)
+    formError.style.display = 'none'
+    formError.textContent = ''
+    Object.values(errMap).forEach((node) => {
+      node.textContent = ''
     })
   }
 
-  function focusFirstError(errors: Record<string, string[]>) {
-    const order = ['title', 'description', 'heroImage', 'startDate', 'endDate', 'location']
-    for (const k of order) {
-      if (errors[k] && errors[k].length) {
-        const elmap: Record<string, HTMLElement | null> = {
-          title: titleInput,
-          description: descEditor,
-          heroImage: heroUrl,
-          startDate: startInput,
-          endDate: endInput,
-          location: addressInput,
-        }
-        const node = elmap[k]
-        if (node) {
-          node.focus()
-          return
-        }
-      }
-    }
+  function updateHiddenDescription() {
+    descriptionInput.value = sanitizeHtml(descriptionEditor.innerHTML)
   }
 
-  // Simple HTML sanitizer that allows a small set of tags and ensures links are safe
-  function sanitizeHtml(html: string) {
-    const allowed = new Set(['B', 'STRONG', 'I', 'EM', 'UL', 'OL', 'LI', 'A', 'P', 'BR'])
-    const doc = document.createElement('div')
-    doc.innerHTML = html || ''
-
-    function walk(node: Node) {
-      const toRemove: Node[] = []
-      node.childNodes.forEach((child) => {
-        if (child.nodeType === Node.ELEMENT_NODE) {
-          const el = child as HTMLElement
-          const tag = el.tagName.toUpperCase()
-          if (!allowed.has(tag)) {
-            // unwrap the element: move its children up
-            while (el.firstChild) node.insertBefore(el.firstChild, el)
-            toRemove.push(el)
-          } else {
-            // strip all attributes except href on anchors
-            if (tag === 'A') {
-              const href = el.getAttribute('href') || ''
-              // allow only http(s) and mailto links
-              if (!href.match(/^https?:\/\//) && !href.match(/^mailto:/)) {
-                el.removeAttribute('href')
-              } else {
-                el.setAttribute('rel', 'noopener noreferrer')
-                el.setAttribute('target', '_blank')
-              }
-            } else {
-              // remove attributes
-              Array.from(el.attributes).forEach((a) => el.removeAttribute(a.name))
-            }
-            walk(el)
-          }
-        } else if (child.nodeType === Node.TEXT_NODE) {
-          // ok
-        } else {
-          toRemove.push(child)
-        }
-      })
-      toRemove.forEach((n) => n.parentNode && n.parentNode.removeChild(n))
-    }
-
-    walk(doc)
-    return doc.innerHTML
-  }
-
-  function updateHiddenFromEditor() {
-    if (!descEditor) return
-    // normalize: wrap text nodes into <p>
-    // we will simply take innerHTML and sanitize
-    const html = descEditor.innerHTML
-    descInput.value = sanitizeHtml(html)
-  }
-
-  // wire toolbar
-  if (descToolbar) {
-    descToolbar.addEventListener('click', (ev) => {
-      const btn = (ev.target as HTMLElement).closest('button') as HTMLButtonElement | null
-      if (!btn) return
-      const cmd = btn.getAttribute('data-cmd')
-      if (!cmd) return
-      // use execCommand for lightweight formatting
-      document.execCommand(cmd, false)
-      updateHiddenFromEditor()
-      descEditor.focus()
-      updateToolbarState()
-    })
-    
-    // update visual state of toolbar buttons based on current selection
-    function updateToolbarState() {
-      if (!descToolbar) return
-      const btns = Array.from(descToolbar.querySelectorAll('button[data-cmd]')) as HTMLButtonElement[]
-      btns.forEach((b) => {
-        const cmd = b.getAttribute('data-cmd') || ''
-        // queryCommandState works for bold, italic, lists
-        try {
-          const state = document.queryCommandState(cmd)
-          b.setAttribute('aria-pressed', state ? 'true' : 'false')
-        } catch (e) {
-          b.setAttribute('aria-pressed', 'false')
-        }
-      })
-    }
-    // keep toolbar in sync with selection changes and editor input
-    document.addEventListener('selectionchange', updateToolbarState)
-    if (descEditor) {
-      descEditor.addEventListener('input', updateToolbarState)
-      descEditor.addEventListener('focus', updateToolbarState)
-    }
-    // initial state
-    updateToolbarState()
-  }
-
-  if (addLinkBtn) {
-    addLinkBtn.addEventListener('click', () => {
-      const url = window.prompt('Enter a URL (https://...)') || ''
-      if (!url) return
-      // basic normalization
-      const safeUrl = url.trim()
-      if (!safeUrl.match(/^https?:\/\//) && !safeUrl.match(/^mailto:/)) {
-        alert('Please enter a valid URL starting with http:// or https://')
-        return
-      }
-      document.execCommand('createLink', false, safeUrl)
-      updateHiddenFromEditor()
-      descEditor.focus()
-      // reflect link state (createLink is not queryable reliably, so reset others)
-      const tb = descToolbar
-      if (tb) {
-        const btns = tb.querySelectorAll('button[data-cmd]')
-        btns.forEach((b) => b.setAttribute('aria-pressed', document.queryCommandState((b as HTMLElement).getAttribute('data-cmd') || '') ? 'true' : 'false'))
+  function updateToolbarState() {
+    const buttons = Array.from(descToolbar.querySelectorAll('button[data-cmd]')) as HTMLButtonElement[]
+    buttons.forEach((button) => {
+      const cmd = button.getAttribute('data-cmd') || ''
+      try {
+        button.setAttribute('aria-pressed', document.queryCommandState(cmd) ? 'true' : 'false')
+      } catch {
+        button.setAttribute('aria-pressed', 'false')
       }
     })
   }
 
-  descEditor.addEventListener('input', () => {
-    updateHiddenFromEditor()
-  })
+  function setPreviewImage(source?: string) {
+    if (!source) {
+      previewImage.style.display = 'none'
+      previewImage.removeAttribute('src')
+      previewMedia.classList.remove('has-image')
+      return
+    }
 
-  function renderPreviewFromUrl(url: string) {
+    previewImage.src = source
+    previewImage.style.display = 'block'
+    previewMedia.classList.add('has-image')
+  }
+
+  function renderHeroFilePreview(file?: File) {
     heroPreview.innerHTML = ''
-    if (!url) return
+
+    if (!file) {
+      setPreviewImage()
+      return
+    }
+
     const wrapper = document.createElement('div')
-    wrapper.className = 'upload-preview'
-    const img = document.createElement('img')
-    img.src = url
-    img.alt = 'Cover preview'
-    img.onerror = () => { heroPreview.textContent = 'Unable to load image preview' }
-    wrapper.appendChild(img)
-    heroPreview.appendChild(wrapper)
-  }
-
-  heroUrl.addEventListener('input', () => {
-    // clear file selection if user typed URL
-    heroFile.value = ''
-    errMap.heroImage.textContent = ''
-    renderPreviewFromUrl(heroUrl.value.trim())
-  })
-
-  chooseFile.addEventListener('click', () => heroFile.click())
-  // make the dashed upload zone interactive
-  const heroUploadZone = el.querySelector('#hero-upload-zone') as HTMLElement | null
-  if (heroUploadZone) {
-    heroUploadZone.addEventListener('click', () => heroFile.click())
-    heroUploadZone.addEventListener('keydown', (ev) => {
-      if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); heroFile.click() }
-    })
-  }
-  heroFile.addEventListener('change', () => {
-    const f = heroFile.files && heroFile.files[0]
-    heroPreview.innerHTML = ''
-    errMap.heroImage.textContent = ''
-    if (!f) return
-    // client-side validation
-    const MAX_BYTES = 8 * 1024 * 1024 // 8 MB
-    const allowed = ['image/svg+xml']
-    if (!allowed.includes(f.type)) {
-      errMap.heroImage.textContent = 'Invalid file type. Only SVG files are allowed.'
-      heroFile.value = ''
-      return
-    }
-    if (f.size > MAX_BYTES) {
-      errMap.heroImage.textContent = 'File too large. Maximum size is 8 MB.'
-      heroFile.value = ''
-      return
-    }
-
-    // clear URL field
-    heroUrl.value = ''
-
-    const container = document.createElement('div')
-    container.className = 'upload-preview'
+    wrapper.className = 'create-event-upload-preview__card'
 
     const img = document.createElement('img')
-    img.style.maxWidth = '240px'
-    img.style.maxHeight = '140px'
-    img.style.borderRadius = '8px'
-    img.style.objectFit = 'cover'
-    img.alt = f.name
+    img.alt = file.name
 
     const meta = document.createElement('div')
-    meta.className = 'upload-meta stack stack--sm'
+    meta.className = 'create-event-upload-preview__meta'
 
-    const name = document.createElement('div')
-    name.textContent = f.name + ' • ' + (Math.round(f.size / 1024) + ' KB')
-    name.className = 'muted text-sm'
+    const title = document.createElement('strong')
+    title.textContent = file.name
 
-    const ok = document.createElement('div')
-    ok.textContent = 'Image ready — preview below.'
-    ok.className = 'success-text'
+    const detail = document.createElement('span')
+    detail.className = 'muted'
+    detail.textContent = `${Math.max(1, Math.round(file.size / 1024))} KB ready to publish`
 
-    const clearBtn = document.createElement('button')
-    clearBtn.type = 'button'
-    clearBtn.className = 'btn btn--ghost btn--sm'
-    clearBtn.textContent = 'Remove'
-    clearBtn.addEventListener('click', () => {
-      heroFile.value = ''
+    const removeButton = document.createElement('button')
+    removeButton.type = 'button'
+    removeButton.className = 'btn btn--ghost btn--sm'
+    removeButton.textContent = 'Remove image'
+    removeButton.addEventListener('click', () => {
+      heroFileInput.value = ''
       heroPreview.innerHTML = ''
+      setPreviewImage()
       errMap.heroImage.textContent = ''
     })
 
-    meta.appendChild(name)
-    meta.appendChild(ok)
-    meta.appendChild(clearBtn)
+    meta.appendChild(title)
+    meta.appendChild(detail)
+    meta.appendChild(removeButton)
+    wrapper.appendChild(img)
+    wrapper.appendChild(meta)
+    heroPreview.appendChild(wrapper)
 
     const reader = new FileReader()
-    reader.onload = () => { img.src = String(reader.result) }
-    reader.readAsDataURL(f)
+    reader.onload = () => {
+      const source = String(reader.result || '')
+      img.src = source
+      setPreviewImage(source)
+    }
+    reader.readAsDataURL(file)
+  }
 
-    container.appendChild(img)
-    container.appendChild(meta)
-    heroPreview.appendChild(container)
+  function syncPreview() {
+    updateHiddenDescription()
+
+    const safeDescription = stripHtml(descriptionInput.value)
+
+    previewTitle.textContent = titleInput.value.trim() || 'Untitled event'
+    previewDescription.textContent = safeDescription
+      ? truncate(safeDescription, 180)
+      : 'Start with a strong name and a clear description to make your event stand out.'
+    previewSchedule.textContent = formatPreviewSchedule(
+      startDateInput.value,
+      startTimeInput.value,
+      endDateInput.value,
+      endTimeInput.value,
+    )
+    previewLocation.textContent = addressInput.value.trim() || 'Add your venue address'
+    previewPrice.textContent = formatPriceLabel(selectedTicketType(), ticketPriceInput.value.trim())
+  }
+
+  function focusFirstError(errors: Record<string, string[]>) {
+    const order = ['heroImage', 'title', 'location', 'startDate', 'endDate', 'description', 'priceCents']
+    const focusMap: Record<string, HTMLElement | null> = {
+      heroImage: uploadZone,
+      title: titleInput,
+      location: addressInput,
+      startDate: startDateInput,
+      endDate: endDateInput,
+      description: descriptionEditor,
+      priceCents: ticketPriceInput,
+    }
+
+    for (const key of order) {
+      if (errors[key]?.length) {
+        focusMap[key]?.focus()
+        return
+      }
+    }
+  }
+
+  function validateImageFile(file?: File) {
+    if (!file) return undefined
+    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) return 'Please upload a PNG, JPG, WEBP, GIF, AVIF, or SVG image.'
+    if (file.size > MAX_HERO_IMAGE_BYTES) return 'Cover image must be 10 MB or smaller.'
+    return undefined
+  }
+
+  function syncPricingUI() {
+    const isPaid = selectedTicketType() === 'paid'
+    ticketPriceWrap.hidden = !isPaid
+    previewPrice.classList.toggle('is-paid', isPaid)
+    if (!isPaid) {
+      ticketPriceInput.value = ''
+      errMap.priceCents.textContent = ''
+    }
+    syncPreview()
+  }
+
+  descToolbar.addEventListener('click', (event) => {
+    const button = (event.target as HTMLElement).closest('button') as HTMLButtonElement | null
+    if (!button) return
+    const cmd = button.getAttribute('data-cmd')
+    if (!cmd) return
+    document.execCommand(cmd, false)
+    updateHiddenDescription()
+    updateToolbarState()
+    descriptionEditor.focus()
+    syncPreview()
+  })
+
+  document.addEventListener('selectionchange', () => {
+    if (document.activeElement === descriptionEditor) updateToolbarState()
+  })
+
+  addLinkButton.addEventListener('click', () => {
+    const raw = window.prompt('Enter a URL (https://...)') || ''
+    const safeUrl = raw.trim()
+    if (!safeUrl) return
+    if (!/^https?:\/\//i.test(safeUrl) && !/^mailto:/i.test(safeUrl)) {
+      window.alert('Please enter a valid URL starting with http://, https://, or mailto:.')
+      return
+    }
+    document.execCommand('createLink', false, safeUrl)
+    updateHiddenDescription()
+    updateToolbarState()
+    descriptionEditor.focus()
+    syncPreview()
+  })
+
+  descriptionEditor.addEventListener('input', syncPreview)
+  descriptionEditor.addEventListener('focus', updateToolbarState)
+
+  ;[titleInput, addressInput, startDateInput, startTimeInput, endDateInput, endTimeInput, ticketPriceInput].forEach((input) => {
+    input.addEventListener('input', syncPreview)
+  })
+
+  ticketTypeInputs.forEach((input) => {
+    input.addEventListener('change', syncPricingUI)
+  })
+
+  chooseFileButton.addEventListener('click', () => heroFileInput.click())
+  uploadZone.addEventListener('click', (event) => {
+    const target = event.target as HTMLElement
+    if (target.closest('button')) return
+    heroFileInput.click()
+  })
+  uploadZone.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      heroFileInput.click()
+    }
+  })
+
+  ;['dragenter', 'dragover'].forEach((eventName) => {
+    uploadZone.addEventListener(eventName, (event) => {
+      event.preventDefault()
+      uploadZone.classList.add('is-dragover')
+    })
+  })
+  ;['dragleave', 'dragend', 'drop'].forEach((eventName) => {
+    uploadZone.addEventListener(eventName, (event) => {
+      event.preventDefault()
+      uploadZone.classList.remove('is-dragover')
+    })
+  })
+
+  uploadZone.addEventListener('drop', (event) => {
+    const droppedFiles = event instanceof DragEvent ? event.dataTransfer?.files : undefined
+    const file = droppedFiles?.[0]
+    if (!file) return
+
+    const validationError = validateImageFile(file)
+    if (validationError) {
+      errMap.heroImage.textContent = validationError
+      heroFileInput.value = ''
+      heroPreview.innerHTML = ''
+      setPreviewImage()
+      return
+    }
+
+    const transfer = new DataTransfer()
+    transfer.items.add(file)
+    heroFileInput.files = transfer.files
+    errMap.heroImage.textContent = ''
+    renderHeroFilePreview(file)
+  })
+
+  heroFileInput.addEventListener('change', () => {
+    const file = heroFileInput.files?.[0]
+    const validationError = validateImageFile(file)
+
+    if (validationError) {
+      errMap.heroImage.textContent = validationError
+      heroFileInput.value = ''
+      heroPreview.innerHTML = ''
+      setPreviewImage()
+      return
+    }
+
+    errMap.heroImage.textContent = ''
+    renderHeroFilePreview(file)
   })
 
   async function submit(status: EventStatus) {
     clearErrors()
-    const payload: any = {
-      title: titleInput.value.trim(),
-      description: descInput.value.trim(),
-      status,
-      startDate: formatIsoFromLocal(startInput.value || null),
-      endDate: formatIsoFromLocal(endInput.value || null),
-      location: { address: addressInput.value.trim() },
+    syncPreview()
+
+    const startIso = combineDateAndTime(startDateInput.value, startTimeInput.value)
+    const endIso = combineDateAndTime(endDateInput.value, endTimeInput.value)
+    const description = descriptionInput.value.trim()
+    const descriptionPlain = stripHtml(description)
+    const ticketType = selectedTicketType()
+    const ticketPrice = ticketPriceInput.value.trim()
+    const file = heroFileInput.files?.[0]
+
+    const clientErrors: Record<string, string[]> = {}
+    const addError = (key: string, message: string) => {
+      clientErrors[key] = clientErrors[key] || []
+      clientErrors[key].push(message)
     }
 
-    const file = heroFile.files && heroFile.files[0]
+    if (!titleInput.value.trim()) addError('title', 'Event name is required.')
+    else if (titleInput.value.trim().length > 150) addError('title', 'Event name must be 150 characters or fewer.')
 
-    // disable UI
-    const allButtons = el.querySelectorAll('button')
-    allButtons.forEach((b) => (b as HTMLButtonElement).disabled = true)
+    if (!addressInput.value.trim()) addError('location', 'Address is required.')
+
+    if (status === EventStatus.Published) {
+      if (!startDateInput.value || !startTimeInput.value || !startIso) addError('startDate', 'Start date and start time are required.')
+      if (!endDateInput.value || !endTimeInput.value || !endIso) addError('endDate', 'End date and end time are required.')
+      if (!descriptionPlain) addError('description', 'Event description is required when publishing.')
+    } else {
+      if ((startDateInput.value || startTimeInput.value) && !startIso) addError('startDate', 'Add both a valid start date and start time.')
+      if ((endDateInput.value || endTimeInput.value) && !endIso) addError('endDate', 'Add both a valid end date and end time.')
+    }
+
+    if (startIso && endIso && Date.parse(endIso) <= Date.parse(startIso)) {
+      addError('endDate', 'End time must be after the start time.')
+    }
+
+    if (ticketType === 'paid') {
+      const amount = Number.parseFloat(ticketPrice)
+      if (!ticketPrice) addError('priceCents', 'Add a ticket price for paid events.')
+      else if (!Number.isFinite(amount) || amount <= 0) addError('priceCents', 'Ticket price must be greater than 0.')
+    }
+
+    const imageError = validateImageFile(file)
+    if (imageError) addError('heroImage', imageError)
+
+    if (Object.keys(clientErrors).length) {
+      Object.entries(clientErrors).forEach(([key, messages]) => {
+        const node = errMap[key]
+        if (node) node.textContent = messages.join(' ')
+      })
+      focusFirstError(clientErrors)
+      return
+    }
+
+    const allButtons = Array.from(el.querySelectorAll('button')) as HTMLButtonElement[]
+    allButtons.forEach((button) => {
+      button.disabled = true
+    })
 
     try {
+      const payload: any = {
+        title: titleInput.value.trim(),
+        shortDescription: truncate(descriptionPlain, 140),
+        description,
+        status,
+        startDate: startIso || undefined,
+        endDate: endIso || undefined,
+        location: { address: addressInput.value.trim() },
+        priceCents: ticketType === 'paid' ? Math.round(Number.parseFloat(ticketPrice) * 100) : 0,
+        currency: 'USD',
+      }
+
       if (file) payload.heroImage = await readFileAsDataUrl(file)
-      else if (heroUrl.value.trim()) payload.heroImage = heroUrl.value.trim()
 
-      // client-side validation to provide quicker, inline feedback
-      const clientErrors: Record<string, string[]> = {}
-      const addErr = (k: string, msg: string) => { clientErrors[k] = clientErrors[k] || []; clientErrors[k].push(msg) }
-
-      if (!payload.title || payload.title.length === 0) addErr('title', 'Title is required')
-      else if (payload.title.length > 150) addErr('title', 'Title must be 150 characters or fewer')
-
-      // If publishing, require description and dates; drafts may omit them
-      if (status === EventStatus.Published) {
-        if (!payload.description || payload.description.length === 0) addErr('description', 'Description is required when publishing')
-        if (!payload.startDate) addErr('startDate', 'Start date and time are required')
-        else if (Number.isNaN(Date.parse(payload.startDate as string))) addErr('startDate', 'Start date is not a valid datetime')
-        if (!payload.endDate) addErr('endDate', 'End date and time are required')
-        else if (Number.isNaN(Date.parse(payload.endDate as string))) addErr('endDate', 'End date is not a valid datetime')
-      } else {
-        // if provided, validate dates' format
-        if (payload.startDate && Number.isNaN(Date.parse(payload.startDate as string))) addErr('startDate', 'Start date is not a valid datetime')
-        if (payload.endDate && Number.isNaN(Date.parse(payload.endDate as string))) addErr('endDate', 'End date is not a valid datetime')
-      }
-      if (payload.startDate && payload.endDate) {
-        const s = Date.parse(payload.startDate as string)
-        const e = Date.parse(payload.endDate as string)
-        if (!Number.isNaN(s) && !Number.isNaN(e) && e <= s) addErr('endDate', 'End date must be after start date')
-      }
-
-      if ((payload as any).heroImage && typeof (payload as any).heroImage === 'string') {
-        const low = String((payload as any).heroImage).toLowerCase()
-        if (!low.startsWith('data:image/svg+xml') && !/\.svg(?:[?#]|$)/.test(low)) addErr('heroImage', 'Hero image must point to an SVG')
-      }
-
-      // show client errors and abort before network call
-      if (Object.keys(clientErrors).length) {
-        clearErrors()
-        Object.keys(clientErrors).forEach((k) => {
-          const node = (errMap as any)[k]
-          if (node) node.textContent = clientErrors[k].join('. ')
-        })
-        focusFirstError(clientErrors)
+      const response = await createEvent(payload)
+      if (!response.ok) {
+        if (response.errors) {
+          Object.entries(response.errors).forEach(([key, messages]) => {
+            const node = errMap[key]
+            if (node) node.textContent = messages.join(' ')
+          })
+          focusFirstError(response.errors)
+        } else {
+          formError.textContent = response.message || 'We were unable to create the event. Please try again.'
+          formError.style.display = 'block'
+        }
         return
       }
 
-       const res = await createEvent(payload)
-       if (!res.ok) {
-         // show field errors if provided
-         if (res.errors) {
-           Object.keys(res.errors).forEach((k) => {
-             const key = k === 'heroImage' ? 'heroImage' : k
-             const node = (errMap as any)[key]
-             if (node) node.textContent = (res.errors as any)[k].join('. ')
-           })
-           focusFirstError(res.errors)
-         } else {
-           // surface a calm, human-friendly message
-           formError.textContent = res.message || 'We were unable to create the event. Please try again.'
-           formError.style.display = 'block'
-         }
-         return
-       }
-
-      // on success go back to the admin events list
       location.hash = '/admin/events'
-    } catch (err) {
+    } catch {
       formError.textContent = 'An unexpected error occurred. Please try again.'
       formError.style.display = 'block'
-      return
     } finally {
-      // restore button labels and re-enable
-      saveDraft.textContent = 'Save as draft'
-      publish.textContent = 'Publish'
-      allButtons.forEach((b) => (b as HTMLButtonElement).disabled = false)
+      saveDraftButton.disabled = false
+      publishButton.disabled = false
+      saveDraftButton.textContent = 'Save as draft'
+      publishButton.textContent = 'Publish event'
+      allButtons.forEach((button) => {
+        button.disabled = false
+      })
     }
   }
 
-  const saveDraft = el.querySelector('#save-draft') as HTMLButtonElement
-  const publish = el.querySelector('#publish') as HTMLButtonElement
-
-  saveDraft.addEventListener('click', async () => {
-    // UI: show saving state
-    saveDraft.disabled = true
-    publish.disabled = true
-    saveDraft.textContent = 'Saving…'
+  saveDraftButton.addEventListener('click', async () => {
+    saveDraftButton.textContent = 'Saving…'
+    saveDraftButton.disabled = true
+    publishButton.disabled = true
     await submit(EventStatus.Draft)
   })
-  publish.addEventListener('click', async () => {
-    // UI: show publishing state
-    saveDraft.disabled = true
-    publish.disabled = true
-    publish.textContent = 'Publishing…'
+
+  publishButton.addEventListener('click', async () => {
+    publishButton.textContent = 'Publishing…'
+    saveDraftButton.disabled = true
+    publishButton.disabled = true
     await submit(EventStatus.Published)
   })
+
+  syncPricingUI()
+  syncPreview()
+  updateToolbarState()
 
   return el
 }

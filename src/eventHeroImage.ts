@@ -214,13 +214,13 @@ export function buildEventHeroSvgDataUri(event: EventHeroLike) {
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`
 }
 
-function isSvgImageSource(source: string) {
-  return /^data:image\/svg\+xml/i.test(source) || /\.svg(?:[?#]|$)/i.test(source)
+function isRenderableImageSource(source: string) {
+  return /^data:image\//i.test(source) || /^(https?:\/\/|\/|\.\/|\.\.\/)/i.test(source)
 }
 
 export function normalizeEventHeroImage(event: EventHeroLike) {
   const source = typeof event.heroImage === 'string' ? event.heroImage.trim() : ''
-  if (source && isSvgImageSource(source)) return source
+  if (source && isRenderableImageSource(source)) return source
   return buildEventHeroSvgDataUri(event)
 }
 
