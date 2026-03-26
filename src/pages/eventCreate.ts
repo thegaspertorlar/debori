@@ -127,30 +127,6 @@ export function renderEventCreate() {
 
   el.innerHTML = `
     <div class="create-event-shell">
-      <section class="create-event-hero">
-        <div class="create-event-hero__content">
-          <span class="create-event-eyebrow">Create new event</span>
-          <h1>Design a polished event page in one flow</h1>
-          <p class="create-event-hero__lead muted">Add your cover image, timing, venue details, rich event story, and ticket type before you publish.</p>
-          <div class="create-event-checklist">
-            <span class="create-event-checklist__item">Cover upload</span>
-            <span class="create-event-checklist__item">Rich description</span>
-            <span class="create-event-checklist__item">Schedule</span>
-            <span class="create-event-checklist__item">Free or paid</span>
-          </div>
-        </div>
-        <div class="create-event-hero__aside">
-          <div class="create-event-stat">
-            <span class="create-event-stat__label">Publishing flow</span>
-            <strong>Draft first or publish immediately</strong>
-          </div>
-          <div class="create-event-stat">
-            <span class="create-event-stat__label">Best practice</span>
-            <strong>Use a bold image and a clear event story</strong>
-          </div>
-        </div>
-      </section>
-
       <form id="event-form" novalidate>
         <div id="form-error" class="error-text create-event-form-error" role="alert" style="display:none"></div>
 

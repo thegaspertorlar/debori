@@ -3388,93 +3388,6 @@ h1 {
   gap: 24px;
 }
 
-.create-event-hero {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.9fr);
-  gap: 20px;
-  padding: 28px;
-  border-radius: 28px;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at top right, rgba(52, 211, 153, 0.24), transparent 32%),
-    linear-gradient(135deg, #ffffff 0%, #f5fff9 56%, #ecfdf3 100%);
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.08);
-}
-
-.create-event-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  min-height: 30px;
-  padding: 0 12px;
-  margin-bottom: 14px;
-  border-radius: 999px;
-  background: rgba(22, 163, 74, 0.10);
-  color: var(--brand-700);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.create-event-hero h1 {
-  margin: 0;
-  max-width: 12ch;
-  font-size: clamp(34px, 5vw, 54px);
-  line-height: 0.98;
-}
-
-.create-event-hero__lead {
-  max-width: 64ch;
-  margin: 14px 0 0;
-  font-size: 16px;
-  line-height: 1.65;
-}
-
-.create-event-checklist {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 22px;
-}
-
-.create-event-checklist__item {
-  display: inline-flex;
-  align-items: center;
-  min-height: 34px;
-  padding: 0 14px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  color: var(--neutral-700);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.create-event-hero__aside {
-  display: grid;
-  gap: 14px;
-}
-
-.create-event-stat {
-  padding: 18px;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(148, 163, 184, 0.14);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
-}
-
-.create-event-stat__label {
-  display: block;
-  margin-bottom: 6px;
-  color: var(--neutral-500);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 .create-event-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.78fr);
@@ -3828,8 +3741,7 @@ h1 {
 }
 
 @media (max-width: 1080px) {
-  .create-event-layout,
-  .create-event-hero {
+  .create-event-layout {
     grid-template-columns: 1fr;
   }
 
@@ -3840,7 +3752,6 @@ h1 {
 }
 
 @media (max-width: 760px) {
-  .create-event-hero,
   .create-event-card,
   .create-event-preview-card,
   .create-event-tip-card {
