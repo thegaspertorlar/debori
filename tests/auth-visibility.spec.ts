@@ -67,14 +67,15 @@ test.describe('Authentication-sensitive event UI', () => {
       await expect(page.locator('button:has-text("Edit"), [data-testid="edit-event"]').first()).toHaveCount(0);
       await expect(page.locator('button:has-text("Delete"), [data-testid="delete-event"]').first()).toHaveCount(0);
     } else {
-      // If no event exists, the manager should be able to open a create flow via the admin dashboard
+      // If no event exists, the manager should be able to open a create flow from the events management page
       await page.click('button:has-text("Create"), [data-testid="create-event"], a:has-text("Create Event")');
       await expect(page.locator('form:has-text("Title"), [data-testid="event-form"]').first()).toBeVisible();
     }
 
-    // Manager workflows must originate from the admin dashboard. Verify admin dashboard is accessible
+    // Manager workflows should land on the events management page.
     await page.goto('/admin');
     await expect(page.locator('a:has-text("Create event"), a:has-text("Create Event")')).toBeVisible();
+    await expect(page).toHaveURL(/.*admin.*events.*/i);
   });
 
   test('Switching auth state does not leak admin content', async ({ page }) => {
