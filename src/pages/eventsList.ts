@@ -26,7 +26,7 @@ export function renderEventsList() {
   el.innerHTML = `
     <div class="events-page__header container">
       <div class="events-page__title">
-        <h1>Ahmet's Events</h1>
+        <h1>Mia's Events</h1>
         <p class="muted">Curated selection of upcoming and recent events — easy to browse and discover.</p>
       </div>
       <div class="events-page__actions">
